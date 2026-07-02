@@ -240,11 +240,13 @@ export default function Home() {
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
+  const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardCaptureRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileTabMenuRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
 
   const selectedText = useMemo(() => {
@@ -265,6 +267,8 @@ export default function Home() {
     return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
   }, [activeTab]);
 
+  const activeTabLabel = useMemo(() => TAB_LABELS.find((tab) => tab.key === activeTab)?.label ?? "", [activeTab]);
+
   useEffect(() => {
     if (!cardViewportRef.current) return;
 
@@ -278,6 +282,30 @@ export default function Home() {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!mobileTabMenuOpen) return;
+
+    function handlePointerDown(event: globalThis.PointerEvent) {
+      if (!mobileTabMenuRef.current?.contains(event.target as Node)) {
+        setMobileTabMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [mobileTabMenuOpen]);
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    if (textModalOpen) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [textModalOpen]);
 
   useEffect(() => {
     function handlePointerMove(event: globalThis.PointerEvent) {
@@ -604,7 +632,7 @@ export default function Home() {
   }
 
   return (
-    <main className="px-4 py-4 lg:px-8 lg:py-8">
+    <main className="overflow-x-hidden px-4 py-4 lg:px-8 lg:py-8">
       <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
         <section className="lg:hidden">
           <div className="space-y-2">
@@ -710,7 +738,7 @@ export default function Home() {
         <section className="flex w-full flex-col items-center gap-4 lg:w-[443px] lg:gap-6">
           <div
             ref={cardViewportRef}
-            className="sticky top-2 z-20 w-full max-w-[443px] bg-white lg:static lg:w-[443px]"
+            className="sticky top-0 z-20 w-full max-w-[443px] overflow-hidden bg-white lg:static lg:w-[443px]"
             style={{ height: BOARD_SIZE * cardScale }}
           >
             <div
@@ -731,7 +759,7 @@ export default function Home() {
               onDragOver={(event) => event.preventDefault()}
               onDrop={handleDrop}
               onPointerDown={() => setSelectedTarget(null)}
-              className="absolute inset-0"
+              className="absolute inset-0 touch-none"
             >
               <div className="pointer-events-none absolute left-[23px] top-[23px] h-[397px] w-[397px] rounded-[16px] bg-[#fbf7ef]" />
 
@@ -972,9 +1000,143 @@ export default function Home() {
             </button>
           </div>
 
+          <div className="w-full space-y-2 lg:hidden">
+            <div ref={mobileTabMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMobileTabMenuOpen((open) => !open)}
+                className="flex h-[36px] w-full items-center rounded-[59px] bg-[#f1f1f1] px-4"
+              >
+                <span className="flex-1 text-center text-[12px] font-semibold">{activeTabLabel}</span>
+                <ChevronDown size={20} className={`transition-transform ${mobileTabMenuOpen ? "rotate-180" : ""}`} />
+              </button>
+              {mobileTabMenuOpen ? (
+                <div className="absolute left-0 right-0 top-[40px] z-30 rounded-[12px] border border-[#d9d9d9] bg-white p-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)]">
+                  {TAB_LABELS.map((tab) => {
+                    const isActive = tab.key === activeTab;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(tab.key);
+                          setMobileTabMenuOpen(false);
+                        }}
+                        className={`block h-[44px] w-full rounded-[8px] px-3 text-left text-[12px] font-semibold ${isActive ? "bg-[#e3e3e3]" : "bg-transparent"}`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-[10px] border border-[#f1f1f1] pb-2">
+              <div className="h-[224px] overflow-x-auto overflow-y-hidden px-1 py-1">
+                {activeTab === "frames" ? (
+                  <div className="flex h-full w-max items-center gap-4 pr-2">
+                    {paletteItems.map((item) => (
+                      <button
+                        key={item.src}
+                        type="button"
+                        onClick={() => setSelectedFrame(item.src)}
+                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
+                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
+                        }`}
+                      >
+                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid h-full w-max grid-flow-col grid-rows-2 gap-x-4 gap-y-1 pr-2">
+                    {paletteItems.map((item) => (
+                      <button
+                        key={item.src}
+                        type="button"
+                        draggable
+                        onClick={() => addSticker({ src: item.src, width: item.width, height: item.height }, BOARD_SIZE / 2, BOARD_SIZE / 2)}
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData(
+                            "application/card-sticker",
+                            JSON.stringify({ src: item.src, width: item.width, height: item.height }),
+                          );
+                        }}
+                        className={`relative rounded-md ${activeTab === "persons" ? "h-[130px] w-[90px]" : "h-[96px] w-[112px]"}`}
+                      >
+                        <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddText}
+              className="mt-4 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
+            >
+              <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
+                <Type size={17} strokeWidth={2.25} />
+              </span>
+              Add Text
+            </button>
+
+            <div className="pt-1">
+              <p className="text-[15px] font-semibold">Upload a Picture</p>
+              <label
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={onDropUpload}
+                className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
+                  <Upload size={34} strokeWidth={2.2} />
+                </span>
+                <span className="block text-[15px] font-semibold">
+                  <span className="underline">Choose a file</span> or drag and drop it here
+                  <br />
+                  <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="flex w-full items-start gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Restart
+              </button>
+            </div>
+          </div>
+
         </section>
 
-        <section className="w-full lg:h-[528px] lg:w-[480px] lg:rounded-2xl lg:border lg:border-[#e9e9e9] lg:bg-white lg:p-4 lg:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
+        <section className="hidden w-full lg:block lg:h-[528px] lg:w-[480px] lg:rounded-2xl lg:border lg:border-[#e9e9e9] lg:bg-white lg:p-4 lg:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
           <div className="space-y-2 lg:hidden">
             <div className="relative">
               <select
