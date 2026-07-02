@@ -106,12 +106,10 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function getBoundsForScale(width: number, height: number, scale: number, overflowRatio = 0) {
-  const scaledWidth = width * scale;
-  const scaledHeight = height * scale;
   const extraX = (width * scale - width) / 2;
   const extraY = (height * scale - height) / 2;
-  const overflowX = scaledWidth * overflowRatio;
-  const overflowY = scaledHeight * overflowRatio;
+  const overflowX = BOARD_SIZE * overflowRatio;
+  const overflowY = BOARD_SIZE * overflowRatio;
   const minX = extraX - overflowX;
   const maxX = BOARD_SIZE - width - extraX + overflowX;
   const minY = extraY - overflowY;
@@ -217,8 +215,8 @@ function measureTextBox(text: string, fontSize: number) {
   const lines = text.split("\n");
   const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
   return {
-    width: Math.max(100, Math.round(longest * fontSize * 0.56 + 16)),
-    height: Math.max(48, Math.round(lines.length * fontSize * 1.05 + 10)),
+    width: Math.max(36, Math.round(longest * fontSize * 0.54 + 8)),
+    height: Math.max(24, Math.round(lines.length * fontSize * 1.02 + 6)),
   };
 }
 
@@ -321,7 +319,7 @@ export default function Home() {
           if (interaction.mode === "move") {
             const nextX = interaction.startX + (pointerX - interaction.startPointerX);
             const nextY = interaction.startY + (pointerY - interaction.startPointerY);
-            const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale);
+              const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale, 0.2);
             return {
               ...item,
               x,
@@ -340,7 +338,7 @@ export default function Home() {
           const distance = Math.hypot(pointerX - interaction.centerX, pointerY - interaction.centerY);
           const scaleRatio = distance / Math.max(1, interaction.startPointerDistance);
           const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, getTextMaxScale(item.width, item.height));
-          const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale);
+          const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale, 0.2);
           return {
             ...item,
             scale: nextScale,
@@ -472,7 +470,7 @@ export default function Home() {
       const id = `t${counter}`;
       const fontSize = 48;
       const box = measureTextBox(normalized, fontSize / 4);
-      const centered = clampPositionForScale(BOARD_SIZE / 2 - box.width / 2, BOARD_SIZE / 2 - box.height / 2, box.width, box.height, 1);
+      const centered = clampPositionForScale(BOARD_SIZE / 2 - box.width / 2, BOARD_SIZE / 2 - box.height / 2, box.width, box.height, 1, 0.2);
       setCounter((value) => value + 1);
       setTexts((items) => [
         ...items,
@@ -499,7 +497,7 @@ export default function Home() {
           const box = measureTextBox(normalized, item.fontSize / 4);
           const maxScale = getTextMaxScale(box.width, box.height);
           const nextScale = Math.min(item.scale, maxScale);
-          const position = clampPositionForScale(item.x, item.y, box.width, box.height, nextScale);
+          const position = clampPositionForScale(item.x, item.y, box.width, box.height, nextScale, 0.2);
           return {
             ...item,
             text: normalized,
