@@ -395,7 +395,7 @@ export default function Home() {
     setSelectedTarget(target);
   }
 
-  function addSticker(payload: DragPayload, dropX: number, dropY: number) {
+  function addSticker(payload: DragPayload, dropX: number, dropY: number, source: "palette" | "upload" = "palette") {
     const id = `s${counter}`;
     setCounter((value) => value + 1);
 
@@ -414,7 +414,7 @@ export default function Home() {
         height: payload.height,
         rotation: 0,
         scale: 1,
-        zIndex: counter + 10,
+        zIndex: source === "upload" ? counter + 5 : counter + 20,
       },
     ]);
 
@@ -510,7 +510,7 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2);
+    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2, "upload");
   }
 
   function onDropUpload(event: DragEvent<HTMLLabelElement>) {
@@ -518,7 +518,7 @@ export default function Home() {
     const file = event.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2);
+    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2, "upload");
   }
 
   async function handleSave() {
@@ -854,7 +854,7 @@ export default function Home() {
                   );
                 })}
 
-              <div className="pointer-events-none absolute z-[99] bottom-2 -left-1 h-[50px] w-[194px]">
+              <div className="pointer-events-none absolute z-[999] bottom-2 -left-1 h-[50px] w-[194px]">
                 <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
               </div>
 
