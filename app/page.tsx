@@ -1,10 +1,14 @@
 "use client";
 
 import { toPng } from "html-to-image";
+import { Maximize2, RotateCw, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type TabKey = "frames" | "messages" | "stickers" | "persons";
+type FontKey = "open" | "circular" | "caveat" | "kalam";
+type TargetType = "sticker" | "text";
+type InteractionMode = "move" | "rotate" | "resize";
 
 type StickerItem = {
   id: string;
@@ -13,6 +17,8 @@ type StickerItem = {
   y: number;
   width: number;
   height: number;
+  rotation: number;
+  scale: number;
   zIndex: number;
 };
 
@@ -22,8 +28,12 @@ type TextItem = {
   x: number;
   y: number;
   color: string;
-  font: "open" | "circular" | "caveat" | "kalam";
-  size: number;
+  font: FontKey;
+  fontSize: number;
+  width: number;
+  height: number;
+  rotation: number;
+  scale: number;
   zIndex: number;
 };
 
@@ -33,6 +43,28 @@ type DragPayload = {
   height: number;
 };
 
+type SelectedTarget = {
+  type: TargetType;
+  id: string;
+} | null;
+
+type InteractionState = {
+  mode: InteractionMode;
+  target: SelectedTarget;
+  startPointerX: number;
+  startPointerY: number;
+  startX: number;
+  startY: number;
+  startRotation: number;
+  startScale: number;
+  centerX: number;
+  centerY: number;
+  startPointerAngle: number;
+  startPointerDistance: number;
+};
+
+const BOARD_SIZE = 443;
+
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "frames", label: "Frames" },
   { key: "messages", label: "Messages" },
@@ -40,7 +72,7 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "persons", label: "CCP Stickers" },
 ];
 
-const FONT_BUTTONS: { key: TextItem["font"]; label: string; className: string }[] = [
+const FONT_BUTTONS: { key: FontKey; label: string; className: string }[] = [
   { key: "open", label: "Font 1", className: "font-open-sans font-bold" },
   { key: "circular", label: "Font 2", className: "font-circular" },
   { key: "caveat", label: "Font 3", className: "font-caveat text-[40px]" },
@@ -67,83 +99,120 @@ const messageSources = Array.from({ length: 11 }, (_, i) => `/assets/messages/ms
 const stickerSources = Array.from({ length: 16 }, (_, i) => `/assets/stickers/sticker_${i + 1}.png`);
 const personSources = Array.from({ length: 9 }, (_, i) => `/assets/persons/person_${i + 1}.png`);
 
-const initialText: TextItem = {
-  id: "t1",
-  text: "Thank you\nfor your\ndedication!",
-  x: 198,
-  y: 90,
-  color: "#6b3b9c",
-  font: "open",
-  size: 66,
-  zIndex: 10,
-};
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
 
-const initialSticker: StickerItem = {
-  id: "s1",
-  src: "/assets/messages/msg_5.png",
-  x: 76,
-  y: 255,
-  width: 115,
-  height: 115,
-  zIndex: 12,
-};
+function getBoundsForScale(width: number, height: number, scale: number, overflowRatio = 0) {
+  const scaledWidth = width * scale;
+  const scaledHeight = height * scale;
+  const extraX = (width * scale - width) / 2;
+  const extraY = (height * scale - height) / 2;
+  const overflowX = scaledWidth * overflowRatio;
+  const overflowY = scaledHeight * overflowRatio;
+  const minX = extraX - overflowX;
+  const maxX = BOARD_SIZE - width - extraX + overflowX;
+  const minY = extraY - overflowY;
+  const maxY = BOARD_SIZE - height - extraY + overflowY;
 
-function getFontClass(font: TextItem["font"]) {
+  return {
+    minX: minX <= maxX ? minX : (BOARD_SIZE - width) / 2,
+    maxX: minX <= maxX ? maxX : (BOARD_SIZE - width) / 2,
+    minY: minY <= maxY ? minY : (BOARD_SIZE - height) / 2,
+    maxY: minY <= maxY ? maxY : (BOARD_SIZE - height) / 2,
+  };
+}
+
+function clampPositionForScale(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  scale: number,
+  overflowRatio = 0,
+) {
+  const bounds = getBoundsForScale(width, height, scale, overflowRatio);
+  return {
+    x: clamp(x, bounds.minX, bounds.maxX),
+    y: clamp(y, bounds.minY, bounds.maxY),
+  };
+}
+
+function getHandleStyle(scale: number) {
+  const naturalSize = 24 * scale;
+  const clampedSize = clamp(naturalSize, 16, 30);
+  const ratio = clampedSize / Math.max(0.001, naturalSize);
+  return {
+    transform: `scale(${ratio})`,
+    transformOrigin: "center",
+  } as const;
+}
+
+function getFontClass(font: FontKey) {
   if (font === "circular") return "font-circular";
   if (font === "caveat") return "font-caveat";
   if (font === "kalam") return "font-kalam";
   return "font-glass";
 }
 
+function normalizeTextInput(input: string) {
+  const source = input.trim().replace(/\r\n/g, "\n");
+  if (!source) return "";
+
+  const words = source.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  const maxChars = 28;
+
+  for (const word of words) {
+    if (!current.length) {
+      current = word;
+      continue;
+    }
+
+    const candidate = `${current} ${word}`;
+    if (candidate.length <= maxChars) {
+      current = candidate;
+      continue;
+    }
+
+    lines.push(current);
+    current = word;
+  }
+
+  if (current.length) lines.push(current);
+  return lines.join("\n");
+}
+
+function measureTextBox(text: string, fontSize: number) {
+  const lines = text.split("\n");
+  const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
+  return {
+    width: Math.max(100, Math.round(longest * fontSize * 0.56 + 16)),
+    height: Math.max(48, Math.round(lines.length * fontSize * 1.05 + 10)),
+  };
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("messages");
   const [selectedFrame, setSelectedFrame] = useState(frameSources[1]);
-  const [stickers, setStickers] = useState<StickerItem[]>([initialSticker]);
-  const [texts, setTexts] = useState<TextItem[]>([initialText]);
-  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(initialSticker.id);
-  const [selectedTextId, setSelectedTextId] = useState<string | null>(initialText.id);
-  const [counter, setCounter] = useState(2);
+  const [stickers, setStickers] = useState<StickerItem[]>([]);
+  const [texts, setTexts] = useState<TextItem[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
+  const [textModalOpen, setTextModalOpen] = useState(false);
+  const [textModalValue, setTextModalValue] = useState("");
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [counter, setCounter] = useState(1);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardCaptureRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const dragState = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const interactionRef = useRef<InteractionState | null>(null);
 
-  const selectedText = useMemo(
-    () => texts.find((item) => item.id === selectedTextId) ?? null,
-    [texts, selectedTextId],
-  );
-
-  useEffect(() => {
-    function onPointerMove(event: globalThis.PointerEvent) {
-      if (!dragState.current || !cardRef.current) return;
-      const rect = cardRef.current.getBoundingClientRect();
-      const { id, dx, dy } = dragState.current;
-
-      setStickers((items) =>
-        items.map((item) => {
-          if (item.id !== id) return item;
-          const maxX = 397 - item.width;
-          const maxY = 397 - item.height;
-          const x = Math.max(0, Math.min(maxX, event.clientX - rect.left - dx));
-          const y = Math.max(0, Math.min(maxY, event.clientY - rect.top - dy));
-          return { ...item, x, y };
-        }),
-      );
-    }
-
-    function onPointerUp() {
-      dragState.current = null;
-    }
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-    };
-  }, []);
+  const selectedText = useMemo(() => {
+    if (!selectedTarget || selectedTarget.type !== "text") return null;
+    return texts.find((item) => item.id === selectedTarget.id) ?? null;
+  }, [texts, selectedTarget]);
 
   const paletteItems = useMemo(() => {
     if (activeTab === "frames") {
@@ -158,15 +227,171 @@ export default function Home() {
     return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
   }, [activeTab]);
 
+  useEffect(() => {
+    function handlePointerMove(event: globalThis.PointerEvent) {
+      const interaction = interactionRef.current;
+      if (!interaction || !cardRef.current) return;
+
+      const boardRect = cardRef.current.getBoundingClientRect();
+      const pointerX = event.clientX - boardRect.left;
+      const pointerY = event.clientY - boardRect.top;
+
+      if (!interaction.target) return;
+      const { target } = interaction;
+
+      if (target.type === "sticker") {
+        setStickers((items) =>
+          items.map((item) => {
+            if (item.id !== target.id) return item;
+
+            if (interaction.mode === "move") {
+              const nextX = interaction.startX + (pointerX - interaction.startPointerX);
+              const nextY = interaction.startY + (pointerY - interaction.startPointerY);
+              const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale, 0.2);
+              return {
+                ...item,
+                x,
+                y,
+              };
+            }
+
+            if (interaction.mode === "rotate") {
+              const angle = Math.atan2(pointerY - interaction.centerY, pointerX - interaction.centerX);
+              return {
+                ...item,
+                rotation: interaction.startRotation + ((angle - interaction.startPointerAngle) * 180) / Math.PI,
+              };
+            }
+
+            const distance = Math.hypot(pointerX - interaction.centerX, pointerY - interaction.centerY);
+            const scaleRatio = distance / Math.max(1, interaction.startPointerDistance);
+            const nextScale = clamp(interaction.startScale * scaleRatio, 0.3, 3);
+            const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale, 0.2);
+            return {
+              ...item,
+              scale: nextScale,
+              x: position.x,
+              y: position.y,
+            };
+          }),
+        );
+        return;
+      }
+
+      setTexts((items) =>
+        items.map((item) => {
+          if (item.id !== target.id) return item;
+
+          if (interaction.mode === "move") {
+            const nextX = interaction.startX + (pointerX - interaction.startPointerX);
+            const nextY = interaction.startY + (pointerY - interaction.startPointerY);
+            const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale);
+            return {
+              ...item,
+              x,
+              y,
+            };
+          }
+
+          if (interaction.mode === "rotate") {
+            const angle = Math.atan2(pointerY - interaction.centerY, pointerX - interaction.centerX);
+            return {
+              ...item,
+              rotation: interaction.startRotation + ((angle - interaction.startPointerAngle) * 180) / Math.PI,
+            };
+          }
+
+          const distance = Math.hypot(pointerX - interaction.centerX, pointerY - interaction.centerY);
+          const scaleRatio = distance / Math.max(1, interaction.startPointerDistance);
+          const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, 3);
+          const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale);
+          return {
+            ...item,
+            scale: nextScale,
+            x: position.x,
+            y: position.y,
+          };
+        }),
+      );
+    }
+
+    function handlePointerUp() {
+      interactionRef.current = null;
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, []);
+
+  function beginInteraction(
+    event: PointerEvent<HTMLElement>,
+    target: SelectedTarget,
+    mode: InteractionMode,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    scale: number,
+    rotation: number,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const boardRect = cardRef.current?.getBoundingClientRect();
+    const pointerX = event.clientX - (boardRect?.left ?? 0);
+    const pointerY = event.clientY - (boardRect?.top ?? 0);
+    const centerX = x + (width * scale) / 2;
+    const centerY = y + (height * scale) / 2;
+    const pointerAngle = Math.atan2(pointerY - centerY, pointerX - centerX);
+    const pointerDistance = Math.hypot(pointerX - centerX, pointerY - centerY);
+
+    interactionRef.current = {
+      mode,
+      target,
+      startPointerX: pointerX,
+      startPointerY: pointerY,
+      startX: x,
+      startY: y,
+      startRotation: rotation,
+      startScale: scale,
+      centerX,
+      centerY,
+      startPointerAngle: pointerAngle,
+      startPointerDistance: pointerDistance,
+    };
+
+    setSelectedTarget(target);
+  }
+
   function addSticker(payload: DragPayload, dropX: number, dropY: number) {
-    const x = Math.max(0, Math.min(397 - payload.width, dropX - payload.width / 2));
-    const y = Math.max(0, Math.min(397 - payload.height, dropY - payload.height / 2));
     const id = `s${counter}`;
     setCounter((value) => value + 1);
 
-    setStickers((items) => [...items, { id, src: payload.src, x, y, width: payload.width, height: payload.height, zIndex: counter + 20 }]);
-    setSelectedStickerId(id);
-    setSelectedTextId(null);
+    const initialX = dropX - payload.width / 2;
+    const initialY = dropY - payload.height / 2;
+    const clamped = clampPositionForScale(initialX, initialY, payload.width, payload.height, 1, 0.2);
+
+    setStickers((items) => [
+      ...items,
+      {
+        id,
+        src: payload.src,
+        x: clamped.x,
+        y: clamped.y,
+        width: payload.width,
+        height: payload.height,
+        rotation: 0,
+        scale: 1,
+        zIndex: counter + 10,
+      },
+    ]);
+
+    setSelectedTarget({ type: "sticker", id });
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -181,49 +406,84 @@ export default function Home() {
     addSticker(payload, event.clientX - rect.left, event.clientY - rect.top);
   }
 
-  function handleStickerPointerDown(event: PointerEvent<HTMLDivElement>, sticker: StickerItem) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!cardRef.current) return;
-
-    const rect = cardRef.current.getBoundingClientRect();
-    const dx = event.clientX - rect.left - sticker.x;
-    const dy = event.clientY - rect.top - sticker.y;
-    dragState.current = { id: sticker.id, dx, dy };
-    setSelectedStickerId(sticker.id);
-    setSelectedTextId(null);
-  }
-
   function updateSelectedText(partial: Partial<TextItem>) {
-    if (!selectedTextId) return;
-    setTexts((items) => items.map((item) => (item.id === selectedTextId ? { ...item, ...partial } : item)));
+    if (!selectedTarget || selectedTarget.type !== "text") return;
+    setTexts((items) => items.map((item) => (item.id === selectedTarget.id ? { ...item, ...partial } : item)));
   }
 
   function handleAddText() {
-    const id = `t${counter}`;
-    setCounter((value) => value + 1);
-    setTexts((items) => [
-      ...items,
-      {
-        id,
-        text: "Type here",
-        x: 120,
-        y: 170,
-        color: "#1c1815",
-        font: "open",
-        size: 38,
-        zIndex: counter + 30,
-      },
-    ]);
-    setSelectedTextId(id);
-    setSelectedStickerId(null);
+    setEditingTextId(null);
+    setTextModalValue("");
+    setTextModalOpen(true);
+  }
+
+  function handleEditText(target: TextItem) {
+    setEditingTextId(target.id);
+    setTextModalValue(target.text.replace(/\n/g, " "));
+    setTextModalOpen(true);
+  }
+
+  function handleTextModalSubmit() {
+    const normalized = normalizeTextInput(textModalValue);
+    if (!normalized.length) {
+      setTextModalOpen(false);
+      setTextModalValue("");
+      setEditingTextId(null);
+      return;
+    }
+
+    if (!editingTextId) {
+      const id = `t${counter}`;
+      const fontSize = 48;
+      const box = measureTextBox(normalized, fontSize / 4);
+      const centered = clampPositionForScale(BOARD_SIZE / 2 - box.width / 2, BOARD_SIZE / 2 - box.height / 2, box.width, box.height, 1);
+      setCounter((value) => value + 1);
+      setTexts((items) => [
+        ...items,
+        {
+          id,
+          text: normalized,
+          x: centered.x,
+          y: centered.y,
+          color: "#6b3b9c",
+          font: "open",
+          fontSize,
+          width: box.width,
+          height: box.height,
+          rotation: 0,
+          scale: 1,
+          zIndex: counter + 100,
+        },
+      ]);
+      setSelectedTarget({ type: "text", id });
+    } else {
+      setTexts((items) =>
+        items.map((item) => {
+          if (item.id !== editingTextId) return item;
+          const box = measureTextBox(normalized, item.fontSize / 4);
+          const position = clampPositionForScale(item.x, item.y, box.width, box.height, item.scale);
+          return {
+            ...item,
+            text: normalized,
+            width: box.width,
+            height: box.height,
+            x: position.x,
+            y: position.y,
+          };
+        }),
+      );
+    }
+
+    setTextModalOpen(false);
+    setTextModalValue("");
+    setEditingTextId(null);
   }
 
   function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, 200, 230);
+    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2);
   }
 
   function onDropUpload(event: DragEvent<HTMLLabelElement>) {
@@ -231,7 +491,7 @@ export default function Home() {
     const file = event.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, 200, 230);
+    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2);
   }
 
   async function handleSave() {
@@ -245,20 +505,27 @@ export default function Home() {
 
   function handleRestart() {
     setStickers([]);
-    setTexts([initialText]);
-    setSelectedStickerId(null);
-    setSelectedTextId(initialText.id);
+    setTexts([]);
+    setSelectedTarget(null);
   }
 
   function handleSubmit() {
     const payload = {
       frame: selectedFrame,
-      stickers: stickers.map(({ id, src, x, y, width, height }) => ({ id, src, x, y, width, height })),
+      stickers: stickers.map(({ id, src, x, y, width, height, scale, rotation }) => ({
+        id,
+        src,
+        x,
+        y,
+        width,
+        height,
+        scale,
+        rotation,
+      })),
       texts,
       createdAt: new Date().toISOString(),
     };
 
-    // Placeholder submission action for integration.
     console.info("Card submission payload", payload);
     alert("Card submitted. Hook this payload to your form endpoint.");
   }
@@ -266,7 +533,7 @@ export default function Home() {
   return (
     <main className="px-4 py-8 md:px-8">
       <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-6 lg:flex-row lg:items-start">
-        <section className="w-full rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:w-[480px] lg:h-[528px]">
+        <section className="w-full rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:h-[528px] lg:w-[480px]">
           <div className="space-y-2">
             <h1 className="font-open-sans text-[26px] font-bold leading-none text-[#ff661e]">Customise Your C.A.R.E. Card</h1>
             <p className="text-[14px] font-semibold leading-[1.3] text-black">
@@ -359,68 +626,203 @@ export default function Home() {
               ref={cardRef}
               onDragOver={(event) => event.preventDefault()}
               onDrop={handleDrop}
-              onPointerDown={() => {
-                setSelectedStickerId(null);
-                setSelectedTextId(null);
-              }}
-              className="absolute left-[23px] top-[23px] h-[397px] w-[397px] rounded-[16px] bg-[#fbf7ef]"
+              onPointerDown={() => setSelectedTarget(null)}
+              className="absolute inset-0"
             >
+              <div className="pointer-events-none absolute left-[23px] top-[23px] h-[397px] w-[397px] rounded-[16px] bg-[#fbf7ef]" />
+
               {texts
                 .slice()
                 .sort((a, b) => a.zIndex - b.zIndex)
-                .map((text) => (
-                  <button
-                    key={text.id}
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setSelectedTextId(text.id);
-                      setSelectedStickerId(null);
-                    }}
-                    className={`absolute whitespace-pre text-center leading-[0.9] ${getFontClass(text.font)} ${
-                      selectedTextId === text.id ? "outline outline-1 outline-[#6ab5ff]" : ""
-                    }`}
-                    style={{ left: text.x, top: text.y, color: text.color, fontSize: text.size / 4 }}
-                  >
-                    {text.text}
-                  </button>
-                ))}
-
-              {stickers
-                .slice()
-                .sort((a, b) => a.zIndex - b.zIndex)
-                .map((sticker) => {
-                  const selected = selectedStickerId === sticker.id;
+                .map((text) => {
+                  const isSelected = selectedTarget?.type === "text" && selectedTarget.id === text.id;
                   return (
                     <div
-                      key={sticker.id}
-                      onPointerDown={(event) => handleStickerPointerDown(event, sticker)}
-                      className={`absolute cursor-grab active:cursor-grabbing ${selected ? "outline outline-2 outline-[#6ab5ff]" : ""}`}
-                      style={{ left: sticker.x, top: sticker.y, width: sticker.width, height: sticker.height, zIndex: sticker.zIndex }}
+                      key={text.id}
+                      className={`absolute ${isSelected ? "outline outline-1 outline-[#6ab5ff]" : ""}`}
+                      style={{
+                        left: text.x,
+                        top: text.y,
+                        width: text.width,
+                        height: text.height,
+                        transform: `rotate(${text.rotation}deg) scale(${text.scale})`,
+                        transformOrigin: "center",
+                        zIndex: text.zIndex,
+                      }}
                     >
-                      <Image src={sticker.src} alt="sticker" fill sizes="150px" className="object-contain" unoptimized />
-                      {selected ? (
-                        <button
-                          type="button"
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setStickers((items) => items.filter((item) => item.id !== sticker.id));
-                            setSelectedStickerId(null);
-                          }}
-                          className="absolute -right-2 -top-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#6ab5ff] bg-white text-xs"
-                        >
-                          X
-                        </button>
+                      <button
+                        type="button"
+                        onPointerDown={(event) =>
+                          beginInteraction(event, { type: "text", id: text.id }, "move", text.x, text.y, text.width, text.height, text.scale, text.rotation)
+                        }
+                        onDoubleClick={() => handleEditText(text)}
+                        className={`h-full w-full cursor-grab whitespace-pre text-center leading-[0.9] active:cursor-grabbing ${getFontClass(text.font)}`}
+                        style={{ color: text.color, fontSize: text.fontSize / 4 }}
+                      >
+                        {text.text}
+                      </button>
+                      {isSelected ? (
+                        <>
+                          <button
+                            type="button"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setTexts((items) => items.filter((item) => item.id !== text.id));
+                              setSelectedTarget(null);
+                            }}
+                            className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(text.scale)}
+                          >
+                            <X size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(event) =>
+                              beginInteraction(
+                                event,
+                                { type: "text", id: text.id },
+                                "rotate",
+                                text.x,
+                                text.y,
+                                text.width,
+                                text.height,
+                                text.scale,
+                                text.rotation,
+                              )
+                            }
+                            className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(text.scale)}
+                          >
+                            <RotateCw size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(event) =>
+                              beginInteraction(
+                                event,
+                                { type: "text", id: text.id },
+                                "resize",
+                                text.x,
+                                text.y,
+                                text.width,
+                                text.height,
+                                text.scale,
+                                text.rotation,
+                              )
+                            }
+                            className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(text.scale)}
+                          >
+                            <Maximize2 size={12} />
+                          </button>
+                        </>
                       ) : null}
                     </div>
                   );
                 })}
 
-              <div className="absolute bottom-2 left-2 flex items-center gap-2 rounded-full bg-white px-2 py-1 text-[9px] font-semibold text-[#ff661e]">
-                <span>iCiY</span>
-                <span>Community Care Day</span>
-              </div>
+              {stickers
+                .slice()
+                .sort((a, b) => a.zIndex - b.zIndex)
+                .map((sticker) => {
+                  const isSelected = selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
+
+                  return (
+                    <div
+                      key={sticker.id}
+                      className={`absolute ${isSelected ? "outline outline-2 outline-[#6ab5ff]" : ""}`}
+                      style={{
+                        left: sticker.x,
+                        top: sticker.y,
+                        width: sticker.width,
+                        height: sticker.height,
+                        transform: `rotate(${sticker.rotation}deg) scale(${sticker.scale})`,
+                        transformOrigin: "center",
+                        zIndex: sticker.zIndex,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onPointerDown={(event) =>
+                          beginInteraction(
+                            event,
+                            { type: "sticker", id: sticker.id },
+                            "move",
+                            sticker.x,
+                            sticker.y,
+                            sticker.width,
+                            sticker.height,
+                            sticker.scale,
+                            sticker.rotation,
+                          )
+                        }
+                        className="relative h-full w-full cursor-grab active:cursor-grabbing"
+                      >
+                        <Image src={sticker.src} alt="sticker" fill sizes="150px" className="object-contain" unoptimized />
+                      </button>
+
+                      {isSelected ? (
+                        <>
+                          <button
+                            type="button"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setStickers((items) => items.filter((item) => item.id !== sticker.id));
+                              setSelectedTarget(null);
+                            }}
+                            className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(sticker.scale)}
+                          >
+                            <X size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(event) =>
+                              beginInteraction(
+                                event,
+                                { type: "sticker", id: sticker.id },
+                                "rotate",
+                                sticker.x,
+                                sticker.y,
+                                sticker.width,
+                                sticker.height,
+                                sticker.scale,
+                                sticker.rotation,
+                              )
+                            }
+                            className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(sticker.scale)}
+                          >
+                            <RotateCw size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(event) =>
+                              beginInteraction(
+                                event,
+                                { type: "sticker", id: sticker.id },
+                                "resize",
+                                sticker.x,
+                                sticker.y,
+                                sticker.width,
+                                sticker.height,
+                                sticker.scale,
+                                sticker.rotation,
+                              )
+                            }
+                            className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(sticker.scale)}
+                          >
+                            <Maximize2 size={12} />
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  );
+                })}
+
             </div>
           </div>
 
@@ -456,17 +858,17 @@ export default function Home() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`h-full flex-1 rounded-[10px] text-[31px] font-bold leading-none ${
+                className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[20px] font-bold leading-none ${
                   activeTab === tab.key ? "bg-[#ffe27d]" : "bg-white"
                 }`}
               >
-                <span className="relative top-[2px] text-[0.5em]">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>
 
           <div className="mt-6 h-[416px] overflow-y-auto pr-1">
-            <div className={`grid gap-4 ${activeTab === "persons" ? "grid-cols-3" : "grid-cols-3"}`}>
+            <div className="grid grid-cols-3 gap-4">
               {paletteItems.map((item) => {
                 if (item.frame) {
                   return (
@@ -489,7 +891,10 @@ export default function Home() {
                     type="button"
                     draggable
                     onDragStart={(event) => {
-                      event.dataTransfer.setData("application/card-sticker", JSON.stringify(item));
+                      event.dataTransfer.setData(
+                        "application/card-sticker",
+                        JSON.stringify({ src: item.src, width: item.width, height: item.height }),
+                      );
                     }}
                     className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[96px]"}`}
                   >
@@ -501,6 +906,42 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      {textModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            <p className="text-[18px] font-semibold text-[#1c1815]">Enter your thank you message:</p>
+            <textarea
+              value={textModalValue}
+              onChange={(event) => setTextModalValue(event.target.value)}
+              rows={4}
+              autoFocus
+              className="mt-3 w-full resize-none rounded-xl border border-[#dbdbdb] px-3 py-2 text-[15px] outline-none focus:border-[#ff661e]"
+              placeholder="Type your message"
+            />
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setTextModalOpen(false);
+                  setTextModalValue("");
+                  setEditingTextId(null);
+                }}
+                className="rounded-xl bg-[#f1f1f1] px-4 py-2 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleTextModalSubmit}
+                className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white"
+              >
+                Add Text
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
