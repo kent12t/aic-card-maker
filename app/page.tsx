@@ -1,7 +1,7 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { Maximize2, Pencil, RotateCw, Type, Upload, X } from "lucide-react";
+import { ChevronDown, Maximize2, Pencil, RotateCw, Type, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -235,9 +235,13 @@ export default function Home() {
   const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [textModalOpen, setTextModalOpen] = useState(false);
   const [textModalValue, setTextModalValue] = useState("");
+  const [textModalFont, setTextModalFont] = useState<FontKey>("open");
+  const [textModalColor, setTextModalColor] = useState("#6b3b9c");
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [counter, setCounter] = useState(1);
+  const [cardScale, setCardScale] = useState(1);
 
+  const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardCaptureRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -262,13 +266,29 @@ export default function Home() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!cardViewportRef.current) return;
+
+    const element = cardViewportRef.current;
+    const observer = new ResizeObserver(() => {
+      const bounds = element.getBoundingClientRect();
+      const ratio = bounds.width / BOARD_SIZE;
+      setCardScale(clamp(ratio, 0.66, 1));
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     function handlePointerMove(event: globalThis.PointerEvent) {
       const interaction = interactionRef.current;
       if (!interaction || !cardRef.current) return;
 
       const boardRect = cardRef.current.getBoundingClientRect();
-      const pointerX = event.clientX - boardRect.left;
-      const pointerY = event.clientY - boardRect.top;
+      const scaleX = BOARD_SIZE / Math.max(1, boardRect.width);
+      const scaleY = BOARD_SIZE / Math.max(1, boardRect.height);
+      const pointerX = (event.clientX - boardRect.left) * scaleX;
+      const pointerY = (event.clientY - boardRect.top) * scaleY;
 
       if (!interaction.target) return;
       const { target } = interaction;
@@ -377,8 +397,10 @@ export default function Home() {
     event.stopPropagation();
 
     const boardRect = cardRef.current?.getBoundingClientRect();
-    const pointerX = event.clientX - (boardRect?.left ?? 0);
-    const pointerY = event.clientY - (boardRect?.top ?? 0);
+    const scaleX = BOARD_SIZE / Math.max(1, boardRect?.width ?? BOARD_SIZE);
+    const scaleY = BOARD_SIZE / Math.max(1, boardRect?.height ?? BOARD_SIZE);
+    const pointerX = (event.clientX - (boardRect?.left ?? 0)) * scaleX;
+    const pointerY = (event.clientY - (boardRect?.top ?? 0)) * scaleY;
     const centerX = x + (width * scale) / 2;
     const centerY = y + (height * scale) / 2;
     const pointerAngle = Math.atan2(pointerY - centerY, pointerX - centerX);
@@ -437,7 +459,9 @@ export default function Home() {
 
     const payload = JSON.parse(raw) as DragPayload;
     const rect = cardRef.current.getBoundingClientRect();
-    addSticker(payload, event.clientX - rect.left, event.clientY - rect.top);
+    const scaleX = BOARD_SIZE / Math.max(1, rect.width);
+    const scaleY = BOARD_SIZE / Math.max(1, rect.height);
+    addSticker(payload, (event.clientX - rect.left) * scaleX, (event.clientY - rect.top) * scaleY);
   }
 
   function updateSelectedText(partial: Partial<TextItem>) {
@@ -448,12 +472,16 @@ export default function Home() {
   function handleAddText() {
     setEditingTextId(null);
     setTextModalValue("");
+    setTextModalFont("open");
+    setTextModalColor("#6b3b9c");
     setTextModalOpen(true);
   }
 
   function handleEditText(target: TextItem) {
     setEditingTextId(target.id);
     setTextModalValue(target.text);
+    setTextModalFont(target.font);
+    setTextModalColor(target.color);
     setTextModalOpen(true);
   }
 
@@ -479,8 +507,8 @@ export default function Home() {
           text: normalized,
           x: centered.x,
           y: centered.y,
-          color: "#6b3b9c",
-          font: "open",
+          color: textModalColor,
+          font: textModalFont,
           fontSize,
           width: box.width,
           height: box.height,
@@ -501,6 +529,8 @@ export default function Home() {
           return {
             ...item,
             text: normalized,
+            color: textModalColor,
+            font: textModalFont,
             width: box.width,
             height: box.height,
             scale: nextScale,
@@ -574,9 +604,23 @@ export default function Home() {
   }
 
   return (
-    <main className="px-4 py-8 md:px-8">
-      <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-6 lg:flex-row lg:items-start">
-        <section className="w-full rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:h-[528px] lg:w-[480px]">
+    <main className="px-4 py-4 lg:px-8 lg:py-8">
+      <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <section className="lg:hidden">
+          <div className="space-y-2">
+            <h1 className="font-open-sans text-[22px] font-bold leading-none text-[#ff661e]">Customise Your C.A.R.E. Card</h1>
+            <p className="text-[12px] font-semibold leading-[1.28] text-black">
+              Create a message of thanks with the text editor below and decorate your card with the stickers provided. You may also choose to
+              upload your own picture.
+            </p>
+            <p className="text-[12px] font-semibold leading-[1.28] text-black">
+              Once you&apos;re done, click submit and watch your card become a part of a beautiful photo mosaic celebrating Community Care
+              Professionals on Community Care Day.
+            </p>
+          </div>
+        </section>
+
+        <section className="hidden w-full rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:block lg:h-[528px] lg:w-[480px]">
           <div className="space-y-2">
             <h1 className="font-open-sans text-[26px] font-bold leading-none text-[#ff661e]">Customise Your C.A.R.E. Card</h1>
             <p className="text-[14px] font-semibold leading-[1.3] text-black">
@@ -663,12 +707,25 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="flex w-full flex-col items-center gap-6 lg:w-[443px]">
+        <section className="flex w-full flex-col items-center gap-4 lg:w-[443px] lg:gap-6">
           <div
-            ref={cardCaptureRef}
-            className="relative h-[443px] w-[443px] overflow-hidden rounded-md shadow-[-5.3px_6.2px_4.5px_rgba(0,0,0,0.22)]"
-            style={{ backgroundImage: `url(${selectedFrame})`, backgroundSize: "cover", backgroundPosition: "center" }}
+            ref={cardViewportRef}
+            className="sticky top-2 z-20 w-full max-w-[443px] bg-white lg:static lg:w-[443px]"
+            style={{ height: BOARD_SIZE * cardScale }}
           >
+            <div
+              style={{
+                width: BOARD_SIZE,
+                height: BOARD_SIZE,
+                transform: `scale(${cardScale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <div
+                ref={cardCaptureRef}
+                className="relative h-[443px] w-[443px] overflow-hidden rounded-md shadow-[-5.3px_6.2px_4.5px_rgba(0,0,0,0.22)]"
+                style={{ backgroundImage: `url(${selectedFrame})`, backgroundSize: "cover", backgroundPosition: "center" }}
+              >
             <div
               ref={cardRef}
               onDragOver={(event) => event.preventDefault()}
@@ -886,10 +943,12 @@ export default function Home() {
                 <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
               </div>
 
+              </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex w-full justify-between gap-6">
+          <div className="hidden w-full justify-between gap-6 lg:flex">
             <button
               type="button"
               onClick={handleRestart}
@@ -912,59 +971,183 @@ export default function Home() {
               <span className="relative -top-1 text-[0.54em]">Save</span>
             </button>
           </div>
+
         </section>
 
-        <section className="h-[528px] w-full rounded-2xl border border-[#e9e9e9] bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:w-[480px]">
-          <div className="flex h-[40px] gap-2">
-            {TAB_LABELS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[15px] leading-none ${
-                  activeTab === tab.key ? "bg-[#ffe27d]" : "bg-white"
-                }`}
+        <section className="w-full lg:h-[528px] lg:w-[480px] lg:rounded-2xl lg:border lg:border-[#e9e9e9] lg:bg-white lg:p-4 lg:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
+          <div className="space-y-2 lg:hidden">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(event) => setActiveTab(event.target.value as TabKey)}
+                className="h-[36px] w-full appearance-none rounded-[59px] bg-[#f1f1f1] px-4 text-center text-[12px] font-semibold"
               >
-                <span className={activeTab === tab.key ? "font-bold" : "font-semibold"}>{tab.label}</span>
+                {TAB_LABELS.map((tab) => (
+                  <option key={tab.key} value={tab.key}>
+                    {tab.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" size={20} />
+            </div>
+
+            <div className="rounded-[10px] border border-[#f1f1f1] pb-2">
+              <div className="h-[224px] overflow-x-auto overflow-y-hidden px-1 py-1">
+                {activeTab === "frames" ? (
+                  <div className="flex h-full w-max items-center gap-4 pr-2">
+                    {paletteItems.map((item) => (
+                      <button
+                        key={item.src}
+                        type="button"
+                        onClick={() => setSelectedFrame(item.src)}
+                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
+                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
+                        }`}
+                      >
+                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid h-full w-max grid-flow-col grid-rows-2 gap-x-4 gap-y-1 pr-2">
+                    {paletteItems.map((item) => (
+                      <button
+                        key={item.src}
+                        type="button"
+                        draggable
+                        onClick={() => addSticker({ src: item.src, width: item.width, height: item.height }, BOARD_SIZE / 2, BOARD_SIZE / 2)}
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData(
+                            "application/card-sticker",
+                            JSON.stringify({ src: item.src, width: item.width, height: item.height }),
+                          );
+                        }}
+                        className={`relative rounded-md ${activeTab === "persons" ? "h-[130px] w-[90px]" : "h-[96px] w-[112px]"}`}
+                      >
+                        <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="px-2">
+                <div className="h-[3px] w-[180px] rounded-[46px] bg-[#d9d9d9]" />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddText}
+              className="mt-4 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
+            >
+              <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
+                <Type size={17} strokeWidth={2.25} />
+              </span>
+              Add Text
+            </button>
+
+            <div className="pt-1">
+              <p className="text-[15px] font-semibold">Upload a Picture</p>
+              <label
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={onDropUpload}
+                className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
+                  <Upload size={34} strokeWidth={2.2} />
+                </span>
+                <span className="block text-[15px] font-semibold">
+                  <span className="underline">Choose a file</span> or drag and drop it here
+                  <br />
+                  <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="flex w-full items-start gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Save
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+              >
+                Restart
+              </button>
+            </div>
           </div>
 
-          <div className="mt-6 h-[416px] overflow-y-auto pr-1">
-            <div className="grid grid-cols-3 gap-4">
-              {paletteItems.map((item) => {
-                if (item.frame) {
+          <div className="hidden lg:block">
+            <div className="flex h-[40px] gap-2">
+              {TAB_LABELS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[15px] leading-none ${
+                    activeTab === tab.key ? "bg-[#ffe27d]" : "bg-white"
+                  }`}
+                >
+                  <span className={activeTab === tab.key ? "font-bold" : "font-semibold"}>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 h-[416px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-3 gap-4">
+                {paletteItems.map((item) => {
+                  if (item.frame) {
+                    return (
+                      <button
+                        key={item.src}
+                        type="button"
+                        onClick={() => setSelectedFrame(item.src)}
+                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
+                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
+                        }`}
+                      >
+                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                      </button>
+                    );
+                  }
+
                   return (
                     <button
                       key={item.src}
                       type="button"
-                      onClick={() => setSelectedFrame(item.src)}
-                      className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
-                        selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
-                      }`}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData(
+                          "application/card-sticker",
+                          JSON.stringify({ src: item.src, width: item.width, height: item.height }),
+                        );
+                      }}
+                      className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[96px]"}`}
                     >
-                      <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                      <Image src={item.src} alt="palette sticker" fill sizes="120px" className="object-contain" unoptimized />
                     </button>
                   );
-                }
-
-                return (
-                  <button
-                    key={item.src}
-                    type="button"
-                    draggable
-                    onDragStart={(event) => {
-                      event.dataTransfer.setData(
-                        "application/card-sticker",
-                        JSON.stringify({ src: item.src, width: item.width, height: item.height }),
-                      );
-                    }}
-                    className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[96px]"}`}
-                  >
-                    <Image src={item.src} alt="palette sticker" fill sizes="120px" className="object-contain" unoptimized />
-                  </button>
-                );
-              })}
+                })}
+              </div>
             </div>
           </div>
         </section>
@@ -984,12 +1167,47 @@ export default function Home() {
               placeholder="Type your message"
             />
             <p className="mt-1 text-right text-xs text-[#8c8c8c]">{textModalValue.length}/500</p>
+            <div className="mt-3 flex flex-wrap gap-[5px] lg:hidden">
+              {FONT_BUTTONS.map((font) => {
+                const selected = textModalFont === font.key;
+                return (
+                  <button
+                    type="button"
+                    key={font.key}
+                    onClick={() => setTextModalFont(font.key)}
+                    className={`flex h-[26px] w-[62px] items-center justify-center rounded-[10px] ${selected ? "bg-[#ffdd7e]" : "bg-white"}`}
+                  >
+                    <span className={`${font.className} ${font.baselineClass} text-[18px] leading-none`}>{font.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-[5px] lg:hidden">
+              {COLORS.map((color) => {
+                const selected = textModalColor === color;
+                return (
+                  <button
+                    type="button"
+                    key={color}
+                    onClick={() => setTextModalColor(color)}
+                    className="h-[37px] w-[37px] rounded-[9px] border"
+                    style={{
+                      background: color,
+                      borderColor: selected ? "#000" : "#dbdbdb",
+                      borderWidth: selected ? 2 : 1,
+                    }}
+                  />
+                );
+              })}
+            </div>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setTextModalOpen(false);
                   setTextModalValue("");
+                  setTextModalFont("open");
+                  setTextModalColor("#6b3b9c");
                   setEditingTextId(null);
                 }}
                 className="rounded-xl bg-[#f1f1f1] px-4 py-2 text-sm font-semibold"
