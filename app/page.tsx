@@ -1,7 +1,7 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { Maximize2, RotateCw, X } from "lucide-react";
+import { Maximize2, RotateCw, Type, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -72,11 +72,11 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "persons", label: "CCP Stickers" },
 ];
 
-const FONT_BUTTONS: { key: FontKey; label: string; className: string }[] = [
-  { key: "open", label: "Font 1", className: "font-open-sans font-bold" },
-  { key: "circular", label: "Font 2", className: "font-circular" },
-  { key: "caveat", label: "Font 3", className: "font-caveat text-[40px]" },
-  { key: "kalam", label: "Font 4", className: "font-kalam italic text-[31px]" },
+const FONT_BUTTONS: { key: FontKey; label: string; className: string; baselineClass: string }[] = [
+  { key: "open", label: "Font 1", className: "font-open-sans font-medium text-[13pt]", baselineClass: "translate-y-[0px]" },
+  { key: "circular", label: "Font 2", className: "font-circular font-normal text-[14.5pt]", baselineClass: "translate-y-[0px]" },
+  { key: "caveat", label: "Font 3", className: "font-caveat font-normal text-[14pt]", baselineClass: "translate-y-[-1px]" },
+  { key: "kalam", label: "Font 4", className: "font-kalam font-bold text-[14.5pt]", baselineClass: "translate-y-[0px]" },
 ];
 
 const COLORS = [
@@ -156,31 +156,58 @@ function getFontClass(font: FontKey) {
 }
 
 function normalizeTextInput(input: string) {
-  const source = input.trim().replace(/\r\n/g, "\n");
+  const source = input.replace(/\r\n/g, "\n").slice(0, 300);
   if (!source) return "";
 
-  const words = source.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-  const maxChars = 28;
+  const maxCharsPerLine = 28;
 
-  for (const word of words) {
-    if (!current.length) {
-      current = word;
-      continue;
+  function wrapLine(line: string) {
+    const compact = line.replace(/\s+/g, " ").trim();
+    if (!compact) return [""];
+
+    const words = compact.split(" ");
+    const wrapped: string[] = [];
+    let current = "";
+
+    for (const word of words) {
+      if (!current.length) {
+        if (word.length <= maxCharsPerLine) {
+          current = word;
+        } else {
+          for (let i = 0; i < word.length; i += maxCharsPerLine) {
+            wrapped.push(word.slice(i, i + maxCharsPerLine));
+          }
+        }
+        continue;
+      }
+
+      const candidate = `${current} ${word}`;
+      if (candidate.length <= maxCharsPerLine) {
+        current = candidate;
+        continue;
+      }
+
+      wrapped.push(current);
+      if (word.length <= maxCharsPerLine) {
+        current = word;
+      } else {
+        for (let i = 0; i < word.length; i += maxCharsPerLine) {
+          wrapped.push(word.slice(i, i + maxCharsPerLine));
+        }
+        current = "";
+      }
     }
 
-    const candidate = `${current} ${word}`;
-    if (candidate.length <= maxChars) {
-      current = candidate;
-      continue;
-    }
-
-    lines.push(current);
-    current = word;
+    if (current.length) wrapped.push(current);
+    return wrapped;
   }
 
-  if (current.length) lines.push(current);
+  const lines = source
+    .split("\n")
+    .flatMap((line) => wrapLine(line))
+    .map((line) => line.trimEnd());
+  while (lines.length && !lines[0].trim()) lines.shift();
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
   return lines.join("\n");
 }
 
@@ -303,7 +330,7 @@ export default function Home() {
 
           const distance = Math.hypot(pointerX - interaction.centerX, pointerY - interaction.centerY);
           const scaleRatio = distance / Math.max(1, interaction.startPointerDistance);
-          const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, 3);
+          const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, 1.5);
           const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale);
           return {
             ...item,
@@ -419,7 +446,7 @@ export default function Home() {
 
   function handleEditText(target: TextItem) {
     setEditingTextId(target.id);
-    setTextModalValue(target.text.replace(/\n/g, " "));
+    setTextModalValue(target.text);
     setTextModalOpen(true);
   }
 
@@ -551,7 +578,9 @@ export default function Home() {
             onClick={handleAddText}
             className="mt-6 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
           >
-            <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">T</span>
+            <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
+              <Type size={17} strokeWidth={2.25} />
+            </span>
             Add Text
           </button>
 
@@ -563,11 +592,11 @@ export default function Home() {
                   type="button"
                   key={font.key}
                   onClick={() => updateSelectedText({ font: font.key })}
-                  className={`h-[42px] w-[100px] rounded-[10px] text-[33px] leading-none ${font.className} ${
+                  className={`flex h-[42px] w-[100px] items-center justify-center overflow-hidden rounded-[10px] leading-none ${
                     selected ? "bg-[#ffe27d]" : "bg-white"
                   }`}
                 >
-                  <span className="relative -top-1 text-[0.55em]">{font.label}</span>
+                  <span className={`${font.className} ${font.baselineClass}`}>{font.label}</span>
                 </button>
               );
             })}
@@ -599,7 +628,9 @@ export default function Home() {
               onDrop={onDropUpload}
               className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
             >
-              <span className="text-4xl text-[#8c8c8c]">&#8679;</span>
+              <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
+                <Upload size={34} strokeWidth={2.2} />
+              </span>
               <span className="block text-[15px] font-semibold">
                 <span className="underline">Choose a file</span> or drag and drop it here
                 <br />
@@ -823,6 +854,10 @@ export default function Home() {
                   );
                 })}
 
+              <div className="pointer-events-none absolute bottom-2 -left-1 h-[50px] w-[194px]">
+                <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
+              </div>
+
             </div>
           </div>
 
@@ -858,11 +893,11 @@ export default function Home() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[20px] font-bold leading-none ${
+                className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[15px] leading-none ${
                   activeTab === tab.key ? "bg-[#ffe27d]" : "bg-white"
                 }`}
               >
-                <span>{tab.label}</span>
+                <span className={activeTab === tab.key ? "font-bold" : "font-semibold"}>{tab.label}</span>
               </button>
             ))}
           </div>
@@ -915,10 +950,12 @@ export default function Home() {
               value={textModalValue}
               onChange={(event) => setTextModalValue(event.target.value)}
               rows={4}
+              maxLength={300}
               autoFocus
               className="mt-3 w-full resize-none rounded-xl border border-[#dbdbdb] px-3 py-2 text-[15px] outline-none focus:border-[#ff661e]"
               placeholder="Type your message"
             />
+            <p className="mt-1 text-right text-xs text-[#8c8c8c]">{textModalValue.length}/300</p>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 type="button"
