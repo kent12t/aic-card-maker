@@ -1,7 +1,7 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { Maximize2, RotateCw, Type, Upload, X } from "lucide-react";
+import { Maximize2, Pencil, RotateCw, Type, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -703,7 +703,7 @@ export default function Home() {
                           beginInteraction(event, { type: "text", id: text.id }, "move", text.x, text.y, text.width, text.height, text.scale, text.rotation)
                         }
                         onDoubleClick={() => handleEditText(text)}
-                        className={`h-full w-full cursor-grab whitespace-pre text-center leading-[0.9] active:cursor-grabbing ${getFontClass(text.font)}`}
+                        className={`flex h-full w-full cursor-grab items-center justify-center whitespace-pre text-center leading-[0.9] active:cursor-grabbing ${getFontClass(text.font)}`}
                         style={{ color: text.color, fontSize: text.fontSize / 4 }}
                       >
                         {text.text}
@@ -742,6 +742,18 @@ export default function Home() {
                             style={getHandleStyle(text.scale)}
                           >
                             <RotateCw size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleEditText(text);
+                            }}
+                            className="absolute -bottom-3 -left-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                            style={getHandleStyle(text.scale)}
+                          >
+                            <Pencil size={12} />
                           </button>
                           <button
                             type="button"
