@@ -156,7 +156,7 @@ function getFontClass(font: FontKey) {
 }
 
 function normalizeTextInput(input: string) {
-  const source = input.replace(/\r\n/g, "\n").slice(0, 300);
+  const source = input.replace(/\r\n/g, "\n").slice(0, 500);
   if (!source) return "";
 
   const maxCharsPerLine = 28;
@@ -854,7 +854,7 @@ export default function Home() {
                   );
                 })}
 
-              <div className="pointer-events-none absolute bottom-2 -left-1 h-[50px] w-[194px]">
+              <div className="pointer-events-none absolute z-[99] bottom-2 -left-1 h-[50px] w-[194px]">
                 <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
               </div>
 
@@ -950,12 +950,12 @@ export default function Home() {
               value={textModalValue}
               onChange={(event) => setTextModalValue(event.target.value)}
               rows={4}
-              maxLength={300}
+              maxLength={500}
               autoFocus
               className="mt-3 w-full resize-none rounded-xl border border-[#dbdbdb] px-3 py-2 text-[15px] outline-none focus:border-[#ff661e]"
               placeholder="Type your message"
             />
-            <p className="mt-1 text-right text-xs text-[#8c8c8c]">{textModalValue.length}/300</p>
+            <p className="mt-1 text-right text-xs text-[#8c8c8c]">{textModalValue.length}/500</p>
             <div className="mt-4 flex justify-end gap-3">
               <button
                 type="button"
