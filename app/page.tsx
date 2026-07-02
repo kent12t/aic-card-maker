@@ -950,7 +950,7 @@ export default function Home() {
       </div>
 
       {textModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+        <div className="fixed inset-0 z-998 flex items-center justify-center bg-black/35 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
             <p className="text-[18px] font-semibold text-[#1c1815]">Enter your thank you message:</p>
             <textarea
