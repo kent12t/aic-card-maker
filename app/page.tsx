@@ -226,6 +226,7 @@ export default function Home() {
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [texts, setTexts] = useState<TextItem[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
+  const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [textModalOpen, setTextModalOpen] = useState(false);
   const [textModalValue, setTextModalValue] = useState("");
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
@@ -523,11 +524,17 @@ export default function Home() {
 
   async function handleSave() {
     if (!cardCaptureRef.current) return;
-    const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
-    const anchor = document.createElement("a");
-    anchor.download = "community-care-card.png";
-    anchor.href = dataUrl;
-    anchor.click();
+    setIsCaptureMode(true);
+    try {
+      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
+      const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
+      const anchor = document.createElement("a");
+      anchor.download = "community-care-card.png";
+      anchor.href = dataUrl;
+      anchor.click();
+    } finally {
+      setIsCaptureMode(false);
+    }
   }
 
   function handleRestart() {
@@ -666,7 +673,7 @@ export default function Home() {
                 .slice()
                 .sort((a, b) => a.zIndex - b.zIndex)
                 .map((text) => {
-                  const isSelected = selectedTarget?.type === "text" && selectedTarget.id === text.id;
+                  const isSelected = !isCaptureMode && selectedTarget?.type === "text" && selectedTarget.id === text.id;
                   return (
                     <div
                       key={text.id}
@@ -757,7 +764,7 @@ export default function Home() {
                 .slice()
                 .sort((a, b) => a.zIndex - b.zIndex)
                 .map((sticker) => {
-                  const isSelected = selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
+                  const isSelected = !isCaptureMode && selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
 
                   return (
                     <div
