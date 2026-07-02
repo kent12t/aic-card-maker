@@ -1050,7 +1050,11 @@ export default function Home() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid h-full w-max grid-flow-col grid-rows-2 gap-x-4 gap-y-1 pr-2">
+                  <div
+                    className={`grid h-full w-max grid-flow-col gap-x-4 gap-y-1 pr-2 ${
+                      activeTab === "persons" ? "grid-rows-1 items-center" : "grid-rows-2"
+                    }`}
+                  >
                     {paletteItems.map((item) => (
                       <button
                         key={item.src}
@@ -1112,10 +1116,10 @@ export default function Home() {
             <div className="flex w-full items-start gap-4 pt-2">
               <button
                 type="button"
-                onClick={() => void handleSave()}
+                onClick={handleRestart}
                 className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
               >
-                Save
+                Restart
               </button>
               <button
                 type="button"
@@ -1126,10 +1130,10 @@ export default function Home() {
               </button>
               <button
                 type="button"
-                onClick={handleRestart}
+                onClick={() => void handleSave()}
                 className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
               >
-                Restart
+                Save
               </button>
             </div>
           </div>
@@ -1137,128 +1141,7 @@ export default function Home() {
         </section>
 
         <section className="hidden w-full lg:block lg:h-[528px] lg:w-[480px] lg:rounded-2xl lg:border lg:border-[#e9e9e9] lg:bg-white lg:p-4 lg:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-          <div className="space-y-2 lg:hidden">
-            <div className="relative">
-              <select
-                value={activeTab}
-                onChange={(event) => setActiveTab(event.target.value as TabKey)}
-                className="h-[36px] w-full appearance-none rounded-[59px] bg-[#f1f1f1] px-4 text-center text-[12px] font-semibold"
-              >
-                {TAB_LABELS.map((tab) => (
-                  <option key={tab.key} value={tab.key}>
-                    {tab.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" size={20} />
-            </div>
-
-            <div className="rounded-[10px] border border-[#f1f1f1] pb-2">
-              <div className="h-[224px] overflow-x-auto overflow-y-hidden px-1 py-1">
-                {activeTab === "frames" ? (
-                  <div className="flex h-full w-max items-center gap-4 pr-2">
-                    {paletteItems.map((item) => (
-                      <button
-                        key={item.src}
-                        type="button"
-                        onClick={() => setSelectedFrame(item.src)}
-                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
-                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
-                        }`}
-                      >
-                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid h-full w-max grid-flow-col grid-rows-2 gap-x-4 gap-y-1 pr-2">
-                    {paletteItems.map((item) => (
-                      <button
-                        key={item.src}
-                        type="button"
-                        draggable
-                        onClick={() => addSticker({ src: item.src, width: item.width, height: item.height }, BOARD_SIZE / 2, BOARD_SIZE / 2)}
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData(
-                            "application/card-sticker",
-                            JSON.stringify({ src: item.src, width: item.width, height: item.height }),
-                          );
-                        }}
-                        className={`relative rounded-md ${activeTab === "persons" ? "h-[130px] w-[90px]" : "h-[96px] w-[112px]"}`}
-                      >
-                        <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="px-2">
-                <div className="h-[3px] w-[180px] rounded-[46px] bg-[#d9d9d9]" />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAddText}
-              className="mt-4 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
-            >
-              <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
-                <Type size={17} strokeWidth={2.25} />
-              </span>
-              Add Text
-            </button>
-
-            <div className="pt-1">
-              <p className="text-[15px] font-semibold">Upload a Picture</p>
-              <label
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={onDropUpload}
-                className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
-              >
-                <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
-                  <Upload size={34} strokeWidth={2.2} />
-                </span>
-                <span className="block text-[15px] font-semibold">
-                  <span className="underline">Choose a file</span> or drag and drop it here
-                  <br />
-                  <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  onChange={handleUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            <div className="flex w-full items-start gap-4 pt-2">
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Submit
-              </button>
-              <button
-                type="button"
-                onClick={handleRestart}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Restart
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden lg:block">
+          <div>
             <div className="flex h-[40px] gap-2">
               {TAB_LABELS.map((tab) => (
                 <button
