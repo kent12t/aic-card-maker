@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #ffffff;
+  --ink: #111111;
+  --care-orange: #ff661e;
+  --tab-active: #ffe27d;
+  --panel-gray: #f1f1f1;
+  --border-gray: #dbdbdb;
+  --brand-purple: #6b3b9c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  padding: 0;
+}
+
+body {
+  background: radial-gradient(circle at top right, #fff6ec 0, #ffffff 45%, #f8fbff 100%);
+  color: var(--ink);
+  font-family: var(--font-open-sans), sans-serif;
+}
+
+.font-open-sans {
+  font-family: var(--font-open-sans), sans-serif;
+}
+
+.font-circular {
+  font-family: var(--font-circular), sans-serif;
+}
+
+.font-caveat {
+  font-family: var(--font-caveat), cursive;
+}
+
+.font-kalam {
+  font-family: var(--font-kalam), cursive;
+}
+
+.font-glass {
+  font-family: var(--font-glass-antiqua), serif;
+}
