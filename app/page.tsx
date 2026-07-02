@@ -64,6 +64,8 @@ type InteractionState = {
 };
 
 const BOARD_SIZE = 443;
+const TEXT_MAX_RENDER_WIDTH = 390;
+const TEXT_MAX_RENDER_HEIGHT = 320;
 
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "frames", label: "Frames" },
@@ -73,10 +75,10 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
 ];
 
 const FONT_BUTTONS: { key: FontKey; label: string; className: string; baselineClass: string }[] = [
-  { key: "open", label: "Font 1", className: "font-open-sans font-medium text-[13pt]", baselineClass: "translate-y-[0px]" },
-  { key: "circular", label: "Font 2", className: "font-circular font-normal text-[14.5pt]", baselineClass: "translate-y-[0px]" },
-  { key: "caveat", label: "Font 3", className: "font-caveat font-normal text-[14pt]", baselineClass: "translate-y-[-1px]" },
-  { key: "kalam", label: "Font 4", className: "font-kalam font-bold text-[14.5pt]", baselineClass: "translate-y-[0px]" },
+  { key: "open", label: "Font 1", className: "font-circular font-medium text-[13pt]", baselineClass: "translate-y-[0px]" },
+  { key: "circular", label: "Font 2", className: "font-glass font-normal text-[14.5pt]", baselineClass: "translate-y-[0px]" },
+  { key: "caveat", label: "Font 3", className: "font-shadows font-normal text-[14pt]", baselineClass: "translate-y-[-1px]" },
+  { key: "kalam", label: "Font 4", className: "font-caveat font-bold text-[14.5pt]", baselineClass: "translate-y-[0px]" },
 ];
 
 const COLORS = [
@@ -149,10 +151,10 @@ function getHandleStyle(scale: number) {
 }
 
 function getFontClass(font: FontKey) {
-  if (font === "circular") return "font-circular";
-  if (font === "caveat") return "font-caveat";
-  if (font === "kalam") return "font-kalam";
-  return "font-glass";
+  if (font === "open") return "font-circular";
+  if (font === "circular") return "font-glass";
+  if (font === "caveat") return "font-shadows";
+  return "font-caveat";
 }
 
 function normalizeTextInput(input: string) {
@@ -218,6 +220,12 @@ function measureTextBox(text: string, fontSize: number) {
     width: Math.max(100, Math.round(longest * fontSize * 0.56 + 16)),
     height: Math.max(48, Math.round(lines.length * fontSize * 1.05 + 10)),
   };
+}
+
+function getTextMaxScale(width: number, height: number) {
+  const maxByWidth = TEXT_MAX_RENDER_WIDTH / Math.max(1, width);
+  const maxByHeight = TEXT_MAX_RENDER_HEIGHT / Math.max(1, height);
+  return Math.max(0.4, Math.min(maxByWidth, maxByHeight, 8));
 }
 
 export default function Home() {
@@ -331,7 +339,7 @@ export default function Home() {
 
           const distance = Math.hypot(pointerX - interaction.centerX, pointerY - interaction.centerY);
           const scaleRatio = distance / Math.max(1, interaction.startPointerDistance);
-          const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, 1.5);
+          const nextScale = clamp(interaction.startScale * scaleRatio, 0.4, getTextMaxScale(item.width, item.height));
           const position = clampPositionForScale(item.x, item.y, item.width, item.height, nextScale);
           return {
             ...item,
@@ -489,12 +497,15 @@ export default function Home() {
         items.map((item) => {
           if (item.id !== editingTextId) return item;
           const box = measureTextBox(normalized, item.fontSize / 4);
-          const position = clampPositionForScale(item.x, item.y, box.width, box.height, item.scale);
+          const maxScale = getTextMaxScale(box.width, box.height);
+          const nextScale = Math.min(item.scale, maxScale);
+          const position = clampPositionForScale(item.x, item.y, box.width, box.height, nextScale);
           return {
             ...item,
             text: normalized,
             width: box.width,
             height: box.height,
+            scale: nextScale,
             x: position.x,
             y: position.y,
           };
@@ -861,7 +872,7 @@ export default function Home() {
                   );
                 })}
 
-              <div className="pointer-events-none absolute z-[999] bottom-2 -left-1 h-[50px] w-[194px]">
+              <div className="pointer-events-none absolute z-[600] bottom-2 -left-1 h-[50px] w-[194px]">
                 <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
               </div>
 
@@ -950,7 +961,7 @@ export default function Home() {
       </div>
 
       {textModalOpen ? (
-        <div className="fixed inset-0 z-998 flex items-center justify-center bg-black/35 px-4">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/35 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
             <p className="text-[18px] font-semibold text-[#1c1815]">Enter your thank you message:</p>
             <textarea

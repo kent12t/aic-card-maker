@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Caveat, Glass_Antiqua, Kalam, Open_Sans } from "next/font/google";
+import { Caveat, Glass_Antiqua, Open_Sans, Shadows_Into_Light } from "next/font/google";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -19,10 +19,10 @@ const caveat = Caveat({
   variable: "--font-caveat",
 });
 
-const kalam = Kalam({
+const shadowsIntoLight = Shadows_Into_Light({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-kalam",
+  weight: "400",
+  variable: "--font-shadows",
 });
 
 const circular = localFont({
@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${openSans.variable} ${glassAntiqua.variable} ${caveat.variable} ${kalam.variable} ${circular.variable}`}
+        className={`${openSans.variable} ${glassAntiqua.variable} ${caveat.variable} ${shadowsIntoLight.variable} ${circular.variable}`}
       >
         {children}
       </body>
