@@ -1,230 +1,40 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { ChevronDown, Maximize2, Pencil, RotateCw, Type, Upload, X } from "lucide-react";
-import Image from "next/image";
 import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
-
-type TabKey = "frames" | "messages" | "stickers" | "persons";
-type FontKey = "open" | "circular" | "caveat" | "kalam";
-type TargetType = "sticker" | "text";
-type InteractionMode = "move" | "rotate" | "resize";
-
-type StickerItem = {
-  id: string;
-  src: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-  scale: number;
-  zIndex: number;
-};
-
-type TextItem = {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  color: string;
-  font: FontKey;
-  fontSize: number;
-  width: number;
-  height: number;
-  rotation: number;
-  scale: number;
-  zIndex: number;
-};
-
-type DragPayload = {
-  src: string;
-  width: number;
-  height: number;
-};
-
-type SelectedTarget = {
-  type: TargetType;
-  id: string;
-} | null;
-
-type InteractionState = {
-  mode: InteractionMode;
-  target: SelectedTarget;
-  startPointerX: number;
-  startPointerY: number;
-  startX: number;
-  startY: number;
-  startRotation: number;
-  startScale: number;
-  centerX: number;
-  centerY: number;
-  startPointerAngle: number;
-  startPointerDistance: number;
-};
-
-const BOARD_SIZE = 443;
-const TEXT_MAX_RENDER_WIDTH = 390;
-const TEXT_MAX_RENDER_HEIGHT = 320;
-
-const TAB_LABELS: { key: TabKey; label: string }[] = [
-  { key: "frames", label: "Frames" },
-  { key: "messages", label: "Messages" },
-  { key: "stickers", label: "Stickers" },
-  { key: "persons", label: "CCP Stickers" },
-];
-
-const FONT_BUTTONS: { key: FontKey; label: string; className: string; baselineClass: string }[] = [
-  { key: "open", label: "Font 1", className: "font-circular font-medium text-[13pt]", baselineClass: "translate-y-[0px]" },
-  { key: "circular", label: "Font 2", className: "font-glass font-normal text-[14.5pt]", baselineClass: "translate-y-[0px]" },
-  { key: "caveat", label: "Font 3", className: "font-shadows font-normal text-[14pt]", baselineClass: "translate-y-[-1px]" },
-  { key: "kalam", label: "Font 4", className: "font-caveat font-bold text-[14.5pt]", baselineClass: "translate-y-[0px]" },
-];
-
-const COLORS = [
-  "#fd6280",
-  "#f16e58",
-  "#f7922d",
-  "#fbc52c",
-  "#6a9b31",
-  "#76bbb4",
-  "#1a8ca1",
-  "#6277b7",
-  "#b492c8",
-  "#6b3b9c",
-  "#1c1815",
-  "#fbf2e6",
-];
-
-const frameSources = Array.from({ length: 6 }, (_, i) => `/assets/frames/frame_${i + 1}.jpg`);
-const messageSources = Array.from({ length: 11 }, (_, i) => `/assets/messages/msg_${i + 1}.png`);
-const stickerSources = Array.from({ length: 16 }, (_, i) => `/assets/stickers/sticker_${i + 1}.png`);
-const personSources = Array.from({ length: 9 }, (_, i) => `/assets/persons/person_${i + 1}.png`);
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function getBoundsForScale(width: number, height: number, scale: number, overflowRatio = 0) {
-  const extraX = (width * scale - width) / 2;
-  const extraY = (height * scale - height) / 2;
-  const overflowX = BOARD_SIZE * overflowRatio;
-  const overflowY = BOARD_SIZE * overflowRatio;
-  const minX = extraX - overflowX;
-  const maxX = BOARD_SIZE - width - extraX + overflowX;
-  const minY = extraY - overflowY;
-  const maxY = BOARD_SIZE - height - extraY + overflowY;
-
-  return {
-    minX: minX <= maxX ? minX : (BOARD_SIZE - width) / 2,
-    maxX: minX <= maxX ? maxX : (BOARD_SIZE - width) / 2,
-    minY: minY <= maxY ? minY : (BOARD_SIZE - height) / 2,
-    maxY: minY <= maxY ? maxY : (BOARD_SIZE - height) / 2,
-  };
-}
-
-function clampPositionForScale(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  scale: number,
-  overflowRatio = 0,
-) {
-  const bounds = getBoundsForScale(width, height, scale, overflowRatio);
-  return {
-    x: clamp(x, bounds.minX, bounds.maxX),
-    y: clamp(y, bounds.minY, bounds.maxY),
-  };
-}
-
-function getHandleStyle(scale: number) {
-  const naturalSize = 24 * scale;
-  const clampedSize = clamp(naturalSize, 16, 30);
-  const ratio = clampedSize / Math.max(0.001, naturalSize);
-  return {
-    transform: `scale(${ratio})`,
-    transformOrigin: "center",
-  } as const;
-}
-
-function getFontClass(font: FontKey) {
-  if (font === "open") return "font-circular";
-  if (font === "circular") return "font-glass";
-  if (font === "caveat") return "font-shadows";
-  return "font-caveat";
-}
-
-function normalizeTextInput(input: string) {
-  const source = input.replace(/\r\n/g, "\n").slice(0, 500);
-  if (!source) return "";
-
-  const maxCharsPerLine = 28;
-
-  function wrapLine(line: string) {
-    const compact = line.replace(/\s+/g, " ").trim();
-    if (!compact) return [""];
-
-    const words = compact.split(" ");
-    const wrapped: string[] = [];
-    let current = "";
-
-    for (const word of words) {
-      if (!current.length) {
-        if (word.length <= maxCharsPerLine) {
-          current = word;
-        } else {
-          for (let i = 0; i < word.length; i += maxCharsPerLine) {
-            wrapped.push(word.slice(i, i + maxCharsPerLine));
-          }
-        }
-        continue;
-      }
-
-      const candidate = `${current} ${word}`;
-      if (candidate.length <= maxCharsPerLine) {
-        current = candidate;
-        continue;
-      }
-
-      wrapped.push(current);
-      if (word.length <= maxCharsPerLine) {
-        current = word;
-      } else {
-        for (let i = 0; i < word.length; i += maxCharsPerLine) {
-          wrapped.push(word.slice(i, i + maxCharsPerLine));
-        }
-        current = "";
-      }
-    }
-
-    if (current.length) wrapped.push(current);
-    return wrapped;
-  }
-
-  const lines = source
-    .split("\n")
-    .flatMap((line) => wrapLine(line))
-    .map((line) => line.trimEnd());
-  while (lines.length && !lines[0].trim()) lines.shift();
-  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
-  return lines.join("\n");
-}
-
-function measureTextBox(text: string, fontSize: number) {
-  const lines = text.split("\n");
-  const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
-  return {
-    width: Math.max(36, Math.round(longest * fontSize * 0.54 + 8)),
-    height: Math.max(24, Math.round(lines.length * fontSize * 1.02 + 6)),
-  };
-}
-
-function getTextMaxScale(width: number, height: number) {
-  const maxByWidth = TEXT_MAX_RENDER_WIDTH / Math.max(1, width);
-  const maxByHeight = TEXT_MAX_RENDER_HEIGHT / Math.max(1, height);
-  return Math.max(0.4, Math.min(maxByWidth, maxByHeight, 8));
-}
+import { ActionButtons } from "@/components/card-maker/ActionButtons";
+import { CardCanvas } from "@/components/card-maker/CardCanvas";
+import { DesktopEditorPanel } from "@/components/card-maker/DesktopEditorPanel";
+import { DesktopPalettePanel } from "@/components/card-maker/DesktopPalettePanel";
+import { IntroContent } from "@/components/card-maker/IntroContent";
+import { MobilePalettePanel } from "@/components/card-maker/MobilePalettePanel";
+import { TextModal } from "@/components/card-maker/TextModal";
+import {
+  BOARD_SIZE,
+  frameSources,
+  messageSources,
+  personSources,
+  stickerSources,
+  TAB_LABELS,
+} from "@/lib/card-maker/constants";
+import {
+  clamp,
+  clampPositionForScale,
+  getTextMaxScale,
+  measureTextBox,
+  normalizeTextInput,
+} from "@/lib/card-maker/utils";
+import type {
+  DragPayload,
+  FontKey,
+  InteractionMode,
+  InteractionState,
+  PaletteItem,
+  SelectedTarget,
+  StickerItem,
+  TabKey,
+  TextItem,
+} from "@/lib/card-maker/types";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("messages");
@@ -254,7 +64,7 @@ export default function Home() {
     return texts.find((item) => item.id === selectedTarget.id) ?? null;
   }, [texts, selectedTarget]);
 
-  const paletteItems = useMemo(() => {
+  const paletteItems = useMemo<PaletteItem[]>(() => {
     if (activeTab === "frames") {
       return frameSources.map((src) => ({ src, width: 126, height: 126, frame: true }));
     }
@@ -367,7 +177,7 @@ export default function Home() {
           if (interaction.mode === "move") {
             const nextX = interaction.startX + (pointerX - interaction.startPointerX);
             const nextY = interaction.startY + (pointerY - interaction.startPointerY);
-              const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale, 0.2);
+            const { x, y } = clampPositionForScale(nextX, nextY, item.width, item.height, item.scale, 0.2);
             return {
               ...item,
               x,
@@ -458,15 +268,15 @@ export default function Home() {
 
     const initialX = dropX - payload.width / 2;
     const initialY = dropY - payload.height / 2;
-    const clamped = clampPositionForScale(initialX, initialY, payload.width, payload.height, 1, 0.2);
+    const clampedPosition = clampPositionForScale(initialX, initialY, payload.width, payload.height, 1, 0.2);
 
     setStickers((items) => [
       ...items,
       {
         id,
         src: payload.src,
-        x: clamped.x,
-        y: clamped.y,
+        x: clampedPosition.x,
+        y: clampedPosition.y,
         width: payload.width,
         height: payload.height,
         rotation: 0,
@@ -476,6 +286,10 @@ export default function Home() {
     ]);
 
     setSelectedTarget({ type: "sticker", id });
+  }
+
+  function handlePaletteDragStart(event: DragEvent<HTMLButtonElement>, payload: DragPayload) {
+    event.dataTransfer.setData("application/card-sticker", JSON.stringify(payload));
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -511,6 +325,14 @@ export default function Home() {
     setTextModalFont(target.font);
     setTextModalColor(target.color);
     setTextModalOpen(true);
+  }
+
+  function closeTextModal() {
+    setTextModalOpen(false);
+    setTextModalValue("");
+    setTextModalFont("open");
+    setTextModalColor("#6b3b9c");
+    setEditingTextId(null);
   }
 
   function handleTextModalSubmit() {
@@ -631,645 +453,101 @@ export default function Home() {
     alert("Card submitted. Hook this payload to your form endpoint.");
   }
 
+  function handleDeleteText(id: string) {
+    setTexts((items) => items.filter((item) => item.id !== id));
+    setSelectedTarget(null);
+  }
+
+  function handleDeleteSticker(id: string) {
+    setStickers((items) => items.filter((item) => item.id !== id));
+    setSelectedTarget(null);
+  }
+
+  function handleSelectMobileTab(tab: TabKey) {
+    setActiveTab(tab);
+    setMobileTabMenuOpen(false);
+  }
+
   return (
     <main className="overflow-x-hidden px-4 py-4 lg:px-8 lg:py-8">
       <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
         <section className="lg:hidden">
-          <div className="space-y-2">
-            <h1 className="font-open-sans text-[22px] font-bold leading-none text-[#ff661e]">Customise Your C.A.R.E. Card</h1>
-            <p className="text-[12px] font-semibold leading-[1.28] text-black">
-              Create a message of thanks with the text editor below and decorate your card with the stickers provided. You may also choose to
-              upload your own picture.
-            </p>
-            <p className="text-[12px] font-semibold leading-[1.28] text-black">
-              Once you&apos;re done, click submit and watch your card become a part of a beautiful photo mosaic celebrating Community Care
-              Professionals on Community Care Day.
-            </p>
-          </div>
+          <IntroContent titleClassName="font-open-sans text-[22px] font-bold leading-none text-[#ff661e]" textClassName="text-[12px] font-semibold leading-[1.28] text-black" />
         </section>
 
-        <section className="hidden w-full rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.12)] lg:block lg:h-[528px] lg:w-[480px]">
-          <div className="space-y-2">
-            <h1 className="font-open-sans text-[26px] font-bold leading-none text-[#ff661e]">Customise Your C.A.R.E. Card</h1>
-            <p className="text-[14px] font-semibold leading-[1.3] text-black">
-              Create a message of thanks with the text editor below and decorate your card with the stickers provided. You may also choose to
-              upload your own picture.
-            </p>
-            <p className="text-[14px] font-semibold leading-[1.3] text-black">
-              Once you&apos;re done, click submit and watch your card become a part of a beautiful photo mosaic celebrating Community Care
-              Professionals on Community Care Day.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAddText}
-            className="mt-6 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
-          >
-            <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
-              <Type size={17} strokeWidth={2.25} />
-            </span>
-            Add Text
-          </button>
-
-          <div className="mt-6 flex gap-2">
-            {FONT_BUTTONS.map((font) => {
-              const selected = selectedText?.font === font.key;
-              return (
-                <button
-                  type="button"
-                  key={font.key}
-                  onClick={() => updateSelectedText({ font: font.key })}
-                  className={`flex h-[42px] w-[100px] items-center justify-center overflow-hidden rounded-[10px] leading-none ${
-                    selected ? "bg-[#ffe27d]" : "bg-white"
-                  }`}
-                >
-                  <span className={`${font.className} ${font.baselineClass}`}>{font.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 flex items-center justify-between">
-            {COLORS.map((color) => {
-              const selected = selectedText?.color === color;
-              return (
-                <button
-                  type="button"
-                  key={color}
-                  onClick={() => updateSelectedText({ color })}
-                  className="h-[30px] w-[30px] rounded-[7px] border"
-                  style={{
-                    background: color,
-                    borderColor: selected ? "#000" : "#dbdbdb",
-                    borderWidth: selected ? 2 : 1,
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          <div className="mt-5">
-            <p className="text-[15px] font-semibold">Upload a Picture</p>
-            <label
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={onDropUpload}
-              className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
-            >
-              <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
-                <Upload size={34} strokeWidth={2.2} />
-              </span>
-              <span className="block text-[15px] font-semibold">
-                <span className="underline">Choose a file</span> or drag and drop it here
-                <br />
-                <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
-              </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg"
-                onChange={handleUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </section>
+        <DesktopEditorPanel
+          selectedText={selectedText}
+          fileInputRef={fileInputRef}
+          onAddText={handleAddText}
+          onUpdateSelectedText={updateSelectedText}
+          onDropUpload={onDropUpload}
+          onUpload={handleUpload}
+        />
 
         <section className="flex w-full flex-col items-center gap-4 lg:w-[443px] lg:gap-6">
-          <div
-            ref={cardViewportRef}
-            className="sticky top-0 z-20 w-full max-w-[443px] overflow-hidden bg-white lg:static lg:w-[443px]"
-            style={{ height: BOARD_SIZE * cardScale }}
-          >
-            <div
-              style={{
-                width: BOARD_SIZE,
-                height: BOARD_SIZE,
-                transform: `scale(${cardScale})`,
-                transformOrigin: "top left",
-              }}
-            >
-              <div
-                ref={cardCaptureRef}
-                className="relative h-[443px] w-[443px] overflow-hidden rounded-md shadow-[-5.3px_6.2px_4.5px_rgba(0,0,0,0.22)]"
-                style={{ backgroundImage: `url(${selectedFrame})`, backgroundSize: "cover", backgroundPosition: "center" }}
-              >
-            <div
-              ref={cardRef}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={handleDrop}
-              onPointerDown={() => setSelectedTarget(null)}
-              className="absolute inset-0 touch-none"
-            >
-              <div className="pointer-events-none absolute left-[23px] top-[23px] h-[397px] w-[397px] rounded-[16px] bg-[#fbf7ef]" />
+          <CardCanvas
+            cardScale={cardScale}
+            selectedFrame={selectedFrame}
+            texts={texts}
+            stickers={stickers}
+            selectedTarget={selectedTarget}
+            isCaptureMode={isCaptureMode}
+            cardViewportRef={cardViewportRef}
+            cardCaptureRef={cardCaptureRef}
+            cardRef={cardRef}
+            onDrop={handleDrop}
+            onDeselect={() => setSelectedTarget(null)}
+            onBeginInteraction={beginInteraction}
+            onDeleteText={handleDeleteText}
+            onEditText={handleEditText}
+            onDeleteSticker={handleDeleteSticker}
+          />
 
-              {texts
-                .slice()
-                .sort((a, b) => a.zIndex - b.zIndex)
-                .map((text) => {
-                  const isSelected = !isCaptureMode && selectedTarget?.type === "text" && selectedTarget.id === text.id;
-                  return (
-                    <div
-                      key={text.id}
-                      className={`absolute ${isSelected ? "outline outline-1 outline-[#6ab5ff]" : ""}`}
-                      style={{
-                        left: text.x,
-                        top: text.y,
-                        width: text.width,
-                        height: text.height,
-                        transform: `rotate(${text.rotation}deg) scale(${text.scale})`,
-                        transformOrigin: "center",
-                        zIndex: text.zIndex,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onPointerDown={(event) =>
-                          beginInteraction(event, { type: "text", id: text.id }, "move", text.x, text.y, text.width, text.height, text.scale, text.rotation)
-                        }
-                        onDoubleClick={() => handleEditText(text)}
-                        className={`flex h-full w-full cursor-grab items-center justify-center whitespace-pre text-center leading-[0.9] active:cursor-grabbing ${getFontClass(text.font)}`}
-                        style={{ color: text.color, fontSize: text.fontSize / 4 }}
-                      >
-                        {text.text}
-                      </button>
-                      {isSelected ? (
-                        <>
-                          <button
-                            type="button"
-                            onPointerDown={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setTexts((items) => items.filter((item) => item.id !== text.id));
-                              setSelectedTarget(null);
-                            }}
-                            className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(text.scale)}
-                          >
-                            <X size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onPointerDown={(event) =>
-                              beginInteraction(
-                                event,
-                                { type: "text", id: text.id },
-                                "rotate",
-                                text.x,
-                                text.y,
-                                text.width,
-                                text.height,
-                                text.scale,
-                                text.rotation,
-                              )
-                            }
-                            className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(text.scale)}
-                          >
-                            <RotateCw size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            onPointerDown={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              handleEditText(text);
-                            }}
-                            className="absolute -bottom-3 -left-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(text.scale)}
-                          >
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onPointerDown={(event) =>
-                              beginInteraction(
-                                event,
-                                { type: "text", id: text.id },
-                                "resize",
-                                text.x,
-                                text.y,
-                                text.width,
-                                text.height,
-                                text.scale,
-                                text.rotation,
-                              )
-                            }
-                            className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(text.scale)}
-                          >
-                            <Maximize2 size={12} />
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  );
-                })}
+          <ActionButtons onRestart={handleRestart} onSubmit={handleSubmit} onSave={() => void handleSave()} />
 
-              {stickers
-                .slice()
-                .sort((a, b) => a.zIndex - b.zIndex)
-                .map((sticker) => {
-                  const isSelected = !isCaptureMode && selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
-
-                  return (
-                    <div
-                      key={sticker.id}
-                      className={`absolute ${isSelected ? "outline outline-2 outline-[#6ab5ff]" : ""}`}
-                      style={{
-                        left: sticker.x,
-                        top: sticker.y,
-                        width: sticker.width,
-                        height: sticker.height,
-                        transform: `rotate(${sticker.rotation}deg) scale(${sticker.scale})`,
-                        transformOrigin: "center",
-                        zIndex: sticker.zIndex,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onPointerDown={(event) =>
-                          beginInteraction(
-                            event,
-                            { type: "sticker", id: sticker.id },
-                            "move",
-                            sticker.x,
-                            sticker.y,
-                            sticker.width,
-                            sticker.height,
-                            sticker.scale,
-                            sticker.rotation,
-                          )
-                        }
-                        className="relative h-full w-full cursor-grab active:cursor-grabbing"
-                      >
-                        <Image src={sticker.src} alt="sticker" fill sizes="150px" className="object-contain" unoptimized />
-                      </button>
-
-                      {isSelected ? (
-                        <>
-                          <button
-                            type="button"
-                            onPointerDown={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setStickers((items) => items.filter((item) => item.id !== sticker.id));
-                              setSelectedTarget(null);
-                            }}
-                            className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(sticker.scale)}
-                          >
-                            <X size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onPointerDown={(event) =>
-                              beginInteraction(
-                                event,
-                                { type: "sticker", id: sticker.id },
-                                "rotate",
-                                sticker.x,
-                                sticker.y,
-                                sticker.width,
-                                sticker.height,
-                                sticker.scale,
-                                sticker.rotation,
-                              )
-                            }
-                            className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(sticker.scale)}
-                          >
-                            <RotateCw size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            onPointerDown={(event) =>
-                              beginInteraction(
-                                event,
-                                { type: "sticker", id: sticker.id },
-                                "resize",
-                                sticker.x,
-                                sticker.y,
-                                sticker.width,
-                                sticker.height,
-                                sticker.scale,
-                                sticker.rotation,
-                              )
-                            }
-                            className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                            style={getHandleStyle(sticker.scale)}
-                          >
-                            <Maximize2 size={12} />
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  );
-                })}
-
-              <div className="pointer-events-none absolute z-[600] bottom-2 -left-1 h-[50px] w-[194px]">
-                <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
-              </div>
-
-              </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden w-full justify-between gap-6 lg:flex">
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="h-[50px] w-[130px] rounded-[12px] bg-[#f1f1f1] text-[33px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-            >
-              <span className="relative -top-1 text-[0.54em]">Restart</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="h-[50px] w-[130px] rounded-[12px] bg-[#ff661e] text-[33px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-            >
-              <span className="relative -top-1 text-[0.54em]">Submit</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              className="h-[50px] w-[130px] rounded-[12px] bg-[#f1f1f1] text-[33px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-            >
-              <span className="relative -top-1 text-[0.54em]">Save</span>
-            </button>
-          </div>
-
-          <div className="w-full space-y-2 lg:hidden">
-            <div ref={mobileTabMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setMobileTabMenuOpen((open) => !open)}
-                className="flex h-[36px] w-full items-center rounded-[59px] bg-[#f1f1f1] px-4"
-              >
-                <span className="flex-1 text-center text-[12px] font-semibold">{activeTabLabel}</span>
-                <ChevronDown size={20} className={`transition-transform ${mobileTabMenuOpen ? "rotate-180" : ""}`} />
-              </button>
-              {mobileTabMenuOpen ? (
-                <div className="absolute left-0 right-0 top-[40px] z-30 rounded-[12px] border border-[#d9d9d9] bg-white p-2 shadow-[0_8px_20px_rgba(0,0,0,0.15)]">
-                  {TAB_LABELS.map((tab) => {
-                    const isActive = tab.key === activeTab;
-                    return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(tab.key);
-                          setMobileTabMenuOpen(false);
-                        }}
-                        className={`block h-[44px] w-full rounded-[8px] px-3 text-left text-[12px] font-semibold ${isActive ? "bg-[#e3e3e3]" : "bg-transparent"}`}
-                      >
-                        {tab.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rounded-[10px] border border-[#f1f1f1] pb-2">
-              <div className="h-[224px] overflow-x-auto overflow-y-hidden px-1 py-1">
-                {activeTab === "frames" ? (
-                  <div className="flex h-full w-max items-center gap-4 pr-2">
-                    {paletteItems.map((item) => (
-                      <button
-                        key={item.src}
-                        type="button"
-                        onClick={() => setSelectedFrame(item.src)}
-                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
-                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
-                        }`}
-                      >
-                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className={`grid h-full w-max grid-flow-col gap-x-4 gap-y-1 pr-2 ${
-                      activeTab === "persons" ? "grid-rows-1 items-center" : "grid-rows-2"
-                    }`}
-                  >
-                    {paletteItems.map((item) => (
-                      <button
-                        key={item.src}
-                        type="button"
-                        draggable
-                        onClick={() => addSticker({ src: item.src, width: item.width, height: item.height }, BOARD_SIZE / 2, BOARD_SIZE / 2)}
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData(
-                            "application/card-sticker",
-                            JSON.stringify({ src: item.src, width: item.width, height: item.height }),
-                          );
-                        }}
-                        className={`relative rounded-md ${activeTab === "persons" ? "h-[130px] w-[90px]" : "h-[96px] w-[112px]"}`}
-                      >
-                        <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAddText}
-              className="mt-4 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
-            >
-              <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
-                <Type size={17} strokeWidth={2.25} />
-              </span>
-              Add Text
-            </button>
-
-            <div className="pt-1">
-              <p className="text-[15px] font-semibold">Upload a Picture</p>
-              <label
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={onDropUpload}
-                className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
-              >
-                <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
-                  <Upload size={34} strokeWidth={2.2} />
-                </span>
-                <span className="block text-[15px] font-semibold">
-                  <span className="underline">Choose a file</span> or drag and drop it here
-                  <br />
-                  <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  onChange={handleUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            <div className="flex w-full items-start gap-4 pt-2">
-              <button
-                type="button"
-                onClick={handleRestart}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Restart
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Submit
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-
+          <MobilePalettePanel
+            activeTab={activeTab}
+            activeTabLabel={activeTabLabel}
+            mobileTabMenuOpen={mobileTabMenuOpen}
+            mobileTabMenuRef={mobileTabMenuRef}
+            paletteItems={paletteItems}
+            selectedFrame={selectedFrame}
+            fileInputRef={fileInputRef}
+            onToggleMenu={() => setMobileTabMenuOpen((open) => !open)}
+            onSelectTab={handleSelectMobileTab}
+            onSelectFrame={setSelectedFrame}
+            onAddText={handleAddText}
+            onAddSticker={(payload) => addSticker(payload, BOARD_SIZE / 2, BOARD_SIZE / 2)}
+            onDragStartItem={handlePaletteDragStart}
+            onDropUpload={onDropUpload}
+            onUpload={handleUpload}
+            onRestart={handleRestart}
+            onSubmit={handleSubmit}
+            onSave={() => void handleSave()}
+          />
         </section>
 
-        <section className="hidden w-full lg:block lg:h-[528px] lg:w-[480px] lg:rounded-2xl lg:border lg:border-[#e9e9e9] lg:bg-white lg:p-4 lg:shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-          <div>
-            <div className="flex h-[40px] gap-2">
-              {TAB_LABELS.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex h-full flex-1 items-center justify-center rounded-[10px] text-[15px] leading-none ${
-                    activeTab === tab.key ? "bg-[#ffe27d]" : "bg-white"
-                  }`}
-                >
-                  <span className={activeTab === tab.key ? "font-bold" : "font-semibold"}>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 h-[416px] overflow-y-auto pr-1">
-              <div className="grid grid-cols-3 gap-4">
-                {paletteItems.map((item) => {
-                  if (item.frame) {
-                    return (
-                      <button
-                        key={item.src}
-                        type="button"
-                        onClick={() => setSelectedFrame(item.src)}
-                        className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
-                          selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
-                        }`}
-                      >
-                        <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={item.src}
-                      type="button"
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData(
-                          "application/card-sticker",
-                          JSON.stringify({ src: item.src, width: item.width, height: item.height }),
-                        );
-                      }}
-                      className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[96px]"}`}
-                    >
-                      <Image src={item.src} alt="palette sticker" fill sizes="120px" className="object-contain" unoptimized />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
+        <DesktopPalettePanel
+          activeTab={activeTab}
+          paletteItems={paletteItems}
+          selectedFrame={selectedFrame}
+          onSelectTab={setActiveTab}
+          onSelectFrame={setSelectedFrame}
+          onDragStartItem={handlePaletteDragStart}
+        />
       </div>
 
-      {textModalOpen ? (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/35 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-            <p className="text-[18px] font-semibold text-[#1c1815]">Enter your thank you message:</p>
-            <textarea
-              value={textModalValue}
-              onChange={(event) => setTextModalValue(event.target.value)}
-              rows={4}
-              maxLength={500}
-              autoFocus
-              className="mt-3 w-full resize-none rounded-xl border border-[#dbdbdb] px-3 py-2 text-[15px] outline-none focus:border-[#ff661e]"
-              placeholder="Type your message"
-            />
-            <p className="mt-1 text-right text-xs text-[#8c8c8c]">{textModalValue.length}/500</p>
-            <div className="mt-3 flex flex-wrap gap-[5px] lg:hidden">
-              {FONT_BUTTONS.map((font) => {
-                const selected = textModalFont === font.key;
-                return (
-                  <button
-                    type="button"
-                    key={font.key}
-                    onClick={() => setTextModalFont(font.key)}
-                    className={`flex h-[26px] w-[62px] items-center justify-center rounded-[10px] ${selected ? "bg-[#ffdd7e]" : "bg-white"}`}
-                  >
-                    <span className={`${font.className} ${font.baselineClass} text-[18px] leading-none`}>{font.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-3 grid grid-cols-6 gap-[5px] lg:hidden">
-              {COLORS.map((color) => {
-                const selected = textModalColor === color;
-                return (
-                  <button
-                    type="button"
-                    key={color}
-                    onClick={() => setTextModalColor(color)}
-                    className="h-[37px] w-[37px] rounded-[9px] border"
-                    style={{
-                      background: color,
-                      borderColor: selected ? "#000" : "#dbdbdb",
-                      borderWidth: selected ? 2 : 1,
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setTextModalOpen(false);
-                  setTextModalValue("");
-                  setTextModalFont("open");
-                  setTextModalColor("#6b3b9c");
-                  setEditingTextId(null);
-                }}
-                className="rounded-xl bg-[#f1f1f1] px-4 py-2 text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleTextModalSubmit}
-                className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white"
-              >
-                Add Text
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <TextModal
+        open={textModalOpen}
+        value={textModalValue}
+        font={textModalFont}
+        color={textModalColor}
+        onValueChange={setTextModalValue}
+        onFontChange={setTextModalFont}
+        onColorChange={setTextModalColor}
+        onCancel={closeTextModal}
+        onSubmit={handleTextModalSubmit}
+      />
     </main>
   );
 }
