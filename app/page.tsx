@@ -69,10 +69,10 @@ export default function Home() {
       return frameSources.map((src) => ({ src, width: 126, height: 126, frame: true }));
     }
     if (activeTab === "messages") {
-      return messageSources.map((src) => ({ src, width: 95, height: 95, frame: false }));
+      return messageSources.map((src) => ({ src, width: 110, height: 110, frame: false }));
     }
     if (activeTab === "stickers") {
-      return stickerSources.map((src) => ({ src, width: 90, height: 90, frame: false }));
+      return stickerSources.map((src) => ({ src, width: 100, height: 100, frame: false }));
     }
     return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
   }, [activeTab]);

@@ -78,7 +78,7 @@ export function MobilePalettePanel({
         <div className="h-[224px] overflow-x-auto overflow-y-hidden px-1 py-1">
           {activeTab === "frames" ? (
             <div className="flex h-full w-max items-center gap-4 pr-2">
-              {paletteItems.map((item) => (
+              {paletteItems.map((item, index) => (
                 <button
                   key={item.src}
                   type="button"
@@ -87,13 +87,13 @@ export function MobilePalettePanel({
                     selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
                   }`}
                 >
-                  <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                  <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized priority={index === 0} />
                 </button>
               ))}
             </div>
           ) : (
             <div className={`grid h-full w-max grid-flow-col gap-x-4 gap-y-1 pr-2 ${activeTab === "persons" ? "grid-rows-1 items-center" : "grid-rows-2"}`}>
-              {paletteItems.map((item) => (
+              {paletteItems.map((item, index) => (
                 <button
                   key={item.src}
                   type="button"
@@ -102,7 +102,7 @@ export function MobilePalettePanel({
                   onDragStart={(event) => onDragStartItem(event, { src: item.src, width: item.width, height: item.height })}
                   className={`relative rounded-md ${activeTab === "persons" ? "h-[130px] w-[90px]" : "h-[96px] w-[112px]"}`}
                 >
-                  <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized />
+                  <Image src={item.src} alt="palette sticker" fill sizes="130px" className="object-contain" unoptimized priority={index === 0} />
                 </button>
               ))}
             </div>

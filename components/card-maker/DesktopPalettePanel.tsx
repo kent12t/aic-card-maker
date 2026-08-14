@@ -42,7 +42,9 @@ export function DesktopPalettePanel({
 
         <div className="mt-6 h-[416px] overflow-y-auto pr-1">
           <div className="grid grid-cols-3 gap-4">
-            {paletteItems.map((item) => {
+            {paletteItems.map((item, index) => {
+              const isAboveFold = index === 0;
+
               if (item.frame) {
                 return (
                   <button
@@ -53,7 +55,7 @@ export function DesktopPalettePanel({
                       selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
                     }`}
                   >
-                    <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized />
+                    <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized priority={isAboveFold} />
                   </button>
                 );
               }
@@ -64,9 +66,9 @@ export function DesktopPalettePanel({
                   type="button"
                   draggable
                   onDragStart={(event) => onDragStartItem(event, { src: item.src, width: item.width, height: item.height })}
-                  className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[96px]"}`}
+                  className={`relative rounded-md ${activeTab === "persons" ? "h-[130px]" : "h-[112px]"}`}
                 >
-                  <Image src={item.src} alt="palette sticker" fill sizes="120px" className="object-contain" unoptimized />
+                  <Image src={item.src} alt="palette sticker" fill sizes="120px" className="object-contain" unoptimized priority={isAboveFold} />
                 </button>
               );
             })}

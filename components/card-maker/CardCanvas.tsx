@@ -68,7 +68,7 @@ export function CardCanvas({
       >
         <div
           ref={cardCaptureRef}
-          className="relative h-[443px] w-[443px] overflow-hidden rounded-md shadow-[-5.3px_6.2px_4.5px_rgba(0,0,0,0.22)]"
+          className="relative h-[443px] w-[443px] overflow-hidden"
           style={{ backgroundImage: `url(${selectedFrame})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
           <div
@@ -78,7 +78,6 @@ export function CardCanvas({
             onPointerDown={onDeselect}
             className="absolute inset-0 touch-none"
           >
-            <div className="pointer-events-none absolute left-[23px] top-[23px] h-[397px] w-[397px] rounded-[16px] bg-[#fbf7ef]" />
 
             {texts
               .slice()
@@ -260,10 +259,6 @@ export function CardCanvas({
                   </div>
                 );
               })}
-
-            <div className="pointer-events-none absolute bottom-2 -left-1 z-[600] h-[50px] w-[194px]">
-              <Image src="/assets/misc/Card_Footer.png" alt="Card footer" fill sizes="194px" className="object-contain" unoptimized />
-            </div>
           </div>
         </div>
       </div>
