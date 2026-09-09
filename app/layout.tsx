@@ -26,7 +26,7 @@ const shadowsIntoLight = Shadows_Into_Light({
 });
 
 const circular = localFont({
-  src: "../assets/fonts/Circular-Std-Medium.ttf",
+  src: "../public/assets/fonts/Circular-Std-Medium.ttf",
   variable: "--font-circular",
 });
 
