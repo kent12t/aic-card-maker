@@ -9,6 +9,7 @@ A Next.js card customizer for Community Care Day. Users can pick a frame, drag s
 - Tailwind CSS
 - `html-to-image` for PNG export
 - `lucide-react` icons
+- Convex is planned for campaign data, image storage, realtime displays, and moderation
 
 ## Getting started
 
@@ -48,3 +49,4 @@ npm run dev
 - The submit action currently logs payload data and shows an alert placeholder.
 - Uploaded images are added to the canvas using object URLs in-browser.
 - The page keeps desktop and mobile editor layouts with matching functionality.
+- Campaign implementation is outlined in `docs/CONVEX_PLAN.md`.
