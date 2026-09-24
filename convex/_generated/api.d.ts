@@ -11,6 +11,7 @@
 import type * as cards from "../cards.js";
 import type * as http from "../http.js";
 import type * as lib_image from "../lib/image.js";
+import type * as lib_rateLimits from "../lib/rateLimits.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   cards: typeof cards;
   http: typeof http;
   "lib/image": typeof lib_image;
+  "lib/rateLimits": typeof lib_rateLimits;
 }>;
 
 /**
@@ -50,4 +52,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
+};

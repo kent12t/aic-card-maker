@@ -23,6 +23,7 @@ type MobilePalettePanelProps = {
   onDragStartItem: (event: DragEvent<HTMLButtonElement>, payload: DragPayload) => void;
   onDropUpload: (event: DragEvent<HTMLLabelElement>) => void;
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  isSubmitting: boolean;
   onRestart: () => void;
   onSubmit: () => void;
   onSave: () => void;
@@ -44,6 +45,7 @@ export function MobilePalettePanel({
   onDragStartItem,
   onDropUpload,
   onUpload,
+  isSubmitting,
   onRestart,
   onSubmit,
   onSave,
@@ -140,7 +142,7 @@ export function MobilePalettePanel({
         </label>
       </div>
 
-      <ActionButtons mobile onRestart={onRestart} onSubmit={onSubmit} onSave={onSave} />
+      <ActionButtons mobile isSubmitting={isSubmitting} onRestart={onRestart} onSubmit={onSubmit} onSave={onSave} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { MAX_CARD_BYTES, validateCardImage } from "./lib/image";
+import { rateLimiter } from "./lib/rateLimits";
 
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9-]{16,64}$/;
 
@@ -12,15 +13,25 @@ function corsHeaders(): HeadersInit {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key",
     "Access-Control-Max-Age": "86400",
+    "Access-Control-Expose-Headers": "Retry-After",
     Vary: "Origin",
   };
 }
 
-function json(status: number, body: Record<string, unknown>) {
+function json(status: number, body: Record<string, unknown>, headers: HeadersInit = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    headers: { ...corsHeaders(), ...headers, "Content-Type": "application/json" },
   });
+}
+
+function tooManyRequests(retryAfterMs: number) {
+  const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  return json(
+    429,
+    { error: `Too many submissions. Please try again in ${seconds} seconds.` },
+    { "Retry-After": String(seconds) },
+  );
 }
 
 const submitCard = httpAction(async (ctx, request) => {
@@ -34,6 +45,13 @@ const submitCard = httpAction(async (ctx, request) => {
   const prepared = await ctx.runQuery(internal.cards.prepareSubmission, { idempotencyKey, locationSlug });
   if (prepared.kind === "duplicate") return json(200, { cardId: prepared.cardId });
   if (prepared.kind === "invalidLocation") return json(400, { error: "Unknown location" });
+
+  // Platform-provided IP; unlike X-Forwarded-For it can't be spoofed by the client.
+  const { ip } = await ctx.meta.getRequestMetadata();
+  const perIp = await rateLimiter.limit(ctx, "submitCardPerIp", { key: ip ?? "unknown" });
+  if (!perIp.ok) return tooManyRequests(perIp.retryAfter);
+  const global = await rateLimiter.limit(ctx, "submitCardGlobal");
+  if (!global.ok) return tooManyRequests(global.retryAfter);
 
   const bytes = new Uint8Array(await request.arrayBuffer());
   const image = validateCardImage(bytes);

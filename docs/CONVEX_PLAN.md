@@ -57,4 +57,4 @@ Because validation happens before `ctx.storage.store`, nothing unvalidated ever 
 - Invalid images and locations are rejected.
 - Removed cards disappear from all walls promptly.
 - Reconnects do not lose or duplicate cards.
-- Consider adding `@convex-dev/rate-limiter` to the HTTP action if abuse is a concern.
+- `@convex-dev/rate-limiter` guards `POST /cards`: 6/min per IP and 120/min globally (tune in `convex/lib/rateLimits.ts`). Over-limit requests get `429` with `Retry-After`.

@@ -44,6 +44,7 @@ export default function Home() {
   const [texts, setTexts] = useState<TextItem[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
   const [isCaptureMode, setIsCaptureMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [textModalOpen, setTextModalOpen] = useState(false);
   const [textModalValue, setTextModalValue] = useState("");
   const [textModalFont, setTextModalFont] = useState<FontKey>("open");
@@ -438,6 +439,7 @@ export default function Home() {
   async function handleSubmit() {
     if (!cardCaptureRef.current || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    setIsSubmitting(true);
     // Reused across retries of the same submission so the server stores one card.
     submissionKeyRef.current ??= crypto.randomUUID();
     setIsCaptureMode(true);
@@ -453,6 +455,7 @@ export default function Home() {
     } finally {
       setIsCaptureMode(false);
       isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
@@ -506,7 +509,12 @@ export default function Home() {
             onDeleteSticker={handleDeleteSticker}
           />
 
-          <ActionButtons onRestart={handleRestart} onSubmit={() => void handleSubmit()} onSave={() => void handleSave()} />
+          <ActionButtons
+            isSubmitting={isSubmitting}
+            onRestart={handleRestart}
+            onSubmit={() => void handleSubmit()}
+            onSave={() => void handleSave()}
+          />
 
           <MobilePalettePanel
             activeTab={activeTab}
@@ -524,6 +532,7 @@ export default function Home() {
             onDragStartItem={handlePaletteDragStart}
             onDropUpload={onDropUpload}
             onUpload={handleUpload}
+            isSubmitting={isSubmitting}
             onRestart={handleRestart}
             onSubmit={() => void handleSubmit()}
             onSave={() => void handleSave()}
