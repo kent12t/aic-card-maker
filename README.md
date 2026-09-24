@@ -43,7 +43,7 @@ npm run dev
 ## Project structure
 
 - `app/page.tsx` - main stateful card-maker page that composes all UI components
-- `app/display/` + `components/display/` - live display wall (`?location=<slug>` optional)
+- `app/display/` + `components/display/` - live display wall
 - `convex/` - schema, `/cards` submission HTTP action, and the published-cards query
 - `app/layout.tsx` - global layout, fonts, and metadata (includes favicon config)
 - `components/card-maker/` - page UI components (canvas, editor panels, modal, buttons)

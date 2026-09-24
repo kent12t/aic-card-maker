@@ -18,13 +18,10 @@ export async function renderCardImage(node: HTMLElement): Promise<Blob> {
   });
 }
 
-export async function submitCardImage(image: Blob, idempotencyKey: string, location: string | null) {
+export async function submitCardImage(image: Blob, idempotencyKey: string) {
   if (!convexSiteUrl) throw new Error("NEXT_PUBLIC_CONVEX_URL is not configured");
 
-  const url = new URL("/cards", convexSiteUrl);
-  if (location) url.searchParams.set("location", location);
-
-  const response = await fetch(url, {
+  const response = await fetch(new URL("/cards", convexSiteUrl), {
     method: "POST",
     headers: { "Content-Type": image.type, "Idempotency-Key": idempotencyKey },
     body: image,

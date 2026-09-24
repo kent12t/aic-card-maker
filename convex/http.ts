@@ -41,10 +41,8 @@ const submitCard = httpAction(async (ctx, request) => {
   const declaredSize = Number(request.headers.get("Content-Length") ?? 0);
   if (declaredSize > MAX_CARD_BYTES) return json(413, { error: "Image too large" });
 
-  const locationSlug = new URL(request.url).searchParams.get("location") ?? undefined;
-  const prepared = await ctx.runQuery(internal.cards.prepareSubmission, { idempotencyKey, locationSlug });
-  if (prepared.kind === "duplicate") return json(200, { cardId: prepared.cardId });
-  if (prepared.kind === "invalidLocation") return json(400, { error: "Unknown location" });
+  const existingId = await ctx.runQuery(internal.cards.findByIdempotencyKey, { idempotencyKey });
+  if (existingId) return json(200, { cardId: existingId });
 
   // Platform-provided IP; unlike X-Forwarded-For it can't be spoofed by the client.
   const { ip } = await ctx.meta.getRequestMetadata();
@@ -60,7 +58,6 @@ const submitCard = httpAction(async (ctx, request) => {
   const storageId = await ctx.storage.store(new Blob([bytes], { type: image.mimeType }));
   const result = await ctx.runMutation(internal.cards.createCard, {
     storageId,
-    locationId: prepared.locationId,
     idempotencyKey,
     mimeType: image.mimeType,
     byteSize: bytes.length,

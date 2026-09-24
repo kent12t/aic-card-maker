@@ -446,8 +446,7 @@ export default function Home() {
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
       const image = await renderCardImage(cardCaptureRef.current);
-      const location = new URLSearchParams(window.location.search).get("location");
-      await submitCardImage(image, submissionKeyRef.current, location);
+      await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       alert("Card submitted! Look out for it on the display wall.");
     } catch (error) {

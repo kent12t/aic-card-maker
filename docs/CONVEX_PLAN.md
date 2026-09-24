@@ -10,9 +10,9 @@
 ## Submission flow
 
 1. The browser renders the card at 800 × 800 as WebP (the canvas falls back to PNG where WebP encoding is unsupported).
-2. The browser `POST`s the image bytes to the Convex HTTP action `/cards` with an `Idempotency-Key` header and an optional `?location=<slug>`.
+2. The browser `POST`s only the image bytes to the Convex HTTP action `/cards`, plus a random `Idempotency-Key` header. No form fields (name, location, etc.) are collected.
 3. The HTTP action:
-   - rejects bad keys, oversize bodies, and unknown/inactive locations;
+   - rejects bad keys and oversize bodies;
    - returns the existing card if the key was already used (retries create one card);
    - validates size (≤ 2 MB), file signature (PNG/WebP), and dimensions (800 × 800) from the bytes, never trusting `Content-Type`;
    - stores the file and inserts a `published` card in one mutation, deleting its own file if a concurrent retry won.
@@ -22,19 +22,15 @@ Because validation happens before `ctx.storage.store`, nothing unvalidated ever 
 
 ## Data
 
-### `locations`
-
-- slug, name, active — created in the dashboard. Leave empty if the campaign has no locations.
-
 ### `cards`
 
-- storage ID, optional location ID
+- storage ID
 - idempotency key, MIME type, byte size
 - status: `published` or `removed`
 
 ## Display wall
 
-- `/display` shows all published cards; `/display?location=<slug>` shows one location.
+- `/display` shows all published cards.
 - Queries only `published` cards, newest first, capped at 200.
 - Each new card is featured for two seconds, then moves into the grid.
 - Convex's websocket subscription resyncs automatically after reconnects.
@@ -54,7 +50,7 @@ Because validation happens before `ctx.storage.store`, nothing unvalidated ever 
 ## Launch checks
 
 - Duplicate submission retries create one card.
-- Invalid images and locations are rejected.
+- Invalid images are rejected.
 - Removed cards disappear from all walls promptly.
 - Reconnects do not lose or duplicate cards.
 - `@convex-dev/rate-limiter` guards `POST /cards`: 6/min per IP and 120/min globally (tune in `convex/lib/rateLimits.ts`). Over-limit requests get `429` with `Retry-After`.

@@ -10,9 +10,9 @@ const FEATURE_MS = 2000;
 
 type WallCard = { _id: Id<"cards">; _creationTime: number; url: string };
 
-export function CardWall({ location }: { location?: string }) {
+export function CardWall() {
   // Convex keeps this subscription live: inserts and moderator removals re-run the query and push new results.
-  const cards = useQuery(api.cards.listPublished, { location });
+  const cards = useQuery(api.cards.listPublished);
 
   const [lastCards, setLastCards] = useState<WallCard[] | undefined>(undefined);
   const [knownIds, setKnownIds] = useState<Set<string> | null>(null);

@@ -20,7 +20,7 @@ Read `docs/CONVEX_PLAN.md` before changing campaign infrastructure.
 - Inspect current code and human changes before editing.
 - Keep changes focused and preserve existing UI behavior.
 - Keep submission idempotent via the `Idempotency-Key` header and `by_idempotency_key` index.
-- Validate file type, size, signature, dimensions, and location server-side (`convex/lib/image.ts`).
+- Submissions carry only the card image; validate type, size, signature, and dimensions server-side (`convex/lib/image.ts`).
 - Query only published cards on public walls, bounded with `take`.
 - Keep internal-only functions as `internalQuery` / `internalMutation`.
 
