@@ -11,20 +11,17 @@ Read `docs/CONVEX_PLAN.md` before changing campaign infrastructure.
 
 - Vercel hosts all interfaces.
 - Convex is the only backend and source of truth.
-- Use Convex functions, database, file storage, reactive queries, and scheduled work.
-- Publish valid cards immediately after validation.
-- Removed cards must promptly stop rendering on all walls.
+- Submissions go through the `/cards` HTTP action in `convex/http.ts`, which validates bytes before storing.
+- Display walls read `api.cards.listPublished` reactively.
+- Moderation is done in the Convex dashboard by setting `cards.status` to `removed`.
 
 ## Implementation rules
 
 - Inspect current code and human changes before editing.
 - Keep changes focused and preserve existing UI behavior.
-- Upload images directly to Convex Storage.
-- Make submission and moderation mutations idempotent.
-- Validate file type, size, signature, dimensions, and location.
-- Clean up rejected and stale uploads.
-- Query only published cards on public walls.
-- Require authenticated moderators and append-only audit events.
-- Use bounded background jobs for ZIP exports.
+- Keep submission idempotent via the `Idempotency-Key` header and `by_idempotency_key` index.
+- Submissions carry only the card image; validate type, size, signature, and dimensions server-side (`convex/lib/image.ts`).
+- Query only published cards on public walls, bounded with `take`.
+- Keep internal-only functions as `internalQuery` / `internalMutation`.
 
-After changes, run lint, TypeScript checks, focused tests, and a production build where possible.
+After changes, run lint, TypeScript checks, and a production build where possible.

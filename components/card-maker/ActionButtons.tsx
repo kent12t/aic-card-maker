@@ -2,12 +2,15 @@
 
 type ActionButtonsProps = {
   mobile?: boolean;
+  isSubmitting?: boolean;
   onRestart: () => void;
   onSubmit: () => void;
   onSave: () => void;
 };
 
-export function ActionButtons({ mobile = false, onRestart, onSubmit, onSave }: ActionButtonsProps) {
+export function ActionButtons({ mobile = false, isSubmitting = false, onRestart, onSubmit, onSave }: ActionButtonsProps) {
+  const submitLabel = isSubmitting ? "Submitting…" : "Submit";
+
   if (mobile) {
     return (
       <div className="flex w-full items-start gap-4 pt-2">
@@ -21,9 +24,11 @@ export function ActionButtons({ mobile = false, onRestart, onSubmit, onSave }: A
         <button
           type="button"
           onClick={onSubmit}
-          className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-wait disabled:opacity-60"
         >
-          Submit
+          {submitLabel}
         </button>
         <button
           type="button"
@@ -48,9 +53,11 @@ export function ActionButtons({ mobile = false, onRestart, onSubmit, onSave }: A
       <button
         type="button"
         onClick={onSubmit}
-        className="h-[50px] w-[130px] rounded-[12px] bg-[#ff661e] text-[33px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+        disabled={isSubmitting}
+        aria-busy={isSubmitting}
+        className="h-[50px] w-[130px] rounded-[12px] bg-[#ff661e] text-[33px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-wait disabled:opacity-60"
       >
-        <span className="relative -top-1 text-[0.54em]">Submit</span>
+        <span className="relative -top-1 text-[0.54em]">{submitLabel}</span>
       </button>
       <button
         type="button"
