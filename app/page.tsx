@@ -17,6 +17,7 @@ import {
   stickerSources,
   TAB_LABELS,
 } from "@/lib/card-maker/constants";
+import { renderCardImage, submitCardImage } from "@/lib/card-maker/submit";
 import {
   clamp,
   clampPositionForScale,
@@ -58,6 +59,8 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mobileTabMenuRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
+  const isSubmittingRef = useRef(false);
+  const submissionKeyRef = useRef<string | null>(null);
 
   const selectedText = useMemo(() => {
     if (!selectedTarget || selectedTarget.type !== "text") return null;
@@ -432,25 +435,25 @@ export default function Home() {
     setSelectedTarget(null);
   }
 
-  function handleSubmit() {
-    const payload = {
-      frame: selectedFrame,
-      stickers: stickers.map(({ id, src, x, y, width, height, scale, rotation }) => ({
-        id,
-        src,
-        x,
-        y,
-        width,
-        height,
-        scale,
-        rotation,
-      })),
-      texts,
-      createdAt: new Date().toISOString(),
-    };
-
-    console.info("Card submission payload", payload);
-    alert("Card submitted. Hook this payload to your form endpoint.");
+  async function handleSubmit() {
+    if (!cardCaptureRef.current || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    // Reused across retries of the same submission so the server stores one card.
+    submissionKeyRef.current ??= crypto.randomUUID();
+    setIsCaptureMode(true);
+    try {
+      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
+      const image = await renderCardImage(cardCaptureRef.current);
+      const location = new URLSearchParams(window.location.search).get("location");
+      await submitCardImage(image, submissionKeyRef.current, location);
+      submissionKeyRef.current = null;
+      alert("Card submitted! Look out for it on the display wall.");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Submission failed. Please try again.");
+    } finally {
+      setIsCaptureMode(false);
+      isSubmittingRef.current = false;
+    }
   }
 
   function handleDeleteText(id: string) {
@@ -503,7 +506,7 @@ export default function Home() {
             onDeleteSticker={handleDeleteSticker}
           />
 
-          <ActionButtons onRestart={handleRestart} onSubmit={handleSubmit} onSave={() => void handleSave()} />
+          <ActionButtons onRestart={handleRestart} onSubmit={() => void handleSubmit()} onSave={() => void handleSave()} />
 
           <MobilePalettePanel
             activeTab={activeTab}
@@ -522,7 +525,7 @@ export default function Home() {
             onDropUpload={onDropUpload}
             onUpload={handleUpload}
             onRestart={handleRestart}
-            onSubmit={handleSubmit}
+            onSubmit={() => void handleSubmit()}
             onSave={() => void handleSave()}
           />
         </section>

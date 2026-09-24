@@ -2,67 +2,54 @@
 
 ## Architecture
 
-- Vercel hosts the card maker, display walls, and moderation interface.
-- Convex provides functions, database records, file storage, realtime queries, and scheduled work.
-- Convex is the only backend and source of truth.
-- Valid cards appear immediately after validation.
-- Removing a card makes every connected or reconnecting wall stop displaying it. Revoking old image URLs or caches is not required.
+- Vercel hosts the card maker (`/`) and display walls (`/display`).
+- Convex is the only backend and source of truth: HTTP action, database, file storage, reactive queries.
+- Moderation uses the Convex dashboard directly — no custom moderation UI, auth, or audit tables.
+- Valid cards appear immediately. Removing a card makes every connected or reconnecting wall stop displaying it.
 
 ## Submission flow
 
-1. The browser renders an 800 × 800 WebP card, with PNG fallback.
-2. A Convex mutation creates an `uploading` submission and returns an upload URL.
-3. The browser uploads the image directly to Convex Storage.
-4. The browser finalizes the submission using its submission ID and idempotency key.
-5. A Convex action validates file type, size, signature, and dimensions.
-6. A mutation changes the valid submission to `published`.
-7. Display walls update through a reactive query.
+1. The browser renders the card at 800 × 800 as WebP (the canvas falls back to PNG where WebP encoding is unsupported).
+2. The browser `POST`s the image bytes to the Convex HTTP action `/cards` with an `Idempotency-Key` header and an optional `?location=<slug>`.
+3. The HTTP action:
+   - rejects bad keys, oversize bodies, and unknown/inactive locations;
+   - returns the existing card if the key was already used (retries create one card);
+   - validates size (≤ 2 MB), file signature (PNG/WebP), and dimensions (800 × 800) from the bytes, never trusting `Content-Type`;
+   - stores the file and inserts a `published` card in one mutation, deleting its own file if a concurrent retry won.
+4. Display walls update through a reactive query.
 
-Rejected files and stale `uploading` submissions are deleted by scheduled cleanup.
+Because validation happens before `ctx.storage.store`, nothing unvalidated ever lands in storage, so no cleanup jobs are needed.
 
 ## Data
 
 ### `locations`
 
-- slug, name, active
+- slug, name, active — created in the dashboard. Leave empty if the campaign has no locations.
 
-### `submissions`
+### `cards`
 
-- location ID
-- Convex storage ID
-- MIME type, byte size, width, height
-- status: `uploading`, `validating`, `published`, or `removed`
-- idempotency key
-- submitted, reviewed, and moderated timestamps
-
-### `moderationEvents`
-
-- submission ID
-- moderator ID
-- action, reason, timestamp
+- storage ID, optional location ID
+- idempotency key, MIME type, byte size
+- status: `published` or `removed`
 
 ## Display wall
 
-- Query only `published` submissions.
-- Order by submission time and ID.
-- Feature each new card for two seconds, then move it into the grid.
-- Reactive query changes add new cards and remove moderated cards.
-- Refetching after reconnect restores the authoritative state.
+- `/display` shows all published cards; `/display?location=<slug>` shows one location.
+- Queries only `published` cards, newest first, capped at 200.
+- Each new card is featured for two seconds, then moves into the grid.
+- Convex's websocket subscription resyncs automatically after reconnects.
 
-## Moderation
+## Moderation (Convex dashboard)
 
-- Require authenticated, allowlisted moderators.
-- Show an newest-first queue with location and status filters.
-- Keep and remove actions must be idempotent and audited.
-- ZIP exports run as bounded background jobs and produce short-lived download links.
+- Data → `cards` → edit a row's `status` to `removed`. Walls drop it instantly; set it back to `published` to restore.
+- Deleting the row also works, but orphans its file in Files; prefer `removed`.
+- Dashboard access is controlled by Convex team membership.
 
-## Implementation order
+## Setup
 
-1. Add Convex and define the schema.
-2. Replace the placeholder submit action with direct upload and finalization.
-3. Build the reactive display wall.
-4. Add moderator authentication and review actions.
-5. Add rate limits, cleanup, exports, monitoring, and launch tests.
+1. `npx convex dev` — logs in, creates the dev deployment, writes `NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_SITE_URL` to `.env.local`.
+2. Optional: set `CLIENT_ORIGIN` (e.g. `https://your-app.vercel.app`) in the Convex dashboard env vars to restrict CORS.
+3. Production: set the Vercel build command to `npx convex deploy --cmd 'npm run build'` with `CONVEX_DEPLOY_KEY` (production only).
 
 ## Launch checks
 
@@ -70,5 +57,4 @@ Rejected files and stale `uploading` submissions are deleted by scheduled cleanu
 - Invalid images and locations are rejected.
 - Removed cards disappear from all walls promptly.
 - Reconnects do not lose or duplicate cards.
-- Moderator actions are authenticated and audited.
-- Burst tests pass for the expected campaign traffic.
+- Consider adding `@convex-dev/rate-limiter` to the HTTP action if abuse is a concern.

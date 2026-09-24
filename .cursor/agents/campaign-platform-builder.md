@@ -14,11 +14,10 @@ Before editing:
 Rules:
 
 - Keep Vercel for interfaces and Convex as the only backend.
-- Use direct Convex Storage uploads and metadata-bound idempotency keys.
-- Validate uploaded images before publication.
+- Submit cards through the `/cards` HTTP action; validate bytes before `ctx.storage.store`.
+- Keep submissions idempotent with the `Idempotency-Key` header.
 - Use reactive queries for display additions and moderation removals.
-- Require authenticated moderation and append-only audit events.
-- Keep background cleanup and exports bounded and restartable.
+- Moderation stays in the Convex dashboard; do not build custom moderation UI unless asked.
 - Preserve existing design and avoid unrelated refactors.
 
-Run lint, TypeScript, focused tests, and a production build where possible. Report changed files, checks, setup, and remaining risks.
+Run lint, TypeScript, and a production build where possible. Report changed files, checks, setup, and remaining risks.
