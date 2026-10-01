@@ -2,73 +2,92 @@
 
 import { useQuery } from "convex/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
+import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
 
-const FEATURE_MS = 2000;
-
-type WallCard = { _id: Id<"cards">; _creationTime: number; url: string };
+// Elements mount off-screen; the animation loop moves them into place on the next frame.
+const OFFSCREEN = "translate3d(-9999px, 0, 0)";
 
 export function CardWall() {
   // Convex keeps this subscription live: inserts and moderator removals re-run the query and push new results.
   const cards = useQuery(api.cards.listPublished);
 
-  const [lastCards, setLastCards] = useState<WallCard[] | undefined>(undefined);
-  const [knownIds, setKnownIds] = useState<Set<string> | null>(null);
-  const [featureQueue, setFeatureQueue] = useState<Id<"cards">[]>([]);
-
-  // Adjust state during render when the query result changes (cards already on the wall at load are not featured).
-  if (cards !== lastCards) {
-    setLastCards(cards);
-    if (cards) {
-      if (knownIds) {
-        const fresh = cards.filter((card) => !knownIds.has(card._id)).reverse();
-        if (fresh.length) setFeatureQueue((queue) => [...queue, ...fresh.map((card) => card._id)]);
-      }
-      setKnownIds(new Set([...(knownIds ?? []), ...cards.map((card) => card._id)]));
-    }
-  }
-
-  const featuredId = featureQueue[0];
-  const featured = cards?.find((card) => card._id === featuredId);
-  const hasFeatured = featured !== undefined;
+  const [snapshot, setSnapshot] = useState<WallSnapshot | null>(null);
+  const wallRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<WallCard[] | undefined>(undefined);
+  const sizeRef = useRef({ width: 0, height: 0 });
+  const elementsRef = useRef(new Map<string, HTMLElement>());
 
   useEffect(() => {
-    if (!featuredId) return;
-    // Skip straight past cards that were removed while waiting in the queue.
-    const timer = setTimeout(() => setFeatureQueue((queue) => queue.slice(1)), hasFeatured ? FEATURE_MS : 0);
-    return () => clearTimeout(timer);
-  }, [featuredId, hasFeatured]);
+    cardsRef.current = cards;
+  }, [cards]);
 
-  const queued = new Set<string>(featureQueue);
-  const gridCards = cards?.filter((card) => !queued.has(card._id)) ?? [];
+  useEffect(() => {
+    const wall = wallRef.current;
+    if (!wall) return;
+    const observer = new ResizeObserver(([entry]) => {
+      sizeRef.current = { width: entry.contentRect.width, height: entry.contentRect.height };
+    });
+    observer.observe(wall);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Positions are written straight to the DOM every frame; React only re-renders when cards enter or leave.
+    const wall = new BrickWall(elementsRef.current);
+    let last = performance.now();
+    let frame = requestAnimationFrame(function tick(now) {
+      const { width, height } = sizeRef.current;
+      if (wall.tick(now - last, cardsRef.current, width, height)) setSnapshot(wall.snapshot());
+      last = now;
+      frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const register = (key: string) => (element: HTMLDivElement | null) => {
+    if (element) elementsRef.current.set(key, element);
+    else elementsRef.current.delete(key);
+  };
 
   return (
-    <main className="min-h-screen bg-white px-6 py-6">
+    <main className="flex h-screen flex-col overflow-hidden bg-black px-6 py-6">
       <h1 className="mb-6 font-open-sans text-[32px] font-bold text-[#ff661e]">Community Care Day</h1>
 
-      {cards === undefined ? (
-        <p className="text-[18px] font-semibold text-black/60">Loading cards…</p>
-      ) : cards.length === 0 ? (
-        <p className="text-[18px] font-semibold text-black/60">Cards will appear here as they are submitted.</p>
-      ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
-          {gridCards.map((card) => (
-            <li key={card._id} className="relative aspect-square overflow-hidden rounded-[12px] shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
-              <Image src={card.url} alt="Community Care Day card" fill sizes="240px" className="object-cover" unoptimized />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div ref={wallRef} className="relative min-h-0 flex-1 overflow-hidden">
+        {cards === undefined ? (
+          <p className="text-[18px] font-semibold text-white/60">Loading cards…</p>
+        ) : cards.length === 0 ? (
+          <p className="text-[18px] font-semibold text-white/60">Cards will appear here as they are submitted.</p>
+        ) : null}
 
-      {featured ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative aspect-square w-[min(70vw,70vh)] overflow-hidden rounded-[16px] shadow-2xl">
-            <Image src={featured.url} alt="New Community Care Day card" fill sizes="70vw" className="object-cover" unoptimized priority />
+        {snapshot?.bricks.map((brick) => (
+          <div
+            key={brick.key}
+            ref={register(brick.key)}
+            className="absolute left-0 top-0 p-1 will-change-transform"
+            style={{ width: snapshot.cell, height: snapshot.cell, transform: OFFSCREEN }}
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+              <Image src={brick.url} alt="Community Care Day card" fill sizes={`${snapshot.cell}px`} className="object-cover" unoptimized />
+            </div>
           </div>
-        </div>
-      ) : null}
+        ))}
+
+        {snapshot?.features.map((feature) => (
+          <div
+            key={feature.key}
+            ref={register(feature.key)}
+            className="absolute left-0 top-0 z-10 will-change-transform"
+            style={{ width: snapshot.bigSize, height: snapshot.bigSize, transform: OFFSCREEN }}
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-[16px] shadow-[0_0_60px_rgba(255,102,30,0.45)]">
+              <Image src={feature.url} alt="New Community Care Day card" fill sizes={`${Math.ceil(snapshot.bigSize)}px`} className="object-cover" unoptimized priority />
+            </div>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
