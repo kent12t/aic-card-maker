@@ -8,6 +8,7 @@ import { DesktopEditorPanel } from "@/components/card-maker/DesktopEditorPanel";
 import { DesktopPalettePanel } from "@/components/card-maker/DesktopPalettePanel";
 import { IntroContent } from "@/components/card-maker/IntroContent";
 import { MobilePalettePanel } from "@/components/card-maker/MobilePalettePanel";
+import { StatusNotice } from "@/components/card-maker/StatusNotice";
 import { TextModal } from "@/components/card-maker/TextModal";
 import {
   BOARD_SIZE,
@@ -53,6 +54,7 @@ export default function Home() {
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
   const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -448,9 +450,15 @@ export default function Home() {
       const image = await renderCardImage(cardCaptureRef.current);
       await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
-      alert("Card submitted! Look out for it on the display wall.");
+      setNotice({
+        title: "Card submitted",
+        message: "Look out for it on the display wall.",
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Submission failed. Please try again.");
+      setNotice({
+        title: "Submission failed",
+        message: error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
       setIsCaptureMode(false);
       isSubmittingRef.current = false;
@@ -547,6 +555,13 @@ export default function Home() {
           onDragStartItem={handlePaletteDragStart}
         />
       </div>
+
+      <StatusNotice
+        open={notice !== null}
+        title={notice?.title ?? ""}
+        message={notice?.message ?? ""}
+        onClose={() => setNotice(null)}
+      />
 
       <TextModal
         open={textModalOpen}
