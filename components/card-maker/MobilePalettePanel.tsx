@@ -27,6 +27,8 @@ type MobilePalettePanelProps = {
   onRestart: () => void;
   onSubmit: () => void;
   onSave: () => void;
+  onShare?: () => void;
+  isExporting?: boolean;
 };
 
 export function MobilePalettePanel({
@@ -49,6 +51,8 @@ export function MobilePalettePanel({
   onRestart,
   onSubmit,
   onSave,
+  onShare,
+  isExporting,
 }: MobilePalettePanelProps) {
   return (
     <div className="w-full space-y-2 lg:hidden">
@@ -142,7 +146,7 @@ export function MobilePalettePanel({
         </label>
       </div>
 
-      <ActionButtons mobile isSubmitting={isSubmitting} onRestart={onRestart} onSubmit={onSubmit} onSave={onSave} />
+      <ActionButtons mobile isSubmitting={isSubmitting} isExporting={isExporting} onRestart={onRestart} onSubmit={onSubmit} onSave={onSave} onShare={onShare} />
     </div>
   );
 }

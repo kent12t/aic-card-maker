@@ -71,6 +71,32 @@ const submitCard = httpAction(async (ctx, request) => {
 
 const http = httpRouter();
 
+// Download-only images do not create published wall cards.
+http.route({
+  path: "/card-downloads",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const declaredSize = Number(request.headers.get("Content-Length") ?? 0);
+    if (declaredSize > MAX_CARD_BYTES) return json(413, { error: "Image too large" });
+    const { ip } = await ctx.meta.getRequestMetadata();
+    const perIp = await rateLimiter.limit(ctx, "submitCardPerIp", { key: ip ?? "unknown" });
+    if (!perIp.ok) return tooManyRequests(perIp.retryAfter);
+    const global = await rateLimiter.limit(ctx, "submitCardGlobal");
+    if (!global.ok) return tooManyRequests(global.retryAfter);
+    const bytes = new Uint8Array(await request.arrayBuffer());
+    const image = validateCardImage(bytes);
+    if (typeof image === "string") return json(400, { error: image });
+    const storageId = await ctx.storage.store(new Blob([bytes], { type: image.mimeType }));
+    const url = await ctx.storage.getUrl(storageId);
+    return json(201, { url });
+  }),
+});
+http.route({
+  path: "/card-downloads",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders() })),
+});
+
 http.route({ path: "/cards", method: "POST", handler: submitCard });
 http.route({
   path: "/cards",

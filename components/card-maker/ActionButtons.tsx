@@ -3,69 +3,24 @@
 type ActionButtonsProps = {
   mobile?: boolean;
   isSubmitting?: boolean;
+  isExporting?: boolean;
   onRestart: () => void;
   onSubmit: () => void;
   onSave: () => void;
+  onShare?: () => void;
 };
 
-export function ActionButtons({ mobile = false, isSubmitting = false, onRestart, onSubmit, onSave }: ActionButtonsProps) {
-  const submitLabel = isSubmitting ? "Submitting…" : "Submit";
-
-  if (mobile) {
-    return (
-      <div className="flex w-full items-start gap-4 pt-2">
-        <button
-          type="button"
-          onClick={onRestart}
-          className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-        >
-          Restart
-        </button>
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
-          className="h-[40px] flex-1 rounded-[12px] bg-[#ff661e] text-[16px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-wait disabled:opacity-60"
-        >
-          {submitLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="h-[40px] flex-1 rounded-[12px] bg-[#f1f1f1] text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-        >
-          Save
-        </button>
-      </div>
-    );
-  }
-
+export function ActionButtons({ mobile = false, isSubmitting = false, isExporting = false, onRestart, onSubmit, onSave, onShare }: ActionButtonsProps) {
+  const busy = isSubmitting || isExporting;
+  const secondaryClass = "min-h-[44px] flex-1 rounded-[12px] bg-[#f1f1f1] px-2 py-2 text-[16px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-wait disabled:opacity-60 lg:min-h-[50px]";
   return (
-    <div className="hidden w-full justify-between gap-6 lg:flex">
-      <button
-        type="button"
-        onClick={onRestart}
-        className="h-[50px] w-[130px] rounded-[12px] bg-[#f1f1f1] text-[33px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-      >
-        <span className="relative -top-1 text-[0.54em]">Restart</span>
+    <div className={mobile ? "flex w-full flex-wrap items-start gap-2 pt-2" : "hidden w-full flex-wrap gap-3 lg:flex"}>
+      <button type="button" onClick={onRestart} disabled={busy} className={secondaryClass}>Restart</button>
+      <button type="button" onClick={onSubmit} disabled={busy} aria-busy={isSubmitting} className={`${secondaryClass} !bg-[#ff661e] font-bold text-white`}>
+        {isSubmitting ? "Submitting…" : "Submit"}
       </button>
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={isSubmitting}
-        aria-busy={isSubmitting}
-        className="h-[50px] w-[130px] rounded-[12px] bg-[#ff661e] text-[33px] font-bold text-white shadow-[0_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-wait disabled:opacity-60"
-      >
-        <span className="relative -top-1 text-[0.54em]">{submitLabel}</span>
-      </button>
-      <button
-        type="button"
-        onClick={onSave}
-        className="h-[50px] w-[130px] rounded-[12px] bg-[#f1f1f1] text-[33px] font-semibold shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
-      >
-        <span className="relative -top-1 text-[0.54em]">Save</span>
-      </button>
+      <button type="button" onClick={onSave} disabled={busy} aria-busy={isExporting} className={secondaryClass}>Download</button>
+      {onShare && <button type="button" onClick={onShare} disabled={busy} className={secondaryClass}>Share</button>}
     </div>
   );
 }

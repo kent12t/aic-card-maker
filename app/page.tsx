@@ -1,7 +1,8 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { ChangeEvent, DragEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, PointerEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ActionButtons } from "@/components/card-maker/ActionButtons";
 import { CardCanvas } from "@/components/card-maker/CardCanvas";
 import { DesktopEditorPanel } from "@/components/card-maker/DesktopEditorPanel";
@@ -18,7 +19,7 @@ import {
   stickerSources,
   TAB_LABELS,
 } from "@/lib/card-maker/constants";
-import { renderCardImage, submitCardImage } from "@/lib/card-maker/submit";
+import { renderCardImage, submitCardImage, uploadDownloadImage } from "@/lib/card-maker/submit";
 import {
   clamp,
   clampPositionForScale,
@@ -39,6 +40,13 @@ import type {
 } from "@/lib/card-maker/types";
 
 export default function Home() {
+  return <Suspense><CardMaker /></Suspense>;
+}
+
+function CardMaker() {
+  const eventMode = useSearchParams().get("event") === "true";
+  const [isExporting, setIsExporting] = useState(false);
+  const exportingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<TabKey>("messages");
   const [selectedFrame, setSelectedFrame] = useState(frameSources[1]);
   const [stickers, setStickers] = useState<StickerItem[]>([]);
@@ -54,7 +62,7 @@ export default function Home() {
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
   const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
-  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; confirmClear?: boolean } | null>(null);
+  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; qrUrl?: string; confirmClear?: boolean } | null>(null);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +72,24 @@ export default function Home() {
   const interactionRef = useRef<InteractionState | null>(null);
   const isSubmittingRef = useRef(false);
   const submissionKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!eventMode) return;
+    let deadline = Date.now() + 60_000;
+    const resetDeadline = () => { deadline = Date.now() + 60_000; };
+    const checkDeadline = () => {
+      if (Date.now() >= deadline) window.location.reload();
+    };
+    const events = ["pointerdown", "pointermove", "keydown", "input", "wheel", "touchstart"] as const;
+    events.forEach((event) => window.addEventListener(event, resetDeadline, { passive: true }));
+    const interval = window.setInterval(checkDeadline, 1000);
+    document.addEventListener("visibilitychange", checkDeadline);
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, resetDeadline));
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", checkDeadline);
+    };
+  }, [eventMode]);
 
   const selectedText = useMemo(() => {
     if (!selectedTarget || selectedTarget.type !== "text") return null;
@@ -418,14 +444,26 @@ export default function Home() {
   }
 
   async function handleSave() {
-    if (!cardCaptureRef.current) return;
+    if (!cardCaptureRef.current || exportingRef.current || isSubmittingRef.current) return;
+    exportingRef.current = true;
+    setIsExporting(true);
     setNotice({
-      title: "Thank you for participating,",
-      message: "your download will start shortly.",
+      title: eventMode ? "Preparing your QR code…" : "Thank you for participating,",
+      message: eventMode ? "Please wait while we prepare your card." : "your download will start shortly.",
     });
     setIsCaptureMode(true);
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
+      if (eventMode) {
+        const image = await renderCardImage(cardCaptureRef.current);
+        const qrUrl = await uploadDownloadImage(image);
+        setNotice({
+          title: "Thank you for participating!",
+          message: "Scan the QR code to open the image on your phone. Long press to save your card.",
+          qrUrl,
+        });
+        return;
+      }
       const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
       const anchor = document.createElement("a");
       anchor.download = "community-care-card.png";
@@ -438,6 +476,39 @@ export default function Home() {
       });
     } finally {
       setIsCaptureMode(false);
+      exportingRef.current = false;
+      setIsExporting(false);
+    }
+  }
+
+  async function handleShare() {
+    if (typeof navigator.share !== "function") {
+      setNotice({ title: "Sharing unavailable", message: "Your browser does not support native sharing. Download your card and share it from your photos." });
+      return;
+    }
+    if (!cardCaptureRef.current || exportingRef.current || isSubmittingRef.current) return;
+    exportingRef.current = true;
+    setIsExporting(true);
+    setIsCaptureMode(true);
+    try {
+      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
+      const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "community-care-card.png", { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "My thank you card" });
+      } else {
+        const url = await uploadDownloadImage(blob);
+        await navigator.share({ url, title: "My thank you card" });
+      }
+    } catch (error) {
+      if (!(error instanceof Error && error.name === "AbortError")) {
+        setNotice({ title: "Sharing unavailable", message: "Please download your card and share it from your photos, or try sharing again." });
+      }
+    } finally {
+      setIsCaptureMode(false);
+      exportingRef.current = false;
+      setIsExporting(false);
     }
   }
 
@@ -457,7 +528,7 @@ export default function Home() {
   }
 
   async function handleSubmit() {
-    if (!cardCaptureRef.current || isSubmittingRef.current) return;
+    if (!cardCaptureRef.current || isSubmittingRef.current || exportingRef.current) return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     // Reused across retries of the same submission so the server stores one card.
@@ -471,7 +542,7 @@ export default function Home() {
       setNotice({
         title: "Thank you!",
         message: "Your card has been submitted.",
-        linkHref: "/display",
+        linkHref: eventMode ? "/display?event=true" : "/display",
       });
     } catch (error) {
       setNotice({
@@ -536,6 +607,8 @@ export default function Home() {
           />
 
           <ActionButtons
+            isExporting={isExporting}
+            onShare={!eventMode ? () => void handleShare() : undefined}
             isSubmitting={isSubmitting}
             onRestart={handleRestart}
             onSubmit={() => void handleSubmit()}
@@ -543,6 +616,8 @@ export default function Home() {
           />
 
           <MobilePalettePanel
+            isExporting={isExporting}
+            onShare={!eventMode ? () => void handleShare() : undefined}
             activeTab={activeTab}
             activeTabLabel={activeTabLabel}
             mobileTabMenuOpen={mobileTabMenuOpen}
@@ -580,6 +655,7 @@ export default function Home() {
         title={notice?.title ?? ""}
         message={notice?.message ?? ""}
         linkHref={notice?.linkHref}
+        qrUrl={notice?.qrUrl}
         onConfirm={notice?.confirmClear ? confirmRestart : undefined}
         onClose={() => setNotice(null)}
       />

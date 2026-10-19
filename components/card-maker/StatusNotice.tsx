@@ -1,15 +1,18 @@
 "use client";
 
+import { QRCodeSVG } from "qrcode.react";
+
 type StatusNoticeProps = {
   open: boolean;
   title: string;
   message: string;
   linkHref?: string;
+  qrUrl?: string;
   onConfirm?: () => void;
   onClose: () => void;
 };
 
-export function StatusNotice({ open, title, message, linkHref, onConfirm, onClose }: StatusNoticeProps) {
+export function StatusNotice({ open, title, message, linkHref, qrUrl, onConfirm, onClose }: StatusNoticeProps) {
   if (!open) return null;
 
   return (
@@ -22,6 +25,11 @@ export function StatusNotice({ open, title, message, linkHref, onConfirm, onClos
           {message}
           {linkHref && <><br />Now <a href={linkHref} className="text-[#ff661e] underline">click here</a> to view.</>}
         </p>
+        {qrUrl && (
+          <a href={qrUrl} target="_blank" rel="noopener noreferrer" aria-label="Open your card image" className="mx-auto mt-4 block w-fit rounded-xl bg-white p-4">
+            <QRCodeSVG value={qrUrl} size={224} level="M" marginSize={4} />
+          </a>
+        )}
         <div className="mt-4 flex justify-end gap-2">
           {onConfirm && (
             <button type="button" onClick={onConfirm} className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white">
