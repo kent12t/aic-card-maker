@@ -54,7 +54,7 @@ export default function Home() {
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
   const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
-  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; confirmClear?: boolean } | null>(null);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -419,6 +419,10 @@ export default function Home() {
 
   async function handleSave() {
     if (!cardCaptureRef.current) return;
+    setNotice({
+      title: "Thank you for participating,",
+      message: "your download will start shortly.",
+    });
     setIsCaptureMode(true);
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
@@ -427,15 +431,29 @@ export default function Home() {
       anchor.download = "community-care-card.png";
       anchor.href = dataUrl;
       anchor.click();
+    } catch (error) {
+      setNotice({
+        title: "Download failed",
+        message: error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
       setIsCaptureMode(false);
     }
   }
 
   function handleRestart() {
+    setNotice({
+      title: "This will clear your current card.",
+      message: "Would you like to proceed?",
+      confirmClear: true,
+    });
+  }
+
+  function confirmRestart() {
     setStickers([]);
     setTexts([]);
     setSelectedTarget(null);
+    setNotice(null);
   }
 
   async function handleSubmit() {
@@ -451,8 +469,9 @@ export default function Home() {
       await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
-        title: "Card submitted",
-        message: "Look out for it on the display wall.",
+        title: "Thank you!",
+        message: "Your card has been submitted.",
+        linkHref: "/display",
       });
     } catch (error) {
       setNotice({
@@ -560,6 +579,8 @@ export default function Home() {
         open={notice !== null}
         title={notice?.title ?? ""}
         message={notice?.message ?? ""}
+        linkHref={notice?.linkHref}
+        onConfirm={notice?.confirmClear ? confirmRestart : undefined}
         onClose={() => setNotice(null)}
       />
 

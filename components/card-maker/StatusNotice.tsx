@@ -4,10 +4,12 @@ type StatusNoticeProps = {
   open: boolean;
   title: string;
   message: string;
+  linkHref?: string;
+  onConfirm?: () => void;
   onClose: () => void;
 };
 
-export function StatusNotice({ open, title, message, onClose }: StatusNoticeProps) {
+export function StatusNotice({ open, title, message, linkHref, onConfirm, onClose }: StatusNoticeProps) {
   if (!open) return null;
 
   return (
@@ -16,10 +18,18 @@ export function StatusNotice({ open, title, message, onClose }: StatusNoticeProp
         <p id="status-notice-title" className="font-open-sans text-[18px] font-bold text-[#ff661e]">
           {title}
         </p>
-        <p className="mt-2 text-[15px] font-semibold leading-snug text-[#1c1815]">{message}</p>
-        <div className="mt-4 flex justify-end">
+        <p className="mt-2 whitespace-pre-line text-[15px] font-semibold leading-snug text-[#1c1815]">
+          {message}
+          {linkHref && <><br />Now <a href={linkHref} className="text-[#ff661e] underline">click here</a> to view.</>}
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          {onConfirm && (
+            <button type="button" onClick={onConfirm} className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white">
+              Yes
+            </button>
+          )}
           <button type="button" onClick={onClose} className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white">
-            OK
+            {onConfirm ? "Cancel" : "OK"}
           </button>
         </div>
       </div>
