@@ -8,11 +8,12 @@ type StatusNoticeProps = {
   message: string;
   linkHref?: string;
   qrUrl?: string;
+  onDownload?: () => void;
   onConfirm?: () => void;
   onClose: () => void;
 };
 
-export function StatusNotice({ open, title, message, linkHref, qrUrl, onConfirm, onClose }: StatusNoticeProps) {
+export function StatusNotice({ open, title, message, linkHref, qrUrl, onDownload, onConfirm, onClose }: StatusNoticeProps) {
   if (!open) return null;
 
   return (
@@ -23,7 +24,8 @@ export function StatusNotice({ open, title, message, linkHref, qrUrl, onConfirm,
         </p>
         <p className="mt-2 whitespace-pre-line text-[15px] font-semibold leading-snug text-[#1c1815]">
           {message}
-          {linkHref && <><br />Now click <a href={linkHref} className="text-[#ff661e] underline">here</a> to view.</>}
+          {onDownload && <> <button type="button" onClick={onDownload} className="not-italic text-[#6b3b9c] underline">Download</button> it to save it as a keepsake.</>}
+          {linkHref && <><br />Now click <a href={linkHref} className="not-italic text-[#6b3b9c] underline">here</a> to view.</>}
         </p>
         {qrUrl && (
           <a href={qrUrl} target="_blank" rel="noopener noreferrer" aria-label="Open your card image" className="mx-auto mt-4 block w-fit rounded-xl bg-white p-4">

@@ -62,7 +62,7 @@ function CardMaker() {
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
   const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
-  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; qrUrl?: string; confirmClear?: boolean } | null>(null);
+  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; qrUrl?: string; confirmClear?: boolean; download?: boolean } | null>(null);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -537,14 +537,12 @@ function CardMaker() {
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
       const image = await renderCardImage(cardCaptureRef.current);
-      const { cardId } = await submitCardImage(image, submissionKeyRef.current);
+      await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
-        title: "Thank you!",
-        message: eventMode
-          ? "Your card has been submitted.\nNow look out for it on our display wall."
-          : "Your card has been submitted.",
-        linkHref: eventMode ? undefined : `/display?card=${encodeURIComponent(cardId)}`,
+        title: "Thank You!",
+        message: "Your card has been submitted.",
+        download: true,
       });
     } catch (error) {
       setNotice({
@@ -658,6 +656,7 @@ function CardMaker() {
         message={notice?.message ?? ""}
         linkHref={notice?.linkHref}
         qrUrl={notice?.qrUrl}
+        onDownload={notice?.download ? () => void handleSave() : undefined}
         onConfirm={notice?.confirmClear ? confirmRestart : undefined}
         onClose={() => setNotice(null)}
       />
