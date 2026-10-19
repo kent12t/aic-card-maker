@@ -23,7 +23,7 @@ export function StatusNotice({ open, title, message, linkHref, qrUrl, onConfirm,
         </p>
         <p className="mt-2 whitespace-pre-line text-[15px] font-semibold leading-snug text-[#1c1815]">
           {message}
-          {linkHref && <><br />Now <a href={linkHref} className="text-[#ff661e] underline">click here</a> to view.</>}
+          {linkHref && <><br />Now click <a href={linkHref} className="text-[#ff661e] underline">here</a> to view.</>}
         </p>
         {qrUrl && (
           <a href={qrUrl} target="_blank" rel="noopener noreferrer" aria-label="Open your card image" className="mx-auto mt-4 block w-fit rounded-xl bg-white p-4">

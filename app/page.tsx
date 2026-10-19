@@ -537,12 +537,14 @@ function CardMaker() {
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
       const image = await renderCardImage(cardCaptureRef.current);
-      await submitCardImage(image, submissionKeyRef.current);
+      const { cardId } = await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
         title: "Thank you!",
-        message: "Your card has been submitted.",
-        linkHref: eventMode ? "/display?event=true" : "/display",
+        message: eventMode
+          ? "Your card has been submitted.\nNow look out for it on our display wall."
+          : "Your card has been submitted.",
+        linkHref: eventMode ? undefined : `/display?card=${encodeURIComponent(cardId)}`,
       });
     } catch (error) {
       setNotice({

@@ -5,13 +5,15 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
+import { CardSpotlight } from "./CardSpotlight";
 
 // Elements mount off-screen; the animation loop moves them into place on the next frame.
 const OFFSCREEN = "translate3d(-9999px, 0, 0)";
 
-export function CardWall() {
+export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   // Convex keeps this subscription live: inserts and moderator removals re-run the query and push new results.
   const cards = useQuery(api.cards.listPublished);
+  const spotlightCard = cards?.find((card) => card._id === spotlightCardId);
 
   const [snapshot, setSnapshot] = useState<WallSnapshot | null>(null);
   const wallRef = useRef<HTMLDivElement>(null);
@@ -56,6 +58,12 @@ export function CardWall() {
       <h1 className="mb-6 font-open-sans text-[32px] font-bold text-[#ff661e]">Community Care Day</h1>
 
       <div ref={wallRef} className="relative min-h-0 flex-1 overflow-hidden">
+        {spotlightCard && <CardSpotlight key={spotlightCard._id} url={spotlightCard.url} />}
+        {spotlightCardId && cards !== undefined && !spotlightCard && (
+          <p role="status" className="absolute inset-x-0 top-0 z-20 rounded-lg bg-black/80 p-3 text-center text-sm text-white">
+            This card is no longer available on the wall. Enjoy the latest thank you cards below.
+          </p>
+        )}
         {cards === undefined ? (
           <p className="text-[18px] font-semibold text-white/60">Loading cards…</p>
         ) : cards.length === 0 ? (
