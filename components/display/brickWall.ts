@@ -373,6 +373,7 @@ export class BrickWall {
       const bound = bounds.get(feature);
       const element = this.elements.get(feature.key);
       if (!bound || !element) continue;
+      element.dataset.closing = String(feature.closing);
       feature.centerX = (bound.left + bound.right) / 2;
       let x = feature.centerX;
       let y = (feature.row + SPAN_ROWS / 2) * this.cell;

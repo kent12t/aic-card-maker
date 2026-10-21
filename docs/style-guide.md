@@ -426,7 +426,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   wall's new-card entrance) and **Close**. Event mode adds “Now look out for it on
   our display wall.” and has only **Close**. Closing preserves the editor's card.
 
-## 9. Display-wall personal replay (`/display?card=<ID>`)
+## 9. Floating display wall and personal replay (`/display?card=<ID>`)
 
 - The scrolling card area spans the full viewport width, without horizontal
   page padding. The header and loading/empty copy retain their 24px side inset.
@@ -440,23 +440,38 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   lowered mouse hover, flat press, and reduced-motion transition behavior. A
   width-constrained container supplies its `cqw` sizing; keyboard focus remains
   visibly outlined. The CTA is hidden in event mode.
-- After its image loads, the requested published card uses the wall's actual
-  new-arrival animation: gaps open, the card grows with a light-violet glow
-  (`--color-light-violet`, 65% opacity, 60px blur), holds
-  for five seconds, then shrinks into a normal wall tile. There is no preview
-  overlay, waiting message, or dismissal button.
+- The experimental wall uses `components/display/floatingWall.ts`: cards drift
+  slowly left with independent depth/speed, gentle vertical bobbing, and small
+  rotations. Two to six invisible height bands keep the composition filled;
+  staggered placement, varied sizes (78–100%), and independently phased movement
+  soften the grid. The black surface has a subtle dark-purple radial wash.
+- Fill cards are dealt from shuffled, balanced decks across heights. The deal
+  order rotates between columns and avoids a card's previous height (borrowing
+  from the collection when the deck's final card needs a different height),
+  preventing repeated images from being locked to
+  one row when the submission count is a multiple of the number of bands.
+  Off-screen cards draw from the deck again, so the gallery keeps changing and
+  all submissions cycle through without mounting the entire collection.
+- After its image loads, the requested published card glides from a floating
+  tile to the center, straightens and enlarges over one second, holds for five
+  seconds, then smoothly returns to its moving tile over 1.1 seconds. Its full
+  artwork stays visible, with a soft violet drop shadow rather than clipped
+  corners. The background cards gently dim while a card is featured.
 - The replay runs once per requested ID in that browser's wall instance, without
   changing stored cards or triggering animations on other displays.
-- Personal highlights start toward the right (around 85% of the wall width on
-  desktop), with room for their gap to open. On phones the large card can extend
-  past the right edge and scroll into view. All rows keep moving at their normal
-  speed throughout growth, the five-second hold, and rejoining.
-- Highlights keep the same row-based size on phones and desktop. Gaps are inserted
-  at existing brick boundaries without realigning row offsets; alternating rows
-  retain their half-brick stagger after the card rejoins. Off-screen gaps finish
-  their size transition before being retired so fractional widths do not shift
-  a row's alignment.
+- Highlights fit both the wall height and phone width (maximum 82% of viewport
+  width), centered slightly above the wall midpoint to leave space for the CTA.
+  Live arrivals queue individually. After 14 idle seconds, an older card takes
+  a turn in the spotlight without arrival confetti.
+- Reduced motion freezes drifting/bobbing/rotation, disables automatic
+  spotlights, and shows requested/live highlights immediately without travel.
 - Event mode retains its live new-arrival behavior and ignores the card parameter.
+- On this experimental branch, live arrivals and personal replays emit one short
+  confetti burst from the card's sides, starting 650ms into growth. The 36 small
+  orange, light-yellow, violet, dark-orange, and white pieces fan out, tumble,
+  and fall away within about three seconds; they sit behind the complete card
+  artwork and disappear before it rejoins the wall. No label or extra halo is
+  added. Confetti is hidden for reduced-motion users.
 
 ## 10. Maintaining this guide
 

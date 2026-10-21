@@ -5,8 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
-import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
+import type { WallCard } from "./brickWall";
+import { FloatingWall, type FloatingSnapshot } from "./floatingWall";
 import styles from "@/app/display/page.module.css";
+import { ArrivalConfetti } from "./ArrivalConfetti";
 
 // Elements mount off-screen; the animation loop moves them into place on the next frame.
 const OFFSCREEN = "translate3d(-9999px, 0, 0)";
@@ -16,7 +18,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   const cards = useQuery(api.cards.listPublished);
   const spotlightCard = cards?.find((card) => card._id === spotlightCardId);
 
-  const [snapshot, setSnapshot] = useState<WallSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<FloatingSnapshot | null>(null);
   const wallRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<WallCard[] | undefined>(undefined);
   const sizeRef = useRef({ width: 0, height: 0 });
@@ -50,11 +52,12 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
 
   useEffect(() => {
     // Positions are written straight to the DOM every frame; React only re-renders when cards enter or leave.
-    const wall = new BrickWall(elementsRef.current);
+    const wall = new FloatingWall(elementsRef.current);
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let last = performance.now();
     let frame = requestAnimationFrame(function tick(now) {
       const { width, height } = sizeRef.current;
-      if (wall.tick(now - last, cardsRef.current, width, height, replayCardIdRef.current)) setSnapshot(wall.snapshot());
+      if (wall.tick(now - last, cardsRef.current, width, height, replayCardIdRef.current, motionPreference.matches)) setSnapshot(wall.snapshot());
       last = now;
       frame = requestAnimationFrame(tick);
     });
@@ -76,7 +79,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
         <h1 className={styles.title}>Celebrating Community Care Day • 1 Nov</h1>
       </header>
 
-      <div ref={wallRef} className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={wallRef} className={`relative min-h-0 flex-1 overflow-hidden ${styles.floatingWall}`} data-featured={Boolean(snapshot?.features.length)}>
         {spotlightCardId && cards !== undefined && !spotlightCard && (
           <p role="status" className="absolute inset-x-0 top-0 z-20 rounded-lg bg-black/80 p-3 text-center text-sm text-white">
             This card is no longer available on the wall. Enjoy the latest thank you cards below.
@@ -88,15 +91,15 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
           <p className="px-6 text-[18px] font-semibold text-white/60">Cards will appear here as they are submitted.</p>
         ) : null}
 
-        {snapshot?.bricks.map((brick) => (
+        {snapshot?.cards.map((brick) => (
           <div
             key={brick.key}
             ref={register(brick.key)}
-            className="absolute left-0 top-0 p-1 will-change-transform"
-            style={{ width: snapshot.cellWidth, height: snapshot.cell, transform: OFFSCREEN }}
+            className={styles.floatingCard}
+            style={{ width: snapshot.cardWidth, height: snapshot.cardHeight, transform: OFFSCREEN }}
           >
-            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
-              <Image src={brick.url} alt="Community Care Day card" fill sizes={`${snapshot.cellWidth}px`} className="object-contain" unoptimized />
+            <div className={styles.floatingArtwork}>
+              <Image src={brick.url} alt="Community Care Day card" fill sizes={`${Math.ceil(snapshot.cardWidth)}px`} className="object-contain" unoptimized />
             </div>
           </div>
         ))}
@@ -106,10 +109,11 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
             key={feature.key}
             ref={register(feature.key)}
             className="absolute left-0 top-0 z-10 will-change-transform"
-            style={{ width: snapshot.bigWidth, height: snapshot.bigSize, transform: OFFSCREEN }}
+            style={{ width: snapshot.featureWidth, height: snapshot.featureHeight, transform: OFFSCREEN }}
           >
+            {feature.celebrate && <ArrivalConfetti />}
             <div className={styles.featureArtwork}>
-              <Image src={feature.url} alt="New Community Care Day card" fill sizes={`${Math.ceil(snapshot.bigWidth)}px`} className="object-contain" unoptimized priority />
+              <Image src={feature.url} alt={feature.celebrate ? "New Community Care Day card" : "Featured Community Care Day card"} fill sizes={`${Math.ceil(snapshot.featureWidth)}px`} className="object-contain" unoptimized priority />
             </div>
           </div>
         ))}

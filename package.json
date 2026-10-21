@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:wall": "node --test scripts/test-floating-wall.cjs"
   },
   "dependencies": {
     "@convex-dev/rate-limiter": "^0.4.0",
