@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: "Community Care Day Card Maker",
   description: "Drag and drop sticker card maker",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.svg",
+    icon: [{ url: "/assets/misc/ccd-logo-only.svg", type: "image/svg+xml" }],
+    shortcut: "/assets/misc/ccd-logo-only.svg",
   },
 };
 
