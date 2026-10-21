@@ -16,6 +16,7 @@ buttons that start raised. Use this visual language when updating the designer.
 | `components/landing/LandingNav.tsx` | Desktop links and mobile dropdown |
 | `components/landing/SiteHeader.tsx` | Shared logo group and navigation; compact desktop designer variant |
 | `components/landing/CardDeck.tsx` | Animated cards and pause control |
+| `components/Modal.tsx` | Shared native dialog behavior, focus containment, and dismissal |
 | `app/design/page.tsx` | Responsive card designer and editor interactions |
 | `app/design/page.module.css` | Designer layout, tabs, palette, buttons, instructions, and help modal |
 
@@ -59,6 +60,7 @@ Use the provided font files and explicit weights rather than synthesized bold.
 | Navigation | Circular Std Medium, `500` | `CircularStd-Medium.ttf` |
 | Body copy | Caslon Doric Regular No2, `400` | `CaslonDoric-RegularNo2.otf` |
 | Step captions | Caslon Doric Regular No2 Italic, `400` | `CaslonDoric-RegularNo2Italic.otf` |
+| How-it-works step numbers | Caslon Doric Semibold, `600`, upright | `CaslonDoric-Semibold.otf` |
 
 ```css
 /* These next/font variables must exist on an ancestor. */
@@ -289,6 +291,11 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Scrollbars use violet thumbs and a white-tinted light-violet track, including
   the document scrollbar on this route. Native overlay scrollbar visibility
   still follows the browser/OS. Both standard and WebKit styling are supplied.
+- Mobile Chromium/WebKit palette and help-dialog scrollbars use 10px tracks
+  with violet triangular arrow buttons at each end, horizontal or vertical as
+  appropriate. The WebKit rules opt out of standard scrollbar overrides so the
+  buttons can render; browsers/OSes without native scrollbar-button support
+  retain their native scrolling behavior and the standard styled fallback.
 - Wide desktop: library on the left, canvas and actions in the middle,
   instructions on the right. At <=1550px instructions move beneath the canvas;
   at <=1100px the library stacks above the workspace.
@@ -313,9 +320,37 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - “How it works” sits above the canvas, aligned right. Its pill background is
   **orange at 53% opacity**; text and the question icon are **`#a37d4f`**, with
   a white icon interior.
-- The pill opens a native modal dialog with temporary text instructions,
-  pending the user's modal design. It has a labeled close button, outside-click
-  dismissal, native Escape handling, focus containment, and focus restoration.
+- The how-it-works popup opens **automatically on every arrival at `/design`**;
+  the pill reopens it after dismissal. The popup follows the supplied desktop
+  and mobile references: a cream `#fff9ed` panel, purple Circular Std Black
+  heading, medium-weight Circular step labels, lavender numbered circles with
+  **upright Caslon Doric Semibold (600)** numbers, and an outlined orange
+  “Let’s start” button. The CTA uses the same **raised resting state**, lowered
+  mouse hover, flat pressed state, and reduced-motion behavior as the editor
+  action buttons (5px desktop / 3px mobile hard shadow at rest).
+- Use the existing `icon_design.svg`, `icon_message.svg`, `icon_avatar.svg`,
+  and `icon_submit.svg` assets for the four steps. Rotate `icon_arrow.svg` for
+  the vertical dotted connectors. Desktop step rows contain number, icon, and
+  label inline. On mobile the icon is above the number/label row; the heading
+  and final step use mobile-specific line breaks.
+- The panel is at most 1288px wide on desktop, with 52px corners at 1920px.
+  Mobile uses `min(420px, 100% - 64px)` width and 24px corners. Limit the modal
+  to the viewport height and allow internal scrolling on short screens; use
+  more compact desktop steps when viewport height is <=850px.
+- **Every modal** uses the shared native `Modal` component and the global
+  `dialog::backdrop` treatment: **`#241f61` at 59% opacity** with **4px backdrop
+  blur**. This applies to help, restart confirmation, download/QR notices,
+  submission notices, and errors. Background page scrolling is locked while
+  a modal is open.
+- Clicking outside the panel or pressing Escape dismisses any modal. Clicking
+  inside does not dismiss it. Native modal focus containment and restoration
+  are preserved. The help popup also closes through its labeled top-right
+  close button (44px hit area) and “Let’s start”; initial focus is on the dialog
+  itself, not the X or CTA, so no control is pre-highlighted and short screens
+  begin at the top of the instructions. Keyboard users can Tab to the controls.
+- Focusing the dialog container itself adds **no outline or other focus-only
+  styling**. Retain visible keyboard focus indicators on buttons and links
+  inside the dialog.
 
 ## 9. Maintaining this guide
 

@@ -351,61 +351,202 @@
 }
 
 .helpDialog {
-  width: min(520px, calc(100% - 32px));
-  max-height: calc(100svh - 48px);
+  width: min(1288px, calc(100% - 64px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
   padding: 0;
   border: 0;
-  border-radius: 22px;
-  background: #fff;
-  color: var(--color-dark-purple);
+  border-radius: clamp(28px, 2.7vw, 52px);
+  background: #fff9ed;
+  color: var(--color-purple);
   overflow: auto;
   scrollbar-color: var(--color-violet) var(--scroll-track);
-}
-
-.helpDialog::backdrop {
-  background: rgb(36 31 97 / 40%);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 20%);
 }
 
 .helpContent {
   position: relative;
-  padding: 36px;
+  padding: clamp(32px, 3.125vw, 60px) clamp(32px, 5.83vw, 112px) clamp(32px, 3.65vw, 70px);
 }
 
 .helpContent h2 {
-  margin: 0 40px 22px 0;
-  color: var(--color-dark-orange);
+  margin: 0 0 30px;
   font-family: var(--font-circular), sans-serif;
-  font-size: 32px;
+  font-size: clamp(32px, 3.125vw, 60px);
   font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  text-align: center;
 }
 
-.helpContent ol {
+.helpSteps {
+  width: min(780px, 100%);
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.helpStepRow {
   display: grid;
-  gap: 14px;
-  padding-left: 22px;
-  margin-bottom: 28px;
-  font-size: 18px;
-  line-height: 1.4;
-  list-style: decimal;
+  grid-template-columns: 58px 106px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  min-height: 104px;
 }
 
-.helpContent .instructions {
-  font-size: 17px;
+.helpStepNumber {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #c9ade8;
+  color: var(--color-dark-purple);
+  font-family: var(--font-caslon), sans-serif;
+  font-size: 42px;
+  font-weight: 600;
+  font-style: normal;
+  line-height: 1;
+}
+
+.helpStepIcon {
+  justify-self: center;
+  width: 106px;
+  height: 104px;
+  object-fit: contain;
+}
+
+.helpStepLabel {
+  font-family: var(--font-circular), sans-serif;
+  font-size: clamp(24px, 2.2vw, 42px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+}
+
+.mobileHelpBreak {
+  display: none;
+}
+
+.helpStepArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 58px;
+}
+
+.helpStepArrow img {
+  width: 70px;
+  height: 9px;
+  transform: rotate(90deg);
+}
+
+.startButton {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  margin-top: 44px;
+  padding: 12px;
+  border: 3px solid var(--color-dark-purple);
+  border-radius: 22px;
+  background: var(--color-orange);
+  color: var(--color-dark-purple);
+  font-family: var(--font-circular), sans-serif;
+  font-size: clamp(24px, 2.2vw, 42px);
+  font-weight: 900;
+  line-height: 1.15;
+  box-shadow: 5px 5px 0 var(--color-dark-purple);
+  transform: translate(-4px, -4px);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  cursor: pointer;
 }
 
 .closeHelp {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 24px;
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 0;
   border-radius: 50%;
-  background: #deddef;
-  color: var(--color-dark-purple);
+  border: 1px solid var(--color-light-violet);
+  background: #fff;
+  color: var(--color-light-violet);
   cursor: pointer;
+}
+
+.closeHelp svg {
+  width: 30px;
+  height: 30px;
+  stroke-width: 5;
+}
+
+@media (min-width: 601px) and (max-width: 1100px) {
+  .helpStepRow {
+    grid-template-columns: 44px 76px minmax(0, 1fr);
+    gap: 16px;
+    min-height: 76px;
+  }
+
+  .helpStepNumber {
+    width: 44px;
+    height: 44px;
+    font-size: 32px;
+  }
+
+  .helpStepIcon {
+    width: 76px;
+    height: 76px;
+  }
+
+  .helpStepArrow {
+    height: 40px;
+  }
+
+  .helpStepArrow img {
+    width: 50px;
+    height: 7px;
+  }
+}
+
+@media (min-width: 601px) and (max-height: 850px) {
+  .helpContent {
+    padding-block: 32px;
+  }
+
+  .helpContent h2 {
+    margin-bottom: 24px;
+  }
+
+  .helpStepRow {
+    min-height: 72px;
+  }
+
+  .helpStepIcon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .helpStepNumber {
+    width: 44px;
+    height: 44px;
+    font-size: 32px;
+  }
+
+  .helpStepArrow {
+    height: 32px;
+  }
+
+  .helpStepArrow img {
+    width: 40px;
+    height: 6px;
+  }
+
+  .startButton {
+    min-height: 60px;
+    margin-top: 28px;
+  }
 }
 
 @media (min-width: 1921px) {
@@ -628,12 +769,146 @@
   }
 
   .helpContent {
-    padding: 28px 22px;
+    padding: 56px 16px 36px;
+  }
+
+  .helpDialog {
+    width: min(420px, calc(100% - 64px));
+    max-height: calc(100dvh - 40px);
+    border-radius: 24px;
+  }
+
+  .helpContent h2 {
+    margin-bottom: 20px;
+    font-size: clamp(25px, 7.55vw, 36px);
+    line-height: 0.94;
+  }
+
+  .helpStepRow {
+    display: grid;
+    grid-template-columns: 22px minmax(0, max-content);
+    justify-content: center;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .helpStepIcon {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    width: 46px;
+    height: 46px;
+  }
+
+  .helpStepNumber {
+    grid-row: 2;
+    width: 22px;
+    height: 22px;
+    font-size: 18px;
+  }
+
+  .helpStepLabel {
+    grid-row: 2;
+    font-size: clamp(16px, 4.72vw, 22px);
+    line-height: 1.04;
+  }
+
+  .mobileHelpBreak {
+    display: initial;
+  }
+
+  .desktopHelpBreak {
+    display: none;
+  }
+
+  .helpStepArrow {
+    height: 36px;
+  }
+
+  .helpStepArrow img {
+    width: 34px;
+    height: 5px;
+  }
+
+  .startButton {
+    min-height: 44px;
+    margin-top: 28px;
+    padding: 8px;
+    border-width: 1.5px;
+    border-radius: 8px;
+    font-size: 22px;
+    box-shadow: 3px 3px 0 var(--color-dark-purple);
+    transform: translate(-2px, -2px);
+  }
+
+  .closeHelp {
+    top: 2px;
+    right: 2px;
+    border: 0;
+    background: transparent;
+  }
+
+  .closeHelp svg {
+    box-sizing: content-box;
+    width: 14px;
+    height: 14px;
+    padding: 3px;
+    border: 1px solid var(--color-light-violet);
+    border-radius: 50%;
+    background: #fff;
+  }
+}
+
+/* Native scrollbar buttons are available in Chromium/WebKit, but not every
+   mobile OS exposes them. Keep the standard violet scrollbar as the fallback. */
+@supports selector(::-webkit-scrollbar) {
+  @media (max-width: 600px) {
+    .paletteScroll,
+    .helpDialog {
+      scrollbar-color: auto;
+      scrollbar-width: auto;
+    }
+
+    .designer ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .designer ::-webkit-scrollbar-button {
+      display: none;
+    }
+
+    .designer ::-webkit-scrollbar-button:single-button {
+      display: block;
+      width: 12px;
+      height: 12px;
+      background-color: var(--scroll-track);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 10px 10px;
+    }
+
+    .designer ::-webkit-scrollbar-button:single-button:horizontal:decrement {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M7 1 2 5l5 4Z' fill='%237978b5'/%3E%3C/svg%3E");
+    }
+
+    .designer ::-webkit-scrollbar-button:single-button:horizontal:increment {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='m3 1 5 4-5 4Z' fill='%237978b5'/%3E%3C/svg%3E");
+    }
+
+    .designer ::-webkit-scrollbar-button:single-button:vertical:decrement {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='m1 7 4-5 4 5Z' fill='%237978b5'/%3E%3C/svg%3E");
+    }
+
+    .designer ::-webkit-scrollbar-button:single-button:vertical:increment {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='m1 3 4 5 4-5Z' fill='%237978b5'/%3E%3C/svg%3E");
+    }
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .actionButton:not(:disabled):hover {
+  .actionButton:not(:disabled):hover,
+  .startButton:hover {
     box-shadow: 3px 3px 0 var(--color-dark-purple);
     transform: translate(-2px, -2px);
   }
@@ -643,13 +918,15 @@
   }
 }
 
-.actionButton:not(:disabled):active {
+.actionButton:not(:disabled):active,
+.startButton:active {
   box-shadow: 0 0 0 var(--color-dark-purple);
   transform: translate(0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .actionButton {
+  .actionButton,
+  .startButton {
     transition: none;
   }
 }

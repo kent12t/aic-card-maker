@@ -1,32 +1,45 @@
 "use client";
 
 import { CircleHelp, X } from "lucide-react";
-import { useRef } from "react";
-import { EditorInstructions } from "./EditorInstructions";
+import Image from "next/image";
+import { useState } from "react";
+import { Modal } from "@/components/Modal";
 import styles from "@/app/design/page.module.css";
 
+const steps = [
+  { icon: "icon_design.svg", label: "Choose a frame" },
+  { icon: "icon_message.svg", label: "Select a message to say thanks" },
+  { icon: "icon_avatar.svg", label: "Add avatars and stickers" },
+  { icon: "icon_submit.svg", label: <>Submit your card to be<br className={styles.mobileHelpBreak} /> part<br className={styles.desktopHelpBreak} /> of the photo mosaic</> },
+];
+
 export function HowItWorks() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(true);
 
   return (
     <div className={styles.help}>
-      <button type="button" className={styles.helpButton} onClick={() => dialogRef.current?.showModal()}>
+      <button type="button" className={styles.helpButton} onClick={() => setOpen(true)}>
         <CircleHelp aria-hidden="true" /> How it works
       </button>
-      <dialog ref={dialogRef} className={styles.helpDialog} aria-labelledby="how-it-works-title" onClick={(event) => {
-        if (event.target === event.currentTarget) dialogRef.current?.close();
-      }}>
+      <Modal open={open} onClose={() => setOpen(false)} className={styles.helpDialog} labelledBy="how-it-works-title">
         <div className={styles.helpContent}>
-          <button type="button" autoFocus className={styles.closeHelp} aria-label="Close instructions" onClick={() => dialogRef.current?.close()}><X aria-hidden="true" /></button>
-          <h2 id="how-it-works-title">How it works</h2>
-          <ol>
-            <li>Choose a frame for your thank you card.</li>
-            <li>Tap a message or sticker to add it, then drag it into place.</li>
-            <li>Submit your card to the Thank You Wall, or download it to share.</li>
+          <button type="button" className={styles.closeHelp} aria-label="Close instructions" onClick={() => setOpen(false)}><X aria-hidden="true" /></button>
+          <h2 id="how-it-works-title">Create your card in<br className={styles.mobileHelpBreak} /> a few easy steps:</h2>
+          <ol className={styles.helpSteps}>
+            {steps.map((step, index) => (
+              <li key={step.icon}>
+                <div className={styles.helpStepRow}>
+                  <span className={styles.helpStepNumber} aria-hidden="true">{index + 1}</span>
+                  <Image src={`/assets/misc/${step.icon}`} alt="" width={106} height={104} className={styles.helpStepIcon} />
+                  <span className={styles.helpStepLabel}>{step.label}</span>
+                </div>
+                {index < steps.length - 1 && <span className={styles.helpStepArrow} aria-hidden="true"><Image src="/assets/misc/icon_arrow.svg" alt="" width={70} height={9} /></span>}
+              </li>
+            ))}
           </ol>
-          <EditorInstructions />
+          <button type="button" className={styles.startButton} onClick={() => setOpen(false)}>Let’s start</button>
         </div>
-      </dialog>
+      </Modal>
     </div>
   );
 }

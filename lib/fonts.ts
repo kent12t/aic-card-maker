@@ -13,6 +13,7 @@ export const caslon = localFont({
   src: [
     { path: "../public/assets/fonts/CaslonDoric-RegularNo2.otf", weight: "400", style: "normal" },
     { path: "../public/assets/fonts/CaslonDoric-RegularNo2Italic.otf", weight: "400", style: "italic" },
+    { path: "../public/assets/fonts/CaslonDoric-Semibold.otf", weight: "600", style: "normal" },
   ],
   variable: "--font-caslon",
   display: "swap",

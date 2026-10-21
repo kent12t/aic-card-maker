@@ -1,6 +1,7 @@
 "use client";
 
 import { QRCodeSVG } from "qrcode.react";
+import { Modal } from "@/components/Modal";
 
 type StatusNoticeProps = {
   open: boolean;
@@ -14,11 +15,9 @@ type StatusNoticeProps = {
 };
 
 export function StatusNotice({ open, title, message, linkHref, qrUrl, onDownload, onConfirm, onClose }: StatusNoticeProps) {
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/35 px-4" role="dialog" aria-modal="true" aria-labelledby="status-notice-title">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+    <Modal open={open} onClose={onClose} labelledBy="status-notice-title" className="m-auto max-h-[calc(100dvh-32px)] w-[calc(100%_-_32px)] max-w-md overflow-auto rounded-2xl border-0 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+      <div className="p-5">
         <p id="status-notice-title" className="font-open-sans text-[18px] font-bold text-[#ff661e]">
           {title}
         </p>
@@ -43,6 +42,6 @@ export function StatusNotice({ open, title, message, linkHref, qrUrl, onDownload
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
