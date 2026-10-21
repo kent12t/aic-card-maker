@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { PageTransitionProvider } from "@/components/navigation/PageTransition";
 import "./globals.css";
 
 const openSans = Open_Sans({
@@ -26,7 +27,7 @@ export default function RootLayout({
       <body
         className={openSans.variable}
       >
-        {children}
+        <PageTransitionProvider>{children}</PageTransitionProvider>
       </body>
     </html>
   );

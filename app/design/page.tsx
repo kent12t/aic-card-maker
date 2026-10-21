@@ -1,7 +1,7 @@
 "use client";
 
 import { toPng } from "html-to-image";
-import { DragEvent, PointerEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { DragEvent, PointerEvent, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ActionButtons } from "@/components/card-maker/ActionButtons";
 import { CardCanvas } from "@/components/card-maker/CardCanvas";
@@ -9,6 +9,7 @@ import { PalettePanel } from "@/components/card-maker/PalettePanel";
 import { EditorInstructions } from "@/components/card-maker/EditorInstructions";
 import { HowItWorks } from "@/components/card-maker/HowItWorks";
 import { SiteHeader } from "@/components/landing/SiteHeader";
+import { PageTransitionReady } from "@/components/navigation/PageTransition";
 import { StatusNotice, type CardNotice } from "@/components/card-maker/StatusNotice";
 import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
@@ -103,15 +104,17 @@ function CardMaker() {
     return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
   }, [activeTab]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!cardViewportRef.current) return;
 
     const element = cardViewportRef.current;
-    const observer = new ResizeObserver(() => {
+    const measure = () => {
       const bounds = element.getBoundingClientRect();
       const ratio = bounds.width / BOARD_WIDTH;
       setCardScale(ratio);
-    });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
 
     observer.observe(element);
     return () => observer.disconnect();
@@ -359,6 +362,7 @@ function CardMaker() {
 
   return (
     <div className={`${styles.designer} ${circular.variable} ${caslon.variable}`}>
+      <PageTransitionReady imageSrc={selectedFrame} />
       <SiteHeader compact />
       <main className={styles.editor}>
         <section className={styles.library} aria-labelledby="design-title">

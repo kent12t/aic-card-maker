@@ -24,11 +24,13 @@
 }
 
 .aicLogo {
+  view-transition-name: aic-logo;
   width: clamp(100px, 9.17vw, 176px);
   height: auto;
 }
 
 .ccdLogo {
+  view-transition-name: ccd-logo;
   width: clamp(164px, 14.9vw, 286px);
   height: auto;
 }
@@ -58,6 +60,7 @@
 }
 
 .nav {
+  view-transition-name: site-navigation;
   position: relative;
   z-index: 10;
   display: flex;
@@ -90,6 +93,7 @@
 }
 
 .hero {
+  view-transition-name: page-content;
   display: grid;
   grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
   align-items: center;

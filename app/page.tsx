@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CardDeck } from "@/components/landing/CardDeck";
 import { SiteHeader } from "@/components/landing/SiteHeader";
+import { PageTransitionReady, TransitionLink } from "@/components/navigation/PageTransition";
 import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
 
@@ -21,6 +22,7 @@ export default async function Home({
 
   return (
     <div className={`${styles.landing} ${circular.variable} ${caslon.variable}`}>
+      <PageTransitionReady />
       <SiteHeader />
 
       <main className={styles.hero}>
@@ -52,9 +54,9 @@ export default async function Home({
           </ol>
 
           <div className={styles.actions}>
-            <Link href={designHref} className={`${styles.button} ${styles.primaryButton}`}>
+            <TransitionLink href={designHref} className={`${styles.button} ${styles.primaryButton}`}>
               Create your thank you card
-            </Link>
+            </TransitionLink>
             <Link href="/display" className={`${styles.button} ${styles.secondaryButton}`}>
               See the wall
             </Link>

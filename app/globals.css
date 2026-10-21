@@ -46,6 +46,52 @@ dialog::backdrop {
   backdrop-filter: blur(4px);
 }
 
+/* One quiet motion treatment for every shared modal, including its backdrop. */
+dialog[data-modal-state] {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+dialog[data-modal-state="open"][open] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+dialog[data-modal-state]::backdrop {
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+
+dialog[data-modal-state="open"][open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  dialog[data-modal-state="open"][open] {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  dialog[data-modal-state="open"][open]::backdrop {
+    opacity: 0;
+  }
+}
+
+dialog[data-modal-state="closing"][open] {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition-duration: 160ms;
+  transition-timing-function: ease-in;
+}
+
+dialog[data-modal-state="closing"][open]::backdrop {
+  transition-duration: 160ms;
+  transition-timing-function: ease-in;
+}
+
 dialog:focus,
 dialog:focus-visible {
   outline: none;
@@ -53,4 +99,73 @@ dialog:focus-visible {
 
 html:has(dialog:modal) {
   overflow: hidden;
+}
+
+/* Route snapshots keep the shared branding continuous as the header compacts.
+   Only the landing/designer link pair opts into these transitions. */
+html[data-page-transition]::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-page-transition]::view-transition-old(root),
+html[data-page-transition]::view-transition-new(root) {
+  animation-duration: 520ms;
+}
+
+html[data-page-transition]::view-transition-old(page-content),
+html[data-page-transition]::view-transition-new(page-content) {
+  width: 100%;
+  height: 100%;
+  /* Preserve each snapshot's layout instead of stretching the entire editor. */
+  object-fit: none;
+  object-position: top left;
+  mix-blend-mode: normal;
+}
+
+html[data-page-transition]::view-transition-old(page-content) {
+  animation: page-depart 200ms ease-out both;
+}
+
+html[data-page-transition]::view-transition-new(page-content) {
+  animation: page-arrive 440ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+html[data-page-transition="to-home"]::view-transition-old(page-content) {
+  animation-name: page-depart-reverse;
+}
+
+html[data-page-transition="to-home"]::view-transition-new(page-content) {
+  animation-name: page-arrive-reverse;
+}
+
+@keyframes page-depart {
+  to { opacity: 0; transform: translateY(-12px); }
+}
+
+@keyframes page-arrive {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes page-depart-reverse {
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes page-arrive-reverse {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog[data-modal-state][open],
+  dialog[data-modal-state][open]::backdrop {
+    transition: none;
+  }
+
+  html[data-page-transition]::view-transition-group(*),
+  html[data-page-transition]::view-transition-old(*),
+  html[data-page-transition]::view-transition-new(*) {
+    animation: none !important;
+  }
 }

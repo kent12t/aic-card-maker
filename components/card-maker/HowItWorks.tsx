@@ -4,6 +4,7 @@ import { CircleHelp, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
+import { usePageTransition } from "@/components/navigation/PageTransition";
 import styles from "@/app/design/page.module.css";
 
 const steps = [
@@ -15,13 +16,14 @@ const steps = [
 
 export function HowItWorks() {
   const [open, setOpen] = useState(true);
+  const { isTransitioning } = usePageTransition();
 
   return (
     <div className={styles.help}>
       <button type="button" className={styles.helpButton} onClick={() => setOpen(true)}>
         <CircleHelp aria-hidden="true" /> How it works
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} className={styles.helpDialog} labelledBy="how-it-works-title">
+      <Modal open={open && !isTransitioning} onClose={() => setOpen(false)} className={styles.helpDialog} labelledBy="how-it-works-title">
         <div className={styles.helpContent}>
           <button type="button" className={styles.closeHelp} aria-label="Close instructions" onClick={() => setOpen(false)}><X aria-hidden="true" /></button>
           <h2 id="how-it-works-title">Create your card in<br className={styles.mobileHelpBreak} /> a few easy steps:</h2>

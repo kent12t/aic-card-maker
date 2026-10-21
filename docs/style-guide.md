@@ -239,6 +239,24 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Under reduced motion, show a static layered deck, hide the animation control,
   and remove `will-change`.
 
+### Landing ↔ designer transition
+
+- The create CTA and the designer's home-logo link use the browser View
+  Transitions API. The two logos and navigation remain visually continuous;
+  the logos smoothly resize and reposition into the compact designer header.
+- Page content crossfades with a subtle upward entrance (20px), reversed when
+  returning home. Total motion is **520ms**, with
+  `cubic-bezier(0.22, 1, 0.36, 1)` easing and no whole-editor scaling.
+  The white landing surface blends into the designer's warm orange surface.
+- Wait for the actual destination page, initial canvas frame, and canvas
+  measurement before taking the destination snapshot. Open the automatic
+  how-it-works dialog after the transition finishes.
+- Unsupported browsers and reduced-motion users navigate normally. Links retain
+  native new-tab/modifier behavior, prefetching, and event-mode query parameters.
+- Shared orchestration lives in `components/navigation/PageTransition.tsx`;
+  snapshot animations live in `app/globals.css`. A bounded timeout skips motion
+  on a slow route so navigation cannot leave a frozen snapshot on screen.
+
 ## 8. Card designer (`/design`)
 
 ### Surfaces and typography
@@ -346,6 +364,17 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   blur**. This applies to help, restart confirmation, download/QR notices,
   submission notices, and errors. Background page scrolling is locked while
   a modal is open.
+- All modals share a subtle **220ms entrance**: fade in with a **10px upward
+  settle**, using `cubic-bezier(0.22, 1, 0.36, 1)`. Exit is a quicker **160ms**
+  fade with a **6px downward drift**, using `ease-in`. The backdrop fades on
+  matching timings while retaining its purple tint and 4px blur; no bounce or
+  scale effects. Motion lives in `app/globals.css`.
+- The shared `Modal` retains its last content throughout exit, including when a
+  notice is cleared. Keep the native dialog open, focus contained, and background
+  scroll locked until the exit finishes; then restore focus and remove retained
+  content. Reopening cancels a pending close. Reduced-motion users get immediate
+  opening and dismissal. Updates within an already-open notice do not replay
+  its entrance.
 - Clicking outside the panel or pressing Escape dismisses any modal. Clicking
   inside does not dismiss it. Native modal focus containment and restoration
   are preserved. The help popup also closes through its labeled top-right
