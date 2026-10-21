@@ -177,9 +177,7 @@ export class BrickWall {
     if (!this.cards.length) return;
 
     const perRow = Math.max(this.minBricks, Math.ceil(this.cards.length / ROWS));
-    this.rows.forEach((row, r) => {
-      for (let k = 0; k < perRow; k++) row.items.push(this.brick(this.cards[(k * ROWS + r) % this.cards.length]));
-    });
+    this.fillRows(this.cards, perRow);
   }
 
   private sync(cards: WallCard[]) {
@@ -211,9 +209,24 @@ export class BrickWall {
     const featuring = new Set<string>(this.features.map((feature) => feature.card._id));
     const pool = this.cards.filter((card) => !featuring.has(card._id));
     if (!pool.length) return;
-    for (const row of this.rows) {
-      let count = row.items.filter((item) => item.kind === "brick").length;
-      for (; count < this.minBricks; count++) insertAt(row, row.items.length, this.brick(pool[this.fillCounter++ % pool.length]));
+    this.fillRows(pool, this.minBricks);
+  }
+
+  private fillRows(pool: WallCard[], target: number) {
+    const counts = this.rows.map((row) => row.items.filter((item) => item.kind === "brick").length);
+    let missing = counts.reduce((total, count) => total + Math.max(0, target - count), 0);
+    while (missing > 0) {
+      // Shift each pass by one row so repeated copies don't stay in their original row,
+      // even when the number of cards is a multiple of the number of rows.
+      for (let i = 0; i < pool.length && missing > 0; i++) {
+        const r = (i + this.fillCounter) % ROWS;
+        if (counts[r] >= target) continue;
+        const row = this.rows[r];
+        insertAt(row, row.items.length, this.brick(pool[i]));
+        counts[r]++;
+        missing--;
+      }
+      this.fillCounter = (this.fillCounter + 1) % ROWS;
     }
   }
 

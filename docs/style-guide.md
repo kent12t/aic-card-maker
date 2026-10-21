@@ -430,6 +430,8 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 - The scrolling card area spans the full viewport width, without horizontal
   page padding. The header and loading/empty copy retain their 24px side inset.
+- Copies added to fill the wall rotate through different rows on successive
+  passes through the cards, both on initial layout and when refilling rows.
 - The black header has the AIC and CCD logos at the top left, in their original
   colors, at 64px / 120px wide (48px / 90px on phones). Its centered white title
   is “Celebrating Community Care Day • 1 Nov” in Circular Std Medium (500).
