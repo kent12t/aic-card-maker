@@ -1,4 +1,4 @@
-import { BOARD_SIZE, TEXT_MAX_RENDER_HEIGHT, TEXT_MAX_RENDER_WIDTH } from "@/lib/card-maker/constants";
+import { BOARD_HEIGHT, BOARD_WIDTH, TEXT_MAX_RENDER_HEIGHT, TEXT_MAX_RENDER_WIDTH } from "@/lib/card-maker/constants";
 import type { FontKey } from "@/lib/card-maker/types";
 
 export function clamp(value: number, min: number, max: number) {
@@ -8,18 +8,18 @@ export function clamp(value: number, min: number, max: number) {
 export function getBoundsForScale(width: number, height: number, scale: number, overflowRatio = 0) {
   const extraX = (width * scale - width) / 2;
   const extraY = (height * scale - height) / 2;
-  const overflowX = BOARD_SIZE * overflowRatio;
-  const overflowY = BOARD_SIZE * overflowRatio;
+  const overflowX = BOARD_WIDTH * overflowRatio;
+  const overflowY = BOARD_HEIGHT * overflowRatio;
   const minX = extraX - overflowX;
-  const maxX = BOARD_SIZE - width - extraX + overflowX;
+  const maxX = BOARD_WIDTH - width - extraX + overflowX;
   const minY = extraY - overflowY;
-  const maxY = BOARD_SIZE - height - extraY + overflowY;
+  const maxY = BOARD_HEIGHT - height - extraY + overflowY;
 
   return {
-    minX: minX <= maxX ? minX : (BOARD_SIZE - width) / 2,
-    maxX: minX <= maxX ? maxX : (BOARD_SIZE - width) / 2,
-    minY: minY <= maxY ? minY : (BOARD_SIZE - height) / 2,
-    maxY: minY <= maxY ? maxY : (BOARD_SIZE - height) / 2,
+    minX: minX <= maxX ? minX : (BOARD_WIDTH - width) / 2,
+    maxX: minX <= maxX ? maxX : (BOARD_WIDTH - width) / 2,
+    minY: minY <= maxY ? minY : (BOARD_HEIGHT - height) / 2,
+    maxY: minY <= maxY ? maxY : (BOARD_HEIGHT - height) / 2,
   };
 }
 

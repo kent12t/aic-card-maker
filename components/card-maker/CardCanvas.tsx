@@ -3,7 +3,7 @@
 import { Maximize2, Pencil, RotateCw, X } from "lucide-react";
 import Image from "next/image";
 import type { DragEvent, PointerEvent, RefObject } from "react";
-import { BOARD_SIZE } from "@/lib/card-maker/constants";
+import { BOARD_HEIGHT, BOARD_WIDTH } from "@/lib/card-maker/constants";
 import { getFontClass, getHandleStyle } from "@/lib/card-maker/utils";
 import type { InteractionMode, SelectedTarget, StickerItem, TextItem } from "@/lib/card-maker/types";
 
@@ -56,20 +56,20 @@ export function CardCanvas({
     <div
       ref={cardViewportRef}
       className="sticky top-0 z-20 w-full max-w-[443px] overflow-hidden bg-white lg:static lg:w-[443px]"
-      style={{ height: BOARD_SIZE * cardScale }}
+      style={{ height: BOARD_HEIGHT * cardScale }}
     >
       <div
         style={{
-          width: BOARD_SIZE,
-          height: BOARD_SIZE,
+          width: BOARD_WIDTH,
+          height: BOARD_HEIGHT,
           transform: `scale(${cardScale})`,
           transformOrigin: "top left",
         }}
       >
         <div
           ref={cardCaptureRef}
-          className="relative h-[443px] w-[443px] overflow-hidden"
-          style={{ backgroundImage: `url(${selectedFrame})`, backgroundSize: "cover", backgroundPosition: "center" }}
+          className="relative overflow-hidden"
+          style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT, backgroundImage: `url(${selectedFrame})`, backgroundSize: "100% 100%", backgroundPosition: "center" }}
         >
           <div
             ref={cardRef}

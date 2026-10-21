@@ -12,7 +12,9 @@ import { MobilePalettePanel } from "@/components/card-maker/MobilePalettePanel";
 import { StatusNotice } from "@/components/card-maker/StatusNotice";
 import { TextModal } from "@/components/card-maker/TextModal";
 import {
-  BOARD_SIZE,
+  BOARD_HEIGHT,
+  BOARD_WIDTH,
+  CARD_ASPECT_RATIO,
   frameSources,
   messageSources,
   personSources,
@@ -98,7 +100,7 @@ function CardMaker() {
 
   const paletteItems = useMemo<PaletteItem[]>(() => {
     if (activeTab === "frames") {
-      return frameSources.map((src) => ({ src, width: 126, height: 126, frame: true }));
+      return frameSources.map((src) => ({ src, width: 126, height: 126 / CARD_ASPECT_RATIO, frame: true }));
     }
     if (activeTab === "messages") {
       return messageSources.map((src) => ({ src, width: 110, height: 110, frame: false }));
@@ -117,8 +119,8 @@ function CardMaker() {
     const element = cardViewportRef.current;
     const observer = new ResizeObserver(() => {
       const bounds = element.getBoundingClientRect();
-      const ratio = bounds.width / BOARD_SIZE;
-      setCardScale(clamp(ratio, 0.66, 1));
+      const ratio = bounds.width / BOARD_WIDTH;
+      setCardScale(Math.min(ratio, 1));
     });
 
     observer.observe(element);
@@ -155,8 +157,8 @@ function CardMaker() {
       if (!interaction || !cardRef.current) return;
 
       const boardRect = cardRef.current.getBoundingClientRect();
-      const scaleX = BOARD_SIZE / Math.max(1, boardRect.width);
-      const scaleY = BOARD_SIZE / Math.max(1, boardRect.height);
+      const scaleX = BOARD_WIDTH / Math.max(1, boardRect.width);
+      const scaleY = BOARD_HEIGHT / Math.max(1, boardRect.height);
       const pointerX = (event.clientX - boardRect.left) * scaleX;
       const pointerY = (event.clientY - boardRect.top) * scaleY;
 
@@ -267,8 +269,8 @@ function CardMaker() {
     event.stopPropagation();
 
     const boardRect = cardRef.current?.getBoundingClientRect();
-    const scaleX = BOARD_SIZE / Math.max(1, boardRect?.width ?? BOARD_SIZE);
-    const scaleY = BOARD_SIZE / Math.max(1, boardRect?.height ?? BOARD_SIZE);
+    const scaleX = BOARD_WIDTH / Math.max(1, boardRect?.width ?? BOARD_WIDTH);
+    const scaleY = BOARD_HEIGHT / Math.max(1, boardRect?.height ?? BOARD_HEIGHT);
     const pointerX = (event.clientX - (boardRect?.left ?? 0)) * scaleX;
     const pointerY = (event.clientY - (boardRect?.top ?? 0)) * scaleY;
     const centerX = x + (width * scale) / 2;
@@ -333,8 +335,8 @@ function CardMaker() {
 
     const payload = JSON.parse(raw) as DragPayload;
     const rect = cardRef.current.getBoundingClientRect();
-    const scaleX = BOARD_SIZE / Math.max(1, rect.width);
-    const scaleY = BOARD_SIZE / Math.max(1, rect.height);
+    const scaleX = BOARD_WIDTH / Math.max(1, rect.width);
+    const scaleY = BOARD_HEIGHT / Math.max(1, rect.height);
     addSticker(payload, (event.clientX - rect.left) * scaleX, (event.clientY - rect.top) * scaleY);
   }
 
@@ -380,7 +382,7 @@ function CardMaker() {
       const id = `t${counter}`;
       const fontSize = 48;
       const box = measureTextBox(normalized, fontSize / 4);
-      const centered = clampPositionForScale(BOARD_SIZE / 2 - box.width / 2, BOARD_SIZE / 2 - box.height / 2, box.width, box.height, 1, 0.2);
+      const centered = clampPositionForScale(BOARD_WIDTH / 2 - box.width / 2, BOARD_HEIGHT / 2 - box.height / 2, box.width, box.height, 1, 0.2);
       setCounter((value) => value + 1);
       setTexts((items) => [
         ...items,
@@ -432,7 +434,7 @@ function CardMaker() {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2, "upload");
+    addSticker({ src, width: 120, height: 120 }, BOARD_WIDTH / 2, BOARD_HEIGHT / 2, "upload");
   }
 
   function onDropUpload(event: DragEvent<HTMLLabelElement>) {
@@ -440,7 +442,7 @@ function CardMaker() {
     const file = event.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const src = URL.createObjectURL(file);
-    addSticker({ src, width: 120, height: 120 }, BOARD_SIZE / 2, BOARD_SIZE / 2, "upload");
+    addSticker({ src, width: 120, height: 120 }, BOARD_WIDTH / 2, BOARD_HEIGHT / 2, "upload");
   }
 
   async function handleSave() {
@@ -629,7 +631,7 @@ function CardMaker() {
             onSelectTab={handleSelectMobileTab}
             onSelectFrame={setSelectedFrame}
             onAddText={handleAddText}
-            onAddSticker={(payload) => addSticker(payload, BOARD_SIZE / 2, BOARD_SIZE / 2)}
+            onAddSticker={(payload) => addSticker(payload, BOARD_WIDTH / 2, BOARD_HEIGHT / 2)}
             onDragStartItem={handlePaletteDragStart}
             onDropUpload={onDropUpload}
             onUpload={handleUpload}

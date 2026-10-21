@@ -75,10 +75,10 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
             key={brick.key}
             ref={register(brick.key)}
             className="absolute left-0 top-0 p-1 will-change-transform"
-            style={{ width: snapshot.cell, height: snapshot.cell, transform: OFFSCREEN }}
+            style={{ width: snapshot.cellWidth, height: snapshot.cell, transform: OFFSCREEN }}
           >
             <div className="relative h-full w-full overflow-hidden rounded-[6px]">
-              <Image src={brick.url} alt="Community Care Day card" fill sizes={`${snapshot.cell}px`} className="object-cover" unoptimized />
+              <Image src={brick.url} alt="Community Care Day card" fill sizes={`${snapshot.cellWidth}px`} className="object-contain" unoptimized />
             </div>
           </div>
         ))}
@@ -88,10 +88,10 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
             key={feature.key}
             ref={register(feature.key)}
             className="absolute left-0 top-0 z-10 will-change-transform"
-            style={{ width: snapshot.bigSize, height: snapshot.bigSize, transform: OFFSCREEN }}
+            style={{ width: snapshot.bigWidth, height: snapshot.bigSize, transform: OFFSCREEN }}
           >
             <div className="relative h-full w-full overflow-hidden rounded-[16px] shadow-[0_0_60px_rgba(255,102,30,0.45)]">
-              <Image src={feature.url} alt="New Community Care Day card" fill sizes={`${Math.ceil(snapshot.bigSize)}px`} className="object-cover" unoptimized priority />
+              <Image src={feature.url} alt="New Community Care Day card" fill sizes={`${Math.ceil(snapshot.bigWidth)}px`} className="object-contain" unoptimized priority />
             </div>
           </div>
         ))}

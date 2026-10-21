@@ -1,6 +1,10 @@
-import type { FontButton, TabLabel } from "@/lib/card-maker/types";
+import type { FontButton, TabLabel } from "./types";
 
-export const BOARD_SIZE = 443;
+export const CARD_ASPECT_RATIO = 64 / 53;
+export const BOARD_WIDTH = 443;
+export const BOARD_HEIGHT = BOARD_WIDTH / CARD_ASPECT_RATIO;
+export const CARD_EXPORT_WIDTH = 800;
+export const CARD_EXPORT_HEIGHT = Math.round(CARD_EXPORT_WIDTH / CARD_ASPECT_RATIO);
 export const TEXT_MAX_RENDER_WIDTH = 390;
 export const TEXT_MAX_RENDER_HEIGHT = 320;
 

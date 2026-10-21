@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { DragEvent } from "react";
-import { TAB_LABELS } from "@/lib/card-maker/constants";
+import { CARD_ASPECT_RATIO, TAB_LABELS } from "@/lib/card-maker/constants";
 import type { DragPayload, PaletteItem, TabKey } from "@/lib/card-maker/types";
 
 type DesktopPalettePanelProps = {
@@ -51,11 +51,12 @@ export function DesktopPalettePanel({
                     key={item.src}
                     type="button"
                     onClick={() => onSelectFrame(item.src)}
-                    className={`relative h-[126px] w-[126px] overflow-hidden rounded-sm border ${
+                    style={{ aspectRatio: CARD_ASPECT_RATIO }}
+                    className={`relative w-[126px] overflow-hidden rounded-sm border ${
                       selectedFrame === item.src ? "border-[#ff661e]" : "border-transparent"
                     }`}
                   >
-                    <Image src={item.src} alt="frame" fill sizes="126px" className="object-cover" unoptimized priority={isAboveFold} />
+                    <Image src={item.src} alt="frame" fill sizes="126px" className="object-contain" unoptimized priority={isAboveFold} />
                   </button>
                 );
               }

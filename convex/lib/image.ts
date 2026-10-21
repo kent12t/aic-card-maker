@@ -1,4 +1,5 @@
-export const CARD_SIZE = 800;
+import { CARD_EXPORT_HEIGHT, CARD_EXPORT_WIDTH } from "../../lib/card-maker/constants";
+
 export const MAX_CARD_BYTES = 2 * 1024 * 1024;
 
 type ImageInfo = { mimeType: "image/png" | "image/webp"; width: number; height: number };
@@ -48,6 +49,6 @@ export function validateCardImage(bytes: Uint8Array): ImageInfo | string {
   if (bytes.length === 0 || bytes.length > MAX_CARD_BYTES) return "Image must be between 1 byte and 2 MB";
   const info = readPng(bytes) ?? readWebp(bytes);
   if (!info) return "Only PNG or WebP images are allowed";
-  if (info.width !== CARD_SIZE || info.height !== CARD_SIZE) return `Image must be ${CARD_SIZE}x${CARD_SIZE}`;
+  if (info.width !== CARD_EXPORT_WIDTH || info.height !== CARD_EXPORT_HEIGHT) return `Image must be ${CARD_EXPORT_WIDTH}x${CARD_EXPORT_HEIGHT}`;
   return info;
 }

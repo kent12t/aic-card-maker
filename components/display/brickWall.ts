@@ -1,10 +1,13 @@
 import type { Id } from "@/convex/_generated/dataModel";
+import { CARD_ASPECT_RATIO } from "@/lib/card-maker/constants";
 
 export type WallCard = { _id: Id<"cards">; _creationTime: number; url: string };
 
 export type WallSnapshot = {
   cell: number;
+  cellWidth: number;
   bigSize: number;
+  bigWidth: number;
   bricks: { key: string; url: string }[];
   features: { key: string; url: string }[];
 };
@@ -104,7 +107,9 @@ export class BrickWall {
   snapshot(): WallSnapshot {
     return {
       cell: this.cell,
+      cellWidth: this.cellWidth,
       bigSize: this.bigSize,
+      bigWidth: this.bigWidth,
       bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (item.kind === "brick" ? [{ key: item.key, url: item.card.url }] : []))),
       features: this.features.map((feature) => ({ key: feature.key, url: feature.card.url })),
     };
@@ -114,13 +119,21 @@ export class BrickWall {
     return this.cell * BIG_CELLS;
   }
 
+  private get cellWidth() {
+    return (this.cell - BRICK_PADDING * 2) * CARD_ASPECT_RATIO + BRICK_PADDING * 2;
+  }
+
+  private get bigWidth() {
+    return this.bigSize * CARD_ASPECT_RATIO;
+  }
+
   private get gapWidth() {
-    return this.cell * GAP_CELLS;
+    return this.cellWidth * GAP_CELLS;
   }
 
   // Rings are longer than the screen plus a few gaps, so tail insertions and removals always happen off-screen.
   private get minBricks() {
-    return Math.ceil((this.width + 3 * this.gapWidth) / this.cell) + 2;
+    return Math.ceil((this.width + 3 * this.gapWidth) / this.cellWidth) + 2;
   }
 
   private nextKey() {
@@ -132,7 +145,7 @@ export class BrickWall {
   }
 
   private widthOf(item: Item) {
-    return item.kind === "brick" ? this.cell : item.width;
+    return item.kind === "brick" ? this.cellWidth : item.width;
   }
 
   private hasBricks() {
@@ -148,7 +161,7 @@ export class BrickWall {
     this.cards = [...cards].reverse();
     this.known = new Set(cards.map((card) => card._id));
     this.features = [];
-    this.rows = Array.from({ length: ROWS }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cell / 2 : 0 }));
+    this.rows = Array.from({ length: ROWS }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cellWidth / 2 : 0 }));
     if (!this.cards.length) return;
 
     const perRow = Math.max(this.minBricks, Math.ceil(this.cards.length / ROWS));
@@ -288,7 +301,7 @@ export class BrickWall {
         if (item.kind !== "gap") continue;
         const eased = easeInOutCubic(item.feature.progress);
         // While rejoining, the home row's gap closes down to one brick-sized slot for the card to land in.
-        const minWidth = this.isRejoining(item.feature) && item.row === item.feature.homeRow ? this.cell : 0;
+        const minWidth = this.isRejoining(item.feature) && item.row === item.feature.homeRow ? this.cellWidth : 0;
         item.width = minWidth + (this.gapWidth - minWidth) * eased;
       }
 
@@ -356,7 +369,7 @@ export class BrickWall {
         y = (feature.homeRow + 0.5) * this.cell + (y - (feature.homeRow + 0.5) * this.cell) * eased;
         scale = (brickSize + (this.bigSize - brickSize) * eased) / this.bigSize;
       }
-      element.style.transform = `translate3d(${x - this.bigSize / 2}px, ${y - this.bigSize / 2}px, 0) scale(${scale})`;
+      element.style.transform = `translate3d(${x - this.bigWidth / 2}px, ${y - this.bigSize / 2}px, 0) scale(${scale})`;
     }
   }
 }

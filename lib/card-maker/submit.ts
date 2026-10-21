@@ -1,6 +1,5 @@
 import { toCanvas } from "html-to-image";
-
-const CARD_EXPORT_SIZE = 800;
+import { CARD_EXPORT_HEIGHT, CARD_EXPORT_WIDTH } from "@/lib/card-maker/constants";
 
 export const convexSiteUrl =
   process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL?.replace(/\.cloud$/, ".site");
@@ -10,8 +9,8 @@ export async function renderCardImage(node: HTMLElement): Promise<Blob> {
   const canvas = await toCanvas(node, {
     cacheBust: true,
     pixelRatio: 1,
-    canvasWidth: CARD_EXPORT_SIZE,
-    canvasHeight: CARD_EXPORT_SIZE,
+    canvasWidth: CARD_EXPORT_WIDTH,
+    canvasHeight: CARD_EXPORT_HEIGHT,
   });
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not render card"))), "image/webp", 0.9);

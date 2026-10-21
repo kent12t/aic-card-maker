@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { CARD_ASPECT_RATIO } from "@/lib/card-maker/constants";
 
 /** A personal replay; never writes to Convex or changes another wall's animation. */
 export function CardSpotlight({ url }: { url: string }) {
@@ -43,7 +44,7 @@ export function CardSpotlight({ url }: { url: string }) {
       {failed ? (
         <p role="status" className="text-center text-white">We couldn’t load the preview. Your card has still been submitted.</p>
       ) : (
-        <div className="relative aspect-square w-full max-w-[min(640px,max(80px,calc(100dvh-300px)))] overflow-hidden rounded-2xl shadow-[0_0_60px_rgba(255,102,30,0.45)]">
+        <div style={{ aspectRatio: CARD_ASPECT_RATIO }} className="relative w-full max-w-[min(640px,max(80px,calc(100dvh-300px)))] overflow-hidden rounded-2xl shadow-[0_0_60px_rgba(255,102,30,0.45)]">
           <Image
             src={url}
             alt="Your submitted thank you card"
