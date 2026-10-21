@@ -93,6 +93,10 @@ H1 tracking is `-0.035em`. Body tracking is `-0.025em`, changing to
 
 The hero heading has three explicit lines: “Say thank you” / “to the people” /
 “who care.” The first line is dark orange and the others are orange.
+The description begins “Create a card” and refers to a “Community Care Professional”.
+Step captions are **Personalise → Submit → Share**; the secondary CTA reads
+**View the Thank You Wall**. Always capitalise **Thank You Wall** in navigation,
+buttons, body copy, popup instructions, and page metadata.
 
 ## 3. Buttons
 
@@ -140,9 +144,8 @@ Keyboard focus on landing links and controls uses a `3px` purple outline with
 - Mobile buttons have `flex-grow: 1` and fill remaining horizontal space.
 - Mobile row margin is
   `32px clamp(0px, calc((100cqw - 316px) / 2), 10px) 0`.
-- With the current labels, the buttons fit side by side at 360px and 394px;
-  at 320px they naturally wrap. Do not force two columns by shrinking text
-  below 14px or clipping labels.
+- Allow the longer CTA labels to wrap the button row when needed. Do not force
+  two columns by shrinking text below 14px or clipping labels.
 
 ## 4. Corner radii and outlines
 
@@ -202,11 +205,14 @@ is a compositional reference; retain the subsequent smaller deck and wider copy.
 
 - Logo group links to `/`.
 - “Thank You Wall” links to `/display`.
-- “CCD Day” links to `https://for.sg/ccd26` in a new tab, with
+- “Community Care Day” links to `https://for.sg/ccd26` in a new tab, with
   `rel="noopener noreferrer"`.
 - Main CTA links to `/design`; `/?event=true` carries event mode through to
   `/design?event=true`.
 - The display-wall create CTA also links directly to `/design`.
+- Browser-tab titles use **Create a thank you card | Community Care Day** on
+  the landing page, **Create your thank you card | Community Care Day** in the
+  editor, and **Thank You Wall | Community Care Day** on the wall.
 
 Desktop links use violet, a thin vertical separator, and underline on hover.
 On mobile use a `44 × 44px` hamburger button hit area and a pale-purple dropdown
@@ -268,7 +274,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   to fill all remaining space below the header. Do not calculate its height by
   subtracting a fixed header height; that leaves a white footer at some sizes.
 - The heading is Circular Std Black in dark orange. Desktop uses two lines,
-  “Design your” / “thank you card”, at `clamp(36px, 3.35vw, 64px)`.
+  “Create your” / “thank you card”, at `clamp(36px, 3.35vw, 64px)`.
   At <=1100px the explicit line break is removed; mobile type is
   `clamp(24px, 7.1vw, 36px)` and wraps naturally on the narrowest screens.
 - Body copy uses Caslon; tab labels and action buttons use Circular Std Black.
@@ -283,7 +289,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 ### Palette and responsive layout
 
-- Tab order: **Frames → CCP Stickers → Messages → Stickers**. Messages is the
+- Tab order: **Frames → Avatars → Messages → Stickers**. Messages is the
   initially selected tab; the initial frame is the orange heart (`frame_6.webp`).
 - Tabs sit directly on the orange surface. The active tab has a white fill,
   rounded top corners, and curved lower joins into the white palette. Labels
@@ -302,7 +308,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Palette item gutters are **0 on all screen sizes**; the artwork's built-in
   transparent safe zones provide the spacing between images.
 - Palette item boxes and their selector borders preserve the artwork ratios:
-  **frames 64:53**, **CCP stickers 4:5**, **messages and stickers 1:1**.
+  **frames 64:53**, **avatars 4:5**, **messages and stickers 1:1**.
   Use `object-fit: contain` without scaling or cropping; keep the complete
   asset visible, including its transparent padding. Desktop rows size naturally
   to their items. In the horizontal tray, category-specific column widths derive
@@ -354,8 +360,10 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   “Let’s start” button. The CTA uses the same **raised resting state**, lowered
   mouse hover, flat pressed state, and reduced-motion behavior as the editor
   action buttons (5px desktop / 3px mobile hard shadow at rest).
-- Use the existing `icon_design.svg`, `icon_message.svg`, `icon_avatar.svg`,
-  and `icon_submit.svg` assets for the four steps. Rotate `icon_arrow.svg` for
+- Help steps: **Choose a frame**, **Select Avatars**, **Pick your thank you
+  message and stickers**, then **Submit your card to be part of the Thank You Wall**.
+- Use the existing `icon_design.svg`, `icon_avatar.svg`, `icon_message.svg`,
+  and `icon_submit.svg` assets in that order for the four steps. Rotate `icon_arrow.svg` for
   the vertical dotted connectors. Desktop step rows contain number, icon, and
   label inline. On mobile the icon is above the number/label row; the heading
   and final step use mobile-specific line breaks.
@@ -413,7 +421,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   and editor selection to a fresh card.
 - **Regular download:** `messages/msg_9.webp` supplies the “Thank you” artwork,
   followed by “for participating!” and “Your download will start shortly.”
-  Actions: **Back to my card**, **Make a new card**, **Share with a friend**.
+  Actions: **Back to my card**, **Create a new card**, **Share with a friend**.
   Sharing uses the Web Share API with the downloaded card file where supported,
   otherwise the site link; browsers without native sharing copy the site link
   and show inline feedback. Making a new card resets the editor.
@@ -425,10 +433,10 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - **Submission:** “Card submitted!” appears above a preview of the exact image
   blob sent to the API. Decorate its top-left with `stickers/sticker_6.webp` and
   bottom-right with `stickers/sticker_1.webp`, retaining their transparent safe
-  zones. Below it, regular mode says only “Thank you!” with **View my card**
+  zones. Below it, regular mode says only “Thank you!” with **View the Thank You Wall**
   (links to `/display?card=<submitted card ID>` for a client-local replay of the
   wall's new-card entrance) and **Close**. Event mode adds “Now look out for it on
-  our display wall.” and has only **Close**. Closing preserves the editor's card.
+  our Thank You Wall.” and has only **Close**. Closing preserves the editor's card.
 
 ## 9. Display-wall personal replay (`/display?card=<ID>`)
 

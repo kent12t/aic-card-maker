@@ -79,7 +79,7 @@ export function StatusNotice({ notice, eventMode, onRestart, onNewCard, onClose 
             <Image src="/assets/stickers/sticker_6.webp" alt="" width={120} height={120} className={styles.previewStickerTop} />
             <Image src="/assets/stickers/sticker_1.webp" alt="" width={120} height={120} className={styles.previewStickerBottom} />
           </div>
-          <p className={styles.noticeCopy}>Thank you!{eventMode && <><br />Now look out for it on our display wall.</>}</p>
+          <p className={styles.noticeCopy}>Thank you!{eventMode && <><br />Now look out for it on our Thank You Wall.</>}</p>
         </>}
         {(notice?.kind === "loading" || notice?.kind === "error") && <p className={styles.noticeCopy} role="status">{notice.message}</p>}
 
@@ -89,11 +89,11 @@ export function StatusNotice({ notice, eventMode, onRestart, onNewCard, onClose 
             <button type="button" className={`${styles.noticeButton} ${styles.clearButton}`} onClick={onRestart}>Clear</button>
           </> : notice?.kind === "download" ? <>
             <button type="button" className={styles.noticeButton} onClick={onClose}>Back to my card</button>
-            <button type="button" className={styles.noticeButton} onClick={onNewCard}>Make a new card</button>
+            <button type="button" className={styles.noticeButton} onClick={onNewCard}>Create a new card</button>
             <button type="button" className={styles.noticeButton} disabled={isSharing} onClick={() => void shareCard()}>{isSharing ? "Sharing…" : "Share with a friend"}</button>
           </> : <>
             {notice?.kind === "eventDownload" && <button type="button" className={styles.noticeButton} onClick={onClose}>Back to my card</button>}
-            {notice?.kind === "submitted" && !eventMode && <Link href={`/display?card=${encodeURIComponent(notice.cardId)}`} className={styles.noticeButton}>View my card</Link>}
+            {notice?.kind === "submitted" && !eventMode && <Link href={`/display?card=${encodeURIComponent(notice.cardId)}`} className={styles.noticeButton}>View the Thank You Wall</Link>}
             <button type="button" className={styles.noticeButton} onClick={onClose}>Close</button>
           </>}
         </div>

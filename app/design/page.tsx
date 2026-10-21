@@ -363,7 +363,7 @@ function CardMaker() {
       <SiteHeader compact />
       <main className={styles.editor}>
         <section className={styles.library} aria-labelledby="design-title">
-          <h1 id="design-title" className={styles.heading}>Design your<br className={styles.headingBreak} /> thank you card</h1>
+          <h1 id="design-title" className={styles.heading}>Create your<br className={styles.headingBreak} /> thank you card</h1>
           <p className={styles.description}>Select an element to add to your card.</p>
           <PalettePanel
             activeTab={activeTab}

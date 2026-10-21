@@ -59,7 +59,7 @@ export function PalettePanel({ activeTab, paletteItems, selectedFrame, onSelectT
               key={item.src}
               type="button"
               className={`${styles.paletteItem} ${item.frame ? styles.frameItem : ""}`}
-              aria-label={item.frame ? `Select frame ${index + 1}` : `Add ${activeTab === "persons" ? "CCP sticker" : activeTab === "messages" ? "message" : "sticker"} ${index + 1}`}
+              aria-label={item.frame ? `Select frame ${index + 1}` : `Add ${activeTab === "persons" ? "avatar" : activeTab === "messages" ? "message" : "sticker"} ${index + 1}`}
               aria-pressed={item.frame ? selectedFrame === item.src : undefined}
               draggable={!item.frame}
               onClick={() => item.frame ? onSelectFrame(item.src) : onAddSticker(item)}

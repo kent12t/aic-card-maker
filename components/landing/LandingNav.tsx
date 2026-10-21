@@ -55,7 +55,7 @@ export function LandingNav() {
       <div id="landing-navigation" className={`${styles.navLinks} ${open ? styles.navOpen : ""}`}>
         <Link href="/display" onClick={() => setOpen(false)}>Thank You Wall</Link>
         <a href="https://for.sg/ccd26" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-          CCD Day
+          Community Care Day
         </a>
       </div>
     </nav>

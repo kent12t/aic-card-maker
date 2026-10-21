@@ -14,7 +14,7 @@ export function IntroContent({ titleClassName, textClassName }: IntroContentProp
         your own picture.
       </p>
       <p className={textClassName}>
-        Once you&apos;re done, click submit and watch your card become a part of a beautiful photo mosaic celebrating Community Care
+        Once you&apos;re done, click submit and watch your card become a part of a beautiful Thank You Wall celebrating Community Care
         Professionals on Community Care Day.
       </p>
     </div>

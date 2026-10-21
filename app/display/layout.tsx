@@ -4,7 +4,7 @@ import { ConvexClientProvider } from "@/components/display/ConvexClientProvider"
 import { circular } from "@/lib/fonts";
 
 export const metadata: Metadata = {
-  title: "Community Care Day Display Wall",
+  title: "Thank You Wall | Community Care Day",
 };
 
 export default function DisplayLayout({ children }: { children: ReactNode }) {

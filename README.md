@@ -1,6 +1,6 @@
 # AIC Card Maker
 
-A Next.js card customizer for Community Care Day. Users can pick a frame, arrange preset messages, stickers, and person assets, and export the result as a PNG.
+A Next.js card customizer for Community Care Day. Users can pick a frame, arrange preset messages, stickers, and avatars, and export the result as a PNG.
 
 ## Stack
 
@@ -48,7 +48,7 @@ npm run dev
 - `app/layout.tsx` - global layout, fonts, and metadata (includes favicon config)
 - `components/card-maker/` - page UI components (canvas, editor panels, notices, buttons)
 - `lib/card-maker/` - shared domain types, constants, and utility functions
-- `public/assets/` - frame/sticker/message/person image assets
+- `public/assets/` - frame, sticker, message, and avatar image assets
 - `public/logo.svg` - SVG logo
 - `public/favicon.svg` - SVG favicon used in `<head>`
 

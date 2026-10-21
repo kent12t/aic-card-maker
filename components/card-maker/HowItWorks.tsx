@@ -9,9 +9,9 @@ import styles from "@/app/design/page.module.css";
 
 const steps = [
   { icon: "icon_design.svg", label: "Choose a frame" },
-  { icon: "icon_message.svg", label: "Select a message to say thanks" },
-  { icon: "icon_avatar.svg", label: "Add avatars and stickers" },
-  { icon: "icon_submit.svg", label: <>Submit your card to be<br className={styles.mobileHelpBreak} /> part<br className={styles.desktopHelpBreak} /> of the photo mosaic</> },
+  { icon: "icon_avatar.svg", label: "Select Avatars" },
+  { icon: "icon_message.svg", label: "Pick your thank you message and stickers" },
+  { icon: "icon_submit.svg", label: <>Submit your card to be<br className={styles.mobileHelpBreak} /> part<br className={styles.desktopHelpBreak} /> of the Thank You Wall</> },
 ];
 
 export function HowItWorks() {

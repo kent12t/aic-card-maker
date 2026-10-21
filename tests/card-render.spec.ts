@@ -75,8 +75,8 @@ test("export matches the editor with rotated, resized, overlapping stickers", as
   await page.mouse.down();
   await page.mouse.move(resize.x + 35, resize.y + 40);
   await page.mouse.up();
-  await page.getByRole("tab", { name: "CCP Stickers", exact: true }).click();
-  await page.getByRole("button", { name: "Add CCP sticker 1", exact: true }).click();
+  await page.getByRole("tab", { name: "Avatars", exact: true }).click();
+  await page.getByRole("button", { name: "Add avatar 1", exact: true }).click();
   const board = page.locator('[style*="background-image:"]');
   await board.click({ position: { x: 20, y: 20 } });
   await page.locator('button[aria-label="Move sticker"] img').evaluateAll(async (images) => {

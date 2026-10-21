@@ -7,7 +7,7 @@ import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
 
 const steps = [
-  { label: "Design", icon: "icon_design.svg" },
+  { label: "Personalise", icon: "icon_design.svg" },
   { label: "Submit", icon: "icon_submit.svg" },
   { label: "Share", icon: "icon_share.svg" },
 ];
@@ -33,7 +33,7 @@ export default async function Home({
             <span>who care.</span>
           </h1>
           <p className={styles.description}>
-            Design a card in two minutes and send it to a community care worker – a nurse,
+            Create a card in two minutes and send it to a Community Care Professional – a nurse,
             therapist, befriender or care staff who made a difference.
           </p>
 
@@ -58,7 +58,7 @@ export default async function Home({
               Create your thank you card
             </TransitionLink>
             <Link href="/display" className={`${styles.button} ${styles.secondaryButton}`}>
-              See the wall
+              View the Thank You Wall
             </Link>
           </div>
         </section>

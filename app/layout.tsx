@@ -9,8 +9,8 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Community Care Day Card Maker",
-  description: "Drag and drop sticker card maker",
+  title: "Create a thank you card | Community Care Day",
+  description: "Create a personalised thank you card for a Community Care Professional and share it on the Thank You Wall.",
   icons: {
     icon: [{ url: "/assets/misc/ccd-logo-only.svg", type: "image/svg+xml" }],
     shortcut: "/assets/misc/ccd-logo-only.svg",

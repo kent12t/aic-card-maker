@@ -8,7 +8,7 @@ export const CARD_EXPORT_HEIGHT = Math.round(CARD_EXPORT_WIDTH / CARD_ASPECT_RAT
 
 export const TAB_LABELS: TabLabel[] = [
   { key: "frames", label: "Frames" },
-  { key: "persons", label: "CCP Stickers" },
+  { key: "persons", label: "Avatars" },
   { key: "messages", label: "Messages" },
   { key: "stickers", label: "Stickers" },
 ];

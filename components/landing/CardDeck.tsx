@@ -15,7 +15,7 @@ export function CardDeck() {
   const [paused, setPaused] = useState(false);
 
   return (
-    <section className={styles.deckSection} aria-label="Celebrating our community care workers">
+    <section className={styles.deckSection} aria-label="Celebrating our Community Care Professionals">
       <div className={`${styles.deck} ${paused ? styles.paused : ""}`}>
         {cards.map((card, index) => (
           <div key={card.image} className={`${styles.card} ${styles[`card${index + 1}`]}`}>
