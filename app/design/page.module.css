@@ -103,7 +103,7 @@
   content: none;
 }
 
-.tab:nth-child(2):not([aria-selected="true"])::before {
+.tab:not(:first-child):not([aria-selected="true"])::before {
   position: absolute;
   top: 25%;
   left: 0;
@@ -112,8 +112,7 @@
   content: "";
 }
 
-.tab[aria-selected="true"] + .tab::before,
-.tab:nth-child(2)[aria-selected="true"]::before {
+.tab[aria-selected="true"] + .tab::before {
   border-left: 0;
 }
 

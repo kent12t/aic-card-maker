@@ -269,7 +269,8 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   initially selected tab; the initial frame is the orange heart (`frame_6.webp`).
 - Tabs sit directly on the orange surface. The active tab has a white fill,
   rounded top corners, and curved lower joins into the white palette. Labels
-  use purple; a thin separator precedes CCP Stickers when applicable.
+  use purple; thin purple separators appear between adjacent inactive tabs.
+  Separators are hidden on both sides of the active tab.
 - The first and last active tabs omit their outward-facing lower join. The
   palette's corresponding top corner becomes square so it meets the active tab
   flush, without a protruding white shape; inward-facing joins remain curved.
