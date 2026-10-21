@@ -17,6 +17,7 @@ buttons that start raised. Use this visual language when updating the designer.
 | `components/landing/SiteHeader.tsx` | Shared logo group and navigation; compact desktop designer variant |
 | `components/landing/CardDeck.tsx` | Animated cards and pause control |
 | `components/Modal.tsx` | Shared native dialog behavior, focus containment, and dismissal |
+| `components/card-maker/StatusNotice.tsx` | Clear, download/QR, submission, loading, and error modals |
 | `app/design/page.tsx` | Responsive card designer and editor interactions |
 | `app/design/page.module.css` | Designer layout, tabs, palette, buttons, instructions, and help modal |
 
@@ -351,6 +352,47 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Focusing the dialog container itself adds **no outline or other focus-only
   styling**. Retain visible keyboard focus indicators on buttons and links
   inside the dialog.
+
+### Clear, download, and submission modals
+
+- These notices reuse the how-it-works cream surface, purple headings, local
+  Circular typography, lavender top-right X, shared backdrop, and native-dialog
+  dismissal/focus behavior. They are at most **760px wide** on desktop, with
+  `76px 80px 64px` content padding. On mobile they use
+  `min(430px, 100% - 32px)` width and `58px 24px 38px` padding, preserving room
+  for artwork and labels. All help and notice panels disable horizontal
+  overflow, including the transparent bounds of decorative stickers. Card
+  previews, QR codes, and thank-you artwork also scale against viewport height;
+  desktops at <=850px height use tighter spacing and smaller controls. Vertical
+  scrolling is a fallback only when content cannot fit on a short viewport;
+  never clip essential copy or actions to hide overflow.
+- Actions form a full-width vertical stack: orange fills, dark-purple outlines,
+  and the same raised resting / lowered mouse hover / flat pressed states as
+  the help CTA. Desktop buttons have 64px minimum height and 17px corners;
+  mobile uses 44px minimum height, 8px corners, and 1.5px outlines. Keep visible
+  keyboard focus and reduced-motion support on buttons and button-styled links.
+- **Clear:** “Clear your card?” and “All unsaved progress will be lost. Would
+  you like to proceed?”; actions are **Cancel**, then **Clear**. The destructive
+  action uses **`#e84221` with white text**. Confirming resets the frame, stickers,
+  and editor selection to a fresh card.
+- **Regular download:** `messages/msg_9.webp` supplies the “Thank you” artwork,
+  followed by “for participating!” and “Your download will start shortly.”
+  Actions: **Back to my card**, **Make a new card**, **Share with a friend**.
+  Sharing uses the Web Share API with the downloaded card file where supported,
+  otherwise the site link; browsers without native sharing copy the site link
+  and show inline feedback. Making a new card resets the editor.
+- **Event download (`event=true`):** upload the image using the existing download
+  endpoint and render a QR code for its hosted image URL. Heading: “Scan the QR
+  code to download the image into your mobile.” The QR opens that same image
+  when clicked. Follow it with the tap-and-hold saving instructions and thank-you
+  copy; actions are **Back to my card** and **Close**, both dismissing the modal.
+- **Submission:** “Card submitted!” appears above a preview of the exact image
+  blob sent to the API. Decorate its top-left with `stickers/sticker_6.webp` and
+  bottom-right with `stickers/sticker_1.webp`, retaining their transparent safe
+  zones. Below it, regular mode says only “Thank you!” with **View my card**
+  (links to `/display?card=<submitted card ID>` for the existing client-side
+  spotlight) and **Close**. Event mode adds “Now look out for it on our display
+  wall.” and has only **Close**. Closing preserves the editor's card.
 
 ## 9. Maintaining this guide
 

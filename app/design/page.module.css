@@ -359,7 +359,8 @@
   border-radius: clamp(28px, 2.7vw, 52px);
   background: #fff9ed;
   color: var(--color-purple);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-color: var(--color-violet) var(--scroll-track);
   box-shadow: 0 12px 40px rgb(0 0 0 / 20%);
 }
@@ -482,6 +483,137 @@
   stroke-width: 5;
 }
 
+.noticeDialog {
+  width: min(760px, calc(100% - 64px));
+}
+
+.noticeContent {
+  position: relative;
+  padding: 76px 80px 64px;
+  text-align: center;
+}
+
+.noticeTitle {
+  margin: 0;
+  font-family: var(--font-circular), sans-serif;
+  font-size: clamp(32px, 3vw, 46px);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.noticeCopy {
+  margin: 24px 0 0;
+  font-family: var(--font-circular), sans-serif;
+  font-size: clamp(20px, 1.75vw, 28px);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+
+.noticeActions {
+  display: grid;
+  gap: 18px;
+  margin-top: 36px;
+  padding: 4px 4px 0;
+}
+
+.noticeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  border: 3px solid var(--color-dark-purple);
+  border-radius: 17px;
+  background: var(--color-orange);
+  color: var(--color-dark-purple);
+  font-family: var(--font-circular), sans-serif;
+  font-size: clamp(22px, 2vw, 32px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-decoration: none;
+  box-shadow: 5px 5px 0 var(--color-dark-purple);
+  transform: translate(-4px, -4px);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  cursor: pointer;
+}
+
+.noticeButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.clearButton {
+  background: #e84221;
+  color: #fff;
+}
+
+.thankYouImage {
+  display: block;
+  width: min(360px, 85%, max(160px, calc(100dvh - 480px)));
+  height: auto;
+  margin: -36px auto -24px;
+  object-fit: contain;
+}
+
+.noticeQr {
+  display: block;
+  width: min(320px, 100%, max(160px, calc(100dvh - 540px)));
+  margin: 28px auto 0;
+  background: #fff;
+}
+
+.noticeQr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.submittedPreview {
+  position: relative;
+  width: min(100%, max(160px, calc((100dvh - 540px) * 64 / 53)));
+  margin: 28px auto 0;
+}
+
+.submittedImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 9%;
+}
+
+.previewStickerTop,
+.previewStickerBottom {
+  position: absolute;
+  width: 24%;
+  height: auto;
+  pointer-events: none;
+}
+
+.previewStickerTop {
+  /* The sparkle asset has generous transparent padding; size its full box
+     so the visible artwork straddles the card's top-left corner. */
+  top: -24%;
+  left: -31%;
+  width: 65%;
+}
+
+.previewStickerBottom {
+  right: -14%;
+  bottom: 0;
+  width: 32%;
+}
+
+.shareFeedback {
+  margin: 20px 0 0;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
 @media (min-width: 601px) and (max-width: 1100px) {
   .helpStepRow {
     grid-template-columns: 44px 76px minmax(0, 1fr);
@@ -546,6 +678,40 @@
   .startButton {
     min-height: 60px;
     margin-top: 28px;
+  }
+
+  .noticeContent {
+    padding: 60px 64px 32px;
+  }
+
+  .noticeTitle {
+    font-size: 32px;
+  }
+
+  .noticeCopy {
+    margin-top: 20px;
+    font-size: 20px;
+  }
+
+  .noticeActions {
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .noticeButton {
+    min-height: 48px;
+    padding-block: 8px;
+    font-size: 24px;
+  }
+
+  .submittedPreview {
+    width: min(100%, max(160px, calc((100dvh - 460px) * 64 / 53)));
+    margin-top: 20px;
+  }
+
+  .noticeQr {
+    width: min(280px, 100%, max(160px, calc(100dvh - 500px)));
+    margin-top: 20px;
   }
 }
 
@@ -857,6 +1023,54 @@
     border-radius: 50%;
     background: #fff;
   }
+
+  .noticeDialog {
+    width: min(430px, calc(100% - 32px));
+  }
+
+  .noticeContent {
+    padding: 58px 24px 38px;
+  }
+
+  .noticeTitle {
+    font-size: clamp(27px, 7vw, 32px);
+  }
+
+  .noticeCopy {
+    margin-top: 20px;
+    font-size: clamp(17px, 4.5vw, 20px);
+  }
+
+  .noticeActions {
+    gap: 12px;
+    margin-top: 24px;
+    padding: 2px 2px 0;
+  }
+
+  .noticeButton {
+    min-height: 44px;
+    padding: 9px 8px;
+    border-width: 1.5px;
+    border-radius: 8px;
+    font-size: clamp(18px, 5.2vw, 24px);
+    box-shadow: 3px 3px 0 var(--color-dark-purple);
+    transform: translate(-2px, -2px);
+  }
+
+  .thankYouImage {
+    margin-top: -30px;
+    margin-bottom: -18px;
+  }
+
+  .submittedPreview {
+    width: min(92%, max(140px, calc((100dvh - 440px) * 64 / 53)));
+    margin-top: 20px;
+  }
+
+  .noticeQr {
+    width: min(280px, 100%, max(160px, calc(100dvh - 440px)));
+    margin-top: 24px;
+  }
 }
 
 /* Native scrollbar buttons are available in Chromium/WebKit, but not every
@@ -908,7 +1122,8 @@
 
 @media (hover: hover) and (pointer: fine) {
   .actionButton:not(:disabled):hover,
-  .startButton:hover {
+  .startButton:hover,
+  .noticeButton:not(:disabled):hover {
     box-shadow: 3px 3px 0 var(--color-dark-purple);
     transform: translate(-2px, -2px);
   }
@@ -919,14 +1134,16 @@
 }
 
 .actionButton:not(:disabled):active,
-.startButton:active {
+.startButton:active,
+.noticeButton:not(:disabled):active {
   box-shadow: 0 0 0 var(--color-dark-purple);
   transform: translate(0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .actionButton,
-  .startButton {
+  .startButton,
+  .noticeButton {
     transition: none;
   }
 }

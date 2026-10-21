@@ -1,46 +1,103 @@
 "use client";
 
 import { QRCodeSVG } from "qrcode.react";
+import { X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 import { Modal } from "@/components/Modal";
+import styles from "@/app/design/page.module.css";
+
+export type CardNotice =
+  | { kind: "clear" }
+  | { kind: "loading"; title: string; message: string }
+  | { kind: "error"; title: string; message: string }
+  | { kind: "download"; file: File }
+  | { kind: "eventDownload"; qrUrl: string }
+  | { kind: "submitted"; imageUrl: string; cardId: string };
 
 type StatusNoticeProps = {
-  open: boolean;
-  title: string;
-  message: string;
-  linkHref?: string;
-  qrUrl?: string;
-  onDownload?: () => void;
-  onConfirm?: () => void;
+  notice: CardNotice | null;
+  eventMode: boolean;
+  onRestart: () => void;
+  onNewCard: () => void;
   onClose: () => void;
 };
 
-export function StatusNotice({ open, title, message, linkHref, qrUrl, onDownload, onConfirm, onClose }: StatusNoticeProps) {
+export function StatusNotice({ notice, eventMode, onRestart, onNewCard, onClose }: StatusNoticeProps) {
+  const [shareFeedback, setShareFeedback] = useState<{ file: File; message: string } | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
+  async function shareCard() {
+    if (notice?.kind !== "download" || isSharing) return;
+    setShareFeedback(null);
+    setIsSharing(true);
+    try {
+      const url = new URL("/", window.location.origin).href;
+      if (navigator.share) {
+        const files = [notice.file];
+        await navigator.share(navigator.canShare?.({ files })
+          ? { title: "My Community Care thank you card", files }
+          : { title: "Create a Community Care thank you card", url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShareFeedback({ file: notice.file, message: "Link copied! Share it with a friend." });
+      }
+    } catch (error) {
+      if (!(error instanceof Error && error.name === "AbortError")) {
+        setShareFeedback({ file: notice.file, message: "Unable to share right now. Please try again." });
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  }
+
+  const title = notice?.kind === "clear" ? "Clear your card?"
+    : notice?.kind === "submitted" ? "Card submitted!"
+    : notice?.kind === "download" ? "for participating!"
+    : notice?.kind === "eventDownload" ? "Scan the QR code to download the image into your mobile."
+    : notice?.title ?? "";
+
   return (
-    <Modal open={open} onClose={onClose} labelledBy="status-notice-title" className="m-auto max-h-[calc(100dvh-32px)] w-[calc(100%_-_32px)] max-w-md overflow-auto rounded-2xl border-0 bg-white p-0 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-      <div className="p-5">
-        <p id="status-notice-title" className="font-open-sans text-[18px] font-bold text-[#ff661e]">
-          {title}
-        </p>
-        <p className="mt-2 whitespace-pre-line text-[15px] font-semibold leading-snug text-[#1c1815]">
-          {message}
-          {onDownload && <> <button type="button" onClick={onDownload} className="not-italic text-[#6b3b9c] underline">Download</button> it to save it as a keepsake.</>}
-          {linkHref && <><br />Now click <a href={linkHref} className="not-italic text-[#6b3b9c] underline">here</a> to view.</>}
-        </p>
-        {qrUrl && (
-          <a href={qrUrl} target="_blank" rel="noopener noreferrer" aria-label="Open your card image" className="mx-auto mt-4 block w-fit rounded-xl bg-white p-4">
-            <QRCodeSVG value={qrUrl} size={224} level="M" marginSize={4} />
+    <Modal open={notice !== null} onClose={onClose} labelledBy="status-notice-title" className={`${styles.helpDialog} ${styles.noticeDialog}`}>
+      <div className={styles.noticeContent} aria-busy={notice?.kind === "loading"}>
+        <button type="button" className={styles.closeHelp} aria-label="Close dialog" onClick={onClose}><X aria-hidden="true" /></button>
+        {notice?.kind === "download" && <Image src="/assets/messages/msg_9.webp" alt="Thank you" width={420} height={420} className={styles.thankYouImage} />}
+        <h2 id="status-notice-title" className={styles.noticeTitle}>{title}</h2>
+
+        {notice?.kind === "clear" && <p className={styles.noticeCopy}>All unsaved progress will be lost.<br />Would you like to proceed?</p>}
+        {notice?.kind === "download" && <p className={styles.noticeCopy}>Your download will start shortly.</p>}
+        {notice?.kind === "eventDownload" && <>
+          <a href={notice.qrUrl} target="_blank" rel="noopener noreferrer" aria-label="Open your card image" className={styles.noticeQr}>
+            <QRCodeSVG value={notice.qrUrl} size={280} level="M" marginSize={2} />
           </a>
-        )}
-        <div className="mt-4 flex justify-end gap-2">
-          {onConfirm && (
-            <button type="button" onClick={onConfirm} className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white">
-              Yes
-            </button>
-          )}
-          <button type="button" onClick={onClose} className="rounded-xl bg-[#ff661e] px-4 py-2 text-sm font-bold text-white">
-            {onConfirm ? "Cancel" : "OK"}
-          </button>
+          <p className={styles.noticeCopy}>Tap and hold on the image<br />to save it in your phone.<br />Thank you for participating!</p>
+        </>}
+        {notice?.kind === "submitted" && <>
+          <div className={styles.submittedPreview}>
+            <Image unoptimized src={notice.imageUrl} alt="Your submitted thank you card" width={640} height={530} className={styles.submittedImage} />
+            <Image src="/assets/stickers/sticker_6.webp" alt="" width={120} height={120} className={styles.previewStickerTop} />
+            <Image src="/assets/stickers/sticker_1.webp" alt="" width={120} height={120} className={styles.previewStickerBottom} />
+          </div>
+          <p className={styles.noticeCopy}>Thank you!{eventMode && <><br />Now look out for it on our display wall.</>}</p>
+        </>}
+        {(notice?.kind === "loading" || notice?.kind === "error") && <p className={styles.noticeCopy} role="status">{notice.message}</p>}
+
+        <div className={styles.noticeActions}>
+          {notice?.kind === "clear" ? <>
+            <button type="button" className={styles.noticeButton} onClick={onClose}>Cancel</button>
+            <button type="button" className={`${styles.noticeButton} ${styles.clearButton}`} onClick={onRestart}>Clear</button>
+          </> : notice?.kind === "download" ? <>
+            <button type="button" className={styles.noticeButton} onClick={onClose}>Back to my card</button>
+            <button type="button" className={styles.noticeButton} onClick={onNewCard}>Make a new card</button>
+            <button type="button" className={styles.noticeButton} disabled={isSharing} onClick={() => void shareCard()}>{isSharing ? "Sharing…" : "Share with a friend"}</button>
+          </> : <>
+            {notice?.kind === "eventDownload" && <button type="button" className={styles.noticeButton} onClick={onClose}>Back to my card</button>}
+            {notice?.kind === "submitted" && !eventMode && <Link href={`/display?card=${encodeURIComponent(notice.cardId)}`} className={styles.noticeButton}>View my card</Link>}
+            <button type="button" className={styles.noticeButton} onClick={onClose}>Close</button>
+          </>}
         </div>
+        {notice?.kind === "download" && shareFeedback?.file === notice.file && <p className={styles.shareFeedback} role="status">{shareFeedback.message}</p>}
       </div>
     </Modal>
   );

@@ -9,7 +9,7 @@ import { PalettePanel } from "@/components/card-maker/PalettePanel";
 import { EditorInstructions } from "@/components/card-maker/EditorInstructions";
 import { HowItWorks } from "@/components/card-maker/HowItWorks";
 import { SiteHeader } from "@/components/landing/SiteHeader";
-import { StatusNotice } from "@/components/card-maker/StatusNotice";
+import { StatusNotice, type CardNotice } from "@/components/card-maker/StatusNotice";
 import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
 import {
@@ -52,7 +52,18 @@ function CardMaker() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
-  const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; qrUrl?: string; confirmClear?: boolean; download?: boolean } | null>(null);
+  const [notice, setNotice] = useState<CardNotice | null>(null);
+  const noticeRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (notice?.kind !== "submitted") return;
+    return () => URL.revokeObjectURL(notice.imageUrl);
+  }, [notice]);
+
+  function closeNotice() {
+    noticeRequestRef.current += 1;
+    setNotice(null);
+  }
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -260,9 +271,11 @@ function CardMaker() {
     if (!cardCaptureRef.current || exportingRef.current || isSubmittingRef.current) return;
     exportingRef.current = true;
     setIsExporting(true);
+    const request = ++noticeRequestRef.current;
     setNotice({
-      title: eventMode ? "Preparing your QR code…" : "Thank you for participating,",
-      message: eventMode ? "Please wait while we prepare your card." : "your download will start shortly.",
+      kind: "loading",
+      title: eventMode ? "Preparing your QR code…" : "Preparing your download…",
+      message: "Please wait while we prepare your card.",
     });
     setIsCaptureMode(true);
     try {
@@ -270,11 +283,7 @@ function CardMaker() {
       if (eventMode) {
         const image = await renderCardImage(cardCaptureRef.current);
         const qrUrl = await uploadDownloadImage(image);
-        setNotice({
-          title: "Thank you for participating!",
-          message: "Scan the QR code to open the image on your phone. Long press to save your card.",
-          qrUrl,
-        });
+        if (request === noticeRequestRef.current) setNotice({ kind: "eventDownload", qrUrl });
         return;
       }
       const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
@@ -282,8 +291,13 @@ function CardMaker() {
       anchor.download = "community-care-card.png";
       anchor.href = dataUrl;
       anchor.click();
+      const image = await fetch(dataUrl).then((response) => response.blob());
+      if (request === noticeRequestRef.current) {
+        setNotice({ kind: "download", file: new File([image], "community-care-card.png", { type: "image/png" }) });
+      }
     } catch (error) {
-      setNotice({
+      if (request === noticeRequestRef.current) setNotice({
+        kind: "error",
         title: "Download failed",
         message: error instanceof Error ? error.message : "Please try again.",
       });
@@ -295,17 +309,17 @@ function CardMaker() {
   }
 
   function handleRestart() {
-    setNotice({
-      title: "This will clear your current card.",
-      message: "Would you like to proceed?",
-      confirmClear: true,
-    });
+    setNotice({ kind: "clear" });
   }
 
   function confirmRestart() {
     setStickers([]);
+    setSelectedFrame(frameSources[5]);
+    setActiveTab("messages");
+    setCounter(1);
     setSelectedTarget(null);
-    setNotice(null);
+    submissionKeyRef.current = null;
+    closeNotice();
   }
 
   async function handleSubmit() {
@@ -318,15 +332,16 @@ function CardMaker() {
     try {
       await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
       const image = await renderCardImage(cardCaptureRef.current);
-      await submitCardImage(image, submissionKeyRef.current);
+      const { cardId } = await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
-        title: "Thank You!",
-        message: "Your card has been submitted.",
-        download: true,
+        kind: "submitted",
+        imageUrl: URL.createObjectURL(image),
+        cardId,
       });
     } catch (error) {
       setNotice({
+        kind: "error",
         title: "Submission failed",
         message: error instanceof Error ? error.message : "Please try again.",
       });
@@ -389,14 +404,11 @@ function CardMaker() {
       </main>
 
       <StatusNotice
-        open={notice !== null}
-        title={notice?.title ?? ""}
-        message={notice?.message ?? ""}
-        linkHref={notice?.linkHref}
-        qrUrl={notice?.qrUrl}
-        onDownload={notice?.download ? () => void handleSave() : undefined}
-        onConfirm={notice?.confirmClear ? confirmRestart : undefined}
-        onClose={() => setNotice(null)}
+        notice={notice}
+        eventMode={eventMode}
+        onRestart={confirmRestart}
+        onNewCard={confirmRestart}
+        onClose={closeNotice}
       />
 
     </div>
