@@ -81,7 +81,6 @@ export class BrickWall {
   private height = 0;
   private cell = 0;
   private keyCounter = 0;
-  private fillCounter = 0;
   private replayedCardId: string | undefined;
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
@@ -177,6 +176,8 @@ export class BrickWall {
     if (!this.cards.length) return;
 
     const perRow = Math.max(this.minBricks, Math.ceil(this.cards.length / ROWS));
+    // Include every published card once before adding independently shuffled copies.
+    shuffle([...this.cards]).forEach((card, i) => this.rows[i % ROWS].items.push(this.brick(card)));
     this.fillRows(this.cards, perRow);
   }
 
@@ -213,20 +214,26 @@ export class BrickWall {
   }
 
   private fillRows(pool: WallCard[], target: number) {
-    const counts = this.rows.map((row) => row.items.filter((item) => item.kind === "brick").length);
-    let missing = counts.reduce((total, count) => total + Math.max(0, target - count), 0);
-    while (missing > 0) {
-      // Shift each pass by one row so repeated copies don't stay in their original row,
-      // even when the number of cards is a multiple of the number of rows.
-      for (let i = 0; i < pool.length && missing > 0; i++) {
-        const r = (i + this.fillCounter) % ROWS;
-        if (counts[r] >= target) continue;
-        const row = this.rows[r];
-        insertAt(row, row.items.length, this.brick(pool[i]));
-        counts[r]++;
-        missing--;
+    for (const row of this.rows) {
+      const bricks = Array.from({ length: row.items.length }, (_, i) => row.items[(row.head + i) % row.items.length])
+        .filter((item): item is Brick => item.kind === "brick");
+      const existing = new Set(bricks.map((brick) => brick.card._id));
+      let count = bricks.length;
+      let previous = bricks.at(-1)?.card._id;
+      // Finish the row's current set before repeating cards. Every subsequent
+      // batch gets a fresh shuffle, independent of other rows and earlier batches.
+      let batch = shuffle(pool.filter((card) => !existing.has(card._id)));
+      while (count < target) {
+        if (!batch.length) batch = shuffle([...pool]);
+        if (batch.length > 1 && batch[batch.length - 1]._id === previous) {
+          const swap = Math.floor(Math.random() * (batch.length - 1));
+          [batch[swap], batch[batch.length - 1]] = [batch[batch.length - 1], batch[swap]];
+        }
+        const card = batch.pop()!;
+        insertAt(row, row.items.length, this.brick(card));
+        previous = card._id;
+        count++;
       }
-      this.fillCounter = (this.fillCounter + 1) % ROWS;
     }
   }
 

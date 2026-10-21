@@ -434,8 +434,10 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 - The scrolling card area spans the full viewport width, without horizontal
   page padding. The header and loading/empty copy retain their 24px side inset.
-- Copies added to fill the wall rotate through different rows on successive
-  passes through the cards, both on initial layout and when refilling rows.
+- Initial layout randomly distributes every published card at least once.
+  Each row then fills with independently shuffled batches, with a fresh shuffle
+  for every repeated set and on refills. Finish a row's existing set before
+  repeating cards; avoid identical neighbors at batch boundaries where possible.
 - The black header has the AIC and CCD logos at the top left, in their original
   colors, at 64px / 120px wide (48px / 90px on phones). Its centered white title
   is “Celebrating Community Care Day • 1 Nov” in Circular Std Medium (500).
