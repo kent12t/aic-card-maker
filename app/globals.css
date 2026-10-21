@@ -32,19 +32,3 @@ body {
 .font-open-sans {
   font-family: var(--font-open-sans), sans-serif;
 }
-
-.font-circular {
-  font-family: var(--font-circular), sans-serif;
-}
-
-.font-caveat {
-  font-family: var(--font-caveat), cursive;
-}
-
-.font-shadows {
-  font-family: var(--font-shadows), cursive;
-}
-
-.font-glass {
-  font-family: var(--font-glass-antiqua), serif;
-}

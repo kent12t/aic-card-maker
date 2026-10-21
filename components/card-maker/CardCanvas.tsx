@@ -1,16 +1,15 @@
 "use client";
 
-import { Maximize2, Pencil, RotateCw, X } from "lucide-react";
+import { Maximize2, RotateCw, X } from "lucide-react";
 import Image from "next/image";
 import type { DragEvent, PointerEvent, RefObject } from "react";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "@/lib/card-maker/constants";
-import { getFontClass, getHandleStyle } from "@/lib/card-maker/utils";
-import type { InteractionMode, SelectedTarget, StickerItem, TextItem } from "@/lib/card-maker/types";
+import { getHandleStyle } from "@/lib/card-maker/utils";
+import type { InteractionMode, SelectedTarget, StickerItem } from "@/lib/card-maker/types";
 
 type CardCanvasProps = {
   cardScale: number;
   selectedFrame: string;
-  texts: TextItem[];
   stickers: StickerItem[];
   selectedTarget: SelectedTarget;
   isCaptureMode: boolean;
@@ -30,15 +29,12 @@ type CardCanvasProps = {
     scale: number,
     rotation: number,
   ) => void;
-  onDeleteText: (id: string) => void;
-  onEditText: (target: TextItem) => void;
   onDeleteSticker: (id: string) => void;
 };
 
 export function CardCanvas({
   cardScale,
   selectedFrame,
-  texts,
   stickers,
   selectedTarget,
   isCaptureMode,
@@ -48,8 +44,6 @@ export function CardCanvas({
   onDrop,
   onDeselect,
   onBeginInteraction,
-  onDeleteText,
-  onEditText,
   onDeleteSticker,
 }: CardCanvasProps) {
   return (
@@ -78,88 +72,6 @@ export function CardCanvas({
             onPointerDown={onDeselect}
             className="absolute inset-0 touch-none"
           >
-
-            {texts
-              .slice()
-              .sort((a, b) => a.zIndex - b.zIndex)
-              .map((text) => {
-                const isSelected = !isCaptureMode && selectedTarget?.type === "text" && selectedTarget.id === text.id;
-                return (
-                  <div
-                    key={text.id}
-                    className={`absolute ${isSelected ? "outline outline-1 outline-[#6ab5ff]" : ""}`}
-                    style={{
-                      left: text.x,
-                      top: text.y,
-                      width: text.width,
-                      height: text.height,
-                      transform: `rotate(${text.rotation}deg) scale(${text.scale})`,
-                      transformOrigin: "center",
-                      zIndex: text.zIndex,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onPointerDown={(event) =>
-                        onBeginInteraction(event, { type: "text", id: text.id }, "move", text.x, text.y, text.width, text.height, text.scale, text.rotation)
-                      }
-                      onDoubleClick={() => onEditText(text)}
-                      className={`flex h-full w-full cursor-grab items-center justify-center whitespace-pre text-center leading-[0.9] active:cursor-grabbing ${getFontClass(text.font)}`}
-                      style={{ color: text.color, fontSize: text.fontSize / 4 }}
-                    >
-                      {text.text}
-                    </button>
-                    {isSelected ? (
-                      <>
-                        <button
-                          type="button"
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onDeleteText(text.id);
-                          }}
-                          className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                          style={getHandleStyle(text.scale)}
-                        >
-                          <X size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(event) =>
-                            onBeginInteraction(event, { type: "text", id: text.id }, "rotate", text.x, text.y, text.width, text.height, text.scale, text.rotation)
-                          }
-                          className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                          style={getHandleStyle(text.scale)}
-                        >
-                          <RotateCw size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onEditText(text);
-                          }}
-                          className="absolute -bottom-3 -left-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                          style={getHandleStyle(text.scale)}
-                        >
-                          <Pencil size={12} />
-                        </button>
-                        <button
-                          type="button"
-                          onPointerDown={(event) =>
-                            onBeginInteraction(event, { type: "text", id: text.id }, "resize", text.x, text.y, text.width, text.height, text.scale, text.rotation)
-                          }
-                          className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
-                          style={getHandleStyle(text.scale)}
-                        >
-                          <Maximize2 size={12} />
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
 
             {stickers
               .slice()

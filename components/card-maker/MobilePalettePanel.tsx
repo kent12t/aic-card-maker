@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown, Type, Upload } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Image from "next/image";
-import type { ChangeEvent, DragEvent, RefObject } from "react";
+import type { DragEvent, RefObject } from "react";
 import { ActionButtons } from "@/components/card-maker/ActionButtons";
 import { CARD_ASPECT_RATIO, TAB_LABELS } from "@/lib/card-maker/constants";
 import type { DragPayload, PaletteItem, TabKey } from "@/lib/card-maker/types";
@@ -14,15 +14,11 @@ type MobilePalettePanelProps = {
   mobileTabMenuRef: RefObject<HTMLDivElement>;
   paletteItems: PaletteItem[];
   selectedFrame: string;
-  fileInputRef: RefObject<HTMLInputElement>;
   onToggleMenu: () => void;
   onSelectTab: (tab: TabKey) => void;
   onSelectFrame: (src: string) => void;
-  onAddText: () => void;
   onAddSticker: (payload: DragPayload) => void;
   onDragStartItem: (event: DragEvent<HTMLButtonElement>, payload: DragPayload) => void;
-  onDropUpload: (event: DragEvent<HTMLLabelElement>) => void;
-  onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   isSubmitting: boolean;
   onRestart: () => void;
   onSubmit: () => void;
@@ -38,15 +34,11 @@ export function MobilePalettePanel({
   mobileTabMenuRef,
   paletteItems,
   selectedFrame,
-  fileInputRef,
   onToggleMenu,
   onSelectTab,
   onSelectFrame,
-  onAddText,
   onAddSticker,
   onDragStartItem,
-  onDropUpload,
-  onUpload,
   isSubmitting,
   onRestart,
   onSubmit,
@@ -115,36 +107,6 @@ export function MobilePalettePanel({
             </div>
           )}
         </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={onAddText}
-        className="mt-4 flex h-[42px] w-[120px] items-center justify-center gap-2 rounded-[10px] bg-[#f1f1f1] text-[15px] font-semibold"
-      >
-        <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#84898f] text-white">
-          <Type size={17} strokeWidth={2.25} />
-        </span>
-        Add Text
-      </button>
-
-      <div className="pt-1">
-        <p className="text-[15px] font-semibold">Upload a Picture</p>
-        <label
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={onDropUpload}
-          className="mt-2 flex h-[82px] w-full cursor-pointer items-center gap-4 rounded-[10px] border border-dashed border-[#ff661e] px-6"
-        >
-          <span className="inline-flex h-10 w-10 items-center justify-center text-[#8c8c8c]">
-            <Upload size={34} strokeWidth={2.2} />
-          </span>
-          <span className="block text-[15px] font-semibold">
-            <span className="underline">Choose a file</span> or drag and drop it here
-            <br />
-            <span className="text-[13px] text-[#8c8c8c]">JPEG or PNG formats, up to 3MB</span>
-          </span>
-          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg" onChange={onUpload} className="hidden" />
-        </label>
       </div>
 
       <ActionButtons mobile isSubmitting={isSubmitting} isExporting={isExporting} onRestart={onRestart} onSubmit={onSubmit} onSave={onSave} onShare={onShare} />

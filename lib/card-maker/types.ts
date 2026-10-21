@@ -1,9 +1,5 @@
 export type TabKey = "frames" | "messages" | "stickers" | "persons";
 
-export type FontKey = "open" | "circular" | "caveat" | "kalam";
-
-export type TargetType = "sticker" | "text";
-
 export type InteractionMode = "move" | "rotate" | "resize";
 
 export type StickerItem = {
@@ -18,21 +14,6 @@ export type StickerItem = {
   zIndex: number;
 };
 
-export type TextItem = {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  color: string;
-  font: FontKey;
-  fontSize: number;
-  width: number;
-  height: number;
-  rotation: number;
-  scale: number;
-  zIndex: number;
-};
-
 export type DragPayload = {
   src: string;
   width: number;
@@ -40,7 +21,7 @@ export type DragPayload = {
 };
 
 export type SelectedTarget = {
-  type: TargetType;
+  type: "sticker";
   id: string;
 } | null;
 
@@ -62,13 +43,6 @@ export type InteractionState = {
 export type TabLabel = {
   key: TabKey;
   label: string;
-};
-
-export type FontButton = {
-  key: FontKey;
-  label: string;
-  className: string;
-  baselineClass: string;
 };
 
 export type PaletteItem = {
