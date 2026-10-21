@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 :root {
+  --color-dark-orange: #ef5023;
+  --color-orange: #f99d21;
+  --color-light-yellow: #ffe299;
+  --color-dark-purple: #241f61;
+  --color-purple: #682c85;
+  --color-light-violet: #8f8fc6;
+  --color-violet: #7978b5;
   --bg: #ffffff;
   --ink: #111111;
   --care-orange: #ff661e;
