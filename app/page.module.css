@@ -460,7 +460,7 @@
   }
 
   .description {
-    max-width: 310px;
+    max-width: 360px;
     margin-top: 22px;
     font-size: clamp(16px, 4.32vw, 21px);
     line-height: 1.15;
@@ -468,7 +468,7 @@
   }
 
   .steps {
-    max-width: 280px;
+    max-width: 310px;
     margin-top: 30px;
   }
 
@@ -478,12 +478,12 @@
   }
 
   .stepIcon {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
 
   .stepArrow {
-    margin: 17px 5px 0;
+    margin: 20px 5px 0;
   }
 
   .actions {
@@ -511,6 +511,10 @@
   .animationControl {
     right: -8px;
     bottom: -6px;
+  }
+
+  .deckSection {
+    width: 80%;
   }
 }
 
