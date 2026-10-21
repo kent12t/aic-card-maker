@@ -20,10 +20,12 @@ buttons that start raised. Use this visual language when updating the designer.
 | `components/card-maker/StatusNotice.tsx` | Clear, download/QR, submission, loading, and error modals |
 | `app/design/page.tsx` | Responsive card designer and editor interactions |
 | `app/design/page.module.css` | Designer layout, tabs, palette, buttons, instructions, and help modal |
+| `app/display/page.module.css` | Display header, compact logos, violet highlight, and create-CTA placement |
 
-Both landing and designer import the local fonts from `lib/fonts.ts` and apply
-their variable classes to the route root. The global body retains Open Sans for
-other existing screens. Merely referencing `--font-circular` or `--font-caslon`
+Landing and designer import the local fonts from `lib/fonts.ts` and apply
+their variable classes to the route root; the display layout also applies the
+Circular variable. The global body retains Open Sans for other existing screens.
+Merely referencing `--font-circular` or `--font-caslon`
 outside a root with those variable classes is insufficient.
 
 ## 1. Color palette
@@ -390,11 +392,43 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   blob sent to the API. Decorate its top-left with `stickers/sticker_6.webp` and
   bottom-right with `stickers/sticker_1.webp`, retaining their transparent safe
   zones. Below it, regular mode says only “Thank you!” with **View my card**
-  (links to `/display?card=<submitted card ID>` for the existing client-side
-  spotlight) and **Close**. Event mode adds “Now look out for it on our display
-  wall.” and has only **Close**. Closing preserves the editor's card.
+  (links to `/display?card=<submitted card ID>` for a client-local replay of the
+  wall's new-card entrance) and **Close**. Event mode adds “Now look out for it on
+  our display wall.” and has only **Close**. Closing preserves the editor's card.
 
-## 9. Maintaining this guide
+## 9. Display-wall personal replay (`/display?card=<ID>`)
+
+- The scrolling card area spans the full viewport width, without horizontal
+  page padding. The header and loading/empty copy retain their 24px side inset.
+- The black header has the AIC and CCD logos at the top left, in their original
+  colors, at 64px / 120px wide (48px / 90px on phones). Its centered white title
+  is “Celebrating Community Care Day • 1 Nov” in Circular Std Medium (500).
+  At <=1000px the title moves to its own centered row beneath the logos.
+- The fixed bottom-center **Create your thank you card** CTA directly reuses
+  the landing's primary-button classes: orange fill, dark-purple outline/text
+  and hard shadow, Circular Std Black, responsive radii, raised resting state,
+  lowered mouse hover, flat press, and reduced-motion transition behavior. A
+  width-constrained container supplies its `cqw` sizing; keyboard focus remains
+  visibly outlined. The CTA is hidden in event mode.
+- After its image loads, the requested published card uses the wall's actual
+  new-arrival animation: gaps open, the card grows with a light-violet glow
+  (`--color-light-violet`, 65% opacity, 60px blur), holds
+  for five seconds, then shrinks into a normal wall tile. There is no preview
+  overlay, waiting message, or dismissal button.
+- The replay runs once per requested ID in that browser's wall instance, without
+  changing stored cards or triggering animations on other displays.
+- Personal highlights start toward the right (around 85% of the wall width on
+  desktop), with room for their gap to open. On phones the large card can extend
+  past the right edge and scroll into view. All rows keep moving at their normal
+  speed throughout growth, the five-second hold, and rejoining.
+- Highlights keep the same row-based size on phones and desktop. Gaps are inserted
+  at existing brick boundaries without realigning row offsets; alternating rows
+  retain their half-brick stagger after the card rejoins. Off-screen gaps finish
+  their size transition before being retired so fractional widths do not shift
+  a row's alignment.
+- Event mode retains its live new-arrival behavior and ignores the card parameter.
+
+## 10. Maintaining this guide
 
 Use the existing CSS module and components as the exact implementation reference
 when porting styles. Update this document when approved colors, font roles,

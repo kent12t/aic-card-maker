@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ConvexClientProvider } from "@/components/display/ConvexClientProvider";
+import { circular } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "Community Care Day Display Wall",
 };
 
 export default function DisplayLayout({ children }: { children: ReactNode }) {
-  return <ConvexClientProvider>{children}</ConvexClientProvider>;
+  return <ConvexClientProvider><div className={circular.variable}>{children}</div></ConvexClientProvider>;
 }

@@ -82,11 +82,12 @@ export class BrickWall {
   private cell = 0;
   private keyCounter = 0;
   private fillCounter = 0;
+  private replayedCardId: string | undefined;
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
   /** Advances one frame and returns true when the set of rendered elements changed. */
-  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number): boolean {
+  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string): boolean {
     if (!cards || width <= 0 || height < ROWS) return false;
 
     let changed = false;
@@ -97,6 +98,17 @@ export class BrickWall {
     } else if (cards !== this.syncedCards) {
       this.sync(cards);
       changed = true;
+    }
+
+    // Replay a published card as a new arrival on this wall only, once per requested ID.
+    if (replayCardId && replayCardId !== this.replayedCardId) {
+      const card = cards.find((card) => card._id === replayCardId);
+      if (card) {
+        const feature = this.features.find((feature) => feature.card._id === replayCardId);
+        if (!feature) this.addFeature(card, true);
+        this.replayedCardId = replayCardId;
+        changed = true;
+      }
     }
 
     if (this.animate(Math.min(dtMs, MAX_FRAME_MS))) changed = true;
@@ -205,15 +217,17 @@ export class BrickWall {
     }
   }
 
-  private addFeature(card: WallCard) {
+  private addFeature(card: WallCard, personal = false) {
     const gap = this.gapWidth;
     const starts = shuffle(Array.from({ length: ROWS - SPAN_ROWS + 1 }, (_, i) => i));
     let start = starts[0];
-    let centerX = this.width * 0.7;
+    // Leave room for the full gap to open to the right, including beyond a phone's edge.
+    const preferredX = personal ? Math.max(this.width * 0.85, gap / 2 + this.cellWidth) : this.width * 0.7;
+    let centerX = preferredX;
 
     // Pick rows that don't collide with another big card; push further right if the screen is crowded.
     search: for (let attempt = 0; attempt < 4; attempt++) {
-      const x = this.width * 0.7 + attempt * gap;
+      const x = preferredX + attempt * gap;
       for (const r of starts) {
         const free = this.features.every((f) => Math.abs(f.row - r) >= SPAN_ROWS || Math.abs(f.centerX - x) >= gap * 1.2);
         if (free) {
@@ -239,7 +253,7 @@ export class BrickWall {
     for (let r = start; r < start + SPAN_ROWS; r++) {
       const row = this.rows[r];
       if (!row.items.length) continue;
-      // Open the gap at the brick boundary closest to where the big card's left edge should be.
+      // Keep each gap on its row's existing brick boundary so alternating rows stay staggered.
       let x = -row.offset;
       let best = 1;
       let bestDistance = Infinity;
@@ -310,6 +324,10 @@ export class BrickWall {
         const item = row.items[row.head];
         const width = this.widthOf(item);
         if (row.offset < width) break;
+        // A changing gap can already be off-screen, but removing its fractional
+        // brick width would permanently shift this row's stagger. Let it finish
+        // opening or closing before retiring it from the ring.
+        if (item.kind === "gap" && item.feature.progress < 1) break;
         row.offset -= width;
         if (item.kind === "gap") {
           // Gaps are dropped once they scroll off the left edge instead of looping back around.
