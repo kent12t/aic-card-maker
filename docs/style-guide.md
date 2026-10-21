@@ -323,8 +323,12 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   at <=1100px the library stacks above the workspace.
 - The canvas keeps a CSS `64 / 53` aspect ratio independent of JavaScript
   measurement. A ResizeObserver scales the internal 443px editing coordinate
-  system to fit, including scaling upward on desktop. Exports retain that
-  internal capture surface. The viewport has 9% rounded corners.
+  system to fit, including scaling upward on desktop. Exports draw the frame and
+  stickers directly onto a canvas using those same coordinates, layer order,
+  centered rotation/scaling, and contained image proportions. Wait for all
+  artwork to decode and reject blank renders before encoding. Submissions and
+  event downloads are 800×663 WebP (PNG fallback); regular downloads are
+  886×734 PNG. The viewport has 9% rounded corners.
 
 ### Controls and help
 

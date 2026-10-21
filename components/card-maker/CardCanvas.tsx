@@ -13,9 +13,7 @@ type CardCanvasProps = {
   selectedFrame: string;
   stickers: StickerItem[];
   selectedTarget: SelectedTarget;
-  isCaptureMode: boolean;
   cardViewportRef: RefObject<HTMLDivElement>;
-  cardCaptureRef: RefObject<HTMLDivElement>;
   cardRef: RefObject<HTMLDivElement>;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
   onDeselect: () => void;
@@ -38,9 +36,7 @@ export function CardCanvas({
   selectedFrame,
   stickers,
   selectedTarget,
-  isCaptureMode,
   cardViewportRef,
-  cardCaptureRef,
   cardRef,
   onDrop,
   onDeselect,
@@ -61,7 +57,6 @@ export function CardCanvas({
         }}
       >
         <div
-          ref={cardCaptureRef}
           className="relative overflow-hidden"
           style={{ width: BOARD_WIDTH, height: BOARD_HEIGHT, backgroundImage: `url(${selectedFrame})`, backgroundSize: "100% 100%", backgroundPosition: "center" }}
         >
@@ -77,7 +72,7 @@ export function CardCanvas({
               .slice()
               .sort((a, b) => a.zIndex - b.zIndex)
               .map((sticker) => {
-                const isSelected = !isCaptureMode && selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
+                const isSelected = selectedTarget?.type === "sticker" && selectedTarget.id === sticker.id;
                 return (
                   <div
                     key={sticker.id}

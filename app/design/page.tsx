@@ -1,6 +1,5 @@
 "use client";
 
-import { toPng } from "html-to-image";
 import { DragEvent, PointerEvent, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ActionButtons } from "@/components/card-maker/ActionButtons";
@@ -22,7 +21,8 @@ import {
   personSources,
   stickerSources,
 } from "@/lib/card-maker/constants";
-import { renderCardImage, submitCardImage, uploadDownloadImage } from "@/lib/card-maker/submit";
+import { renderCardImage } from "@/lib/card-maker/render";
+import { submitCardImage, uploadDownloadImage } from "@/lib/card-maker/submit";
 import {
   clamp,
   clampPositionForScale,
@@ -49,7 +49,6 @@ function CardMaker() {
   const [selectedFrame, setSelectedFrame] = useState(frameSources[5]);
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
-  const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
@@ -68,7 +67,6 @@ function CardMaker() {
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const cardCaptureRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
   const isSubmittingRef = useRef(false);
   const submissionKeyRef = useRef<string | null>(null);
@@ -271,7 +269,7 @@ function CardMaker() {
   }
 
   async function handleSave() {
-    if (!cardCaptureRef.current || exportingRef.current || isSubmittingRef.current) return;
+    if (exportingRef.current || isSubmittingRef.current) return;
     exportingRef.current = true;
     setIsExporting(true);
     const request = ++noticeRequestRef.current;
@@ -280,21 +278,24 @@ function CardMaker() {
       title: eventMode ? "Preparing your QR code…" : "Preparing your download…",
       message: "Please wait while we prepare your card.",
     });
-    setIsCaptureMode(true);
     try {
-      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
       if (eventMode) {
-        const image = await renderCardImage(cardCaptureRef.current);
+        const image = await renderCardImage({ frame: selectedFrame, stickers });
         const qrUrl = await uploadDownloadImage(image);
         if (request === noticeRequestRef.current) setNotice({ kind: "eventDownload", qrUrl });
         return;
       }
-      const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
+      const image = await renderCardImage({ frame: selectedFrame, stickers }, {
+        width: BOARD_WIDTH * 2,
+        height: Math.round(BOARD_HEIGHT * 2),
+        mimeType: "image/png",
+      });
+      const imageUrl = URL.createObjectURL(image);
       const anchor = document.createElement("a");
       anchor.download = "community-care-card.png";
-      anchor.href = dataUrl;
+      anchor.href = imageUrl;
       anchor.click();
-      const image = await fetch(dataUrl).then((response) => response.blob());
+      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 60_000);
       if (request === noticeRequestRef.current) {
         setNotice({ kind: "download", file: new File([image], "community-care-card.png", { type: "image/png" }) });
       }
@@ -305,7 +306,6 @@ function CardMaker() {
         message: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
-      setIsCaptureMode(false);
       exportingRef.current = false;
       setIsExporting(false);
     }
@@ -326,15 +326,13 @@ function CardMaker() {
   }
 
   async function handleSubmit() {
-    if (!cardCaptureRef.current || isSubmittingRef.current || exportingRef.current) return;
+    if (isSubmittingRef.current || exportingRef.current) return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     // Reused across retries of the same submission so the server stores one card.
     submissionKeyRef.current ??= crypto.randomUUID();
-    setIsCaptureMode(true);
     try {
-      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
-      const image = await renderCardImage(cardCaptureRef.current);
+      const image = await renderCardImage({ frame: selectedFrame, stickers });
       const { cardId } = await submitCardImage(image, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
@@ -349,7 +347,6 @@ function CardMaker() {
         message: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
-      setIsCaptureMode(false);
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
@@ -386,9 +383,7 @@ function CardMaker() {
             selectedFrame={selectedFrame}
             stickers={stickers}
             selectedTarget={selectedTarget}
-            isCaptureMode={isCaptureMode}
             cardViewportRef={cardViewportRef}
-            cardCaptureRef={cardCaptureRef}
             cardRef={cardRef}
             onDrop={handleDrop}
             onDeselect={() => setSelectedTarget(null)}
