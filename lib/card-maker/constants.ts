@@ -33,7 +33,7 @@ export const COLORS = [
   "#fbf2e6",
 ];
 
-export const frameSources = Array.from({ length: 3 }, (_, i) => `/assets/frames/frame_${i + 1}.png`);
-export const messageSources = Array.from({ length: 15 }, (_, i) => `/assets/messages/msg_${i + 1}.png`);
-export const stickerSources = Array.from({ length: 15 }, (_, i) => `/assets/stickers/sticker_${i + 1}.png`);
-export const personSources = Array.from({ length: 6 }, (_, i) => `/assets/persons/ccp_${i + 1}.png`);
+export const frameSources = Array.from({ length: 6 }, (_, i) => `/assets/frames/frame_${i + 1}.webp`);
+export const messageSources = Array.from({ length: 15 }, (_, i) => `/assets/messages/msg_${i + 1}.webp`);
+export const stickerSources = Array.from({ length: 15 }, (_, i) => `/assets/stickers/sticker_${i + 1}.webp`);
+export const personSources = Array.from({ length: 11 }, (_, i) => `/assets/persons/ccp_${i + 1}.webp`);
