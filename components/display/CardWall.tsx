@@ -51,10 +51,11 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   useEffect(() => {
     // Positions are written straight to the DOM every frame; React only re-renders when cards enter or leave.
     const wall = new BrickWall(elementsRef.current);
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let last = performance.now();
     let frame = requestAnimationFrame(function tick(now) {
       const { width, height } = sizeRef.current;
-      if (wall.tick(now - last, cardsRef.current, width, height, replayCardIdRef.current)) setSnapshot(wall.snapshot());
+      if (wall.tick(now - last, cardsRef.current, width, height, replayCardIdRef.current, motionPreference.matches)) setSnapshot(wall.snapshot());
       last = now;
       frame = requestAnimationFrame(tick);
     });
@@ -76,7 +77,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
         <h1 className={styles.title}>Celebrating Community Care Day • 1 Nov</h1>
       </header>
 
-      <div ref={wallRef} className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={wallRef} className="relative isolate min-h-0 flex-1 overflow-hidden">
         {spotlightCardId && cards !== undefined && !spotlightCard && (
           <p role="status" className="absolute inset-x-0 top-0 z-20 rounded-lg bg-black/80 p-3 text-center text-sm text-white">
             This card is no longer available on the wall. Enjoy the latest thank you cards below.
@@ -92,11 +93,16 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
           <div
             key={brick.key}
             ref={register(brick.key)}
-            className="absolute left-0 top-0 p-1 will-change-transform"
-            style={{ width: snapshot.cellWidth, height: snapshot.cell, transform: OFFSCREEN }}
+            className={styles.floatingCard}
+            style={{ width: snapshot.cellWidth, height: snapshot.cell, transform: OFFSCREEN, zIndex: Math.round(brick.depth * 4) }}
           >
-            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+            <div className={styles.cardArtwork} style={{ filter: `drop-shadow(0 ${2 + brick.depth * 6}px ${2 + brick.depth * 7}px rgba(143, 143, 198, ${0.1 + brick.depth * 0.15}))` }}>
               <Image src={brick.url} alt="Community Care Day card" fill sizes={`${snapshot.cellWidth}px`} className="object-contain" unoptimized />
+              <span
+                aria-hidden="true"
+                className={styles.distanceTint}
+                style={{ opacity: 0.04 + (1 - brick.depth) * 0.36, maskImage: `url(${JSON.stringify(brick.url)})` }}
+              />
             </div>
           </div>
         ))}
@@ -105,7 +111,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
           <div
             key={feature.key}
             ref={register(feature.key)}
-            className="absolute left-0 top-0 z-10 will-change-transform"
+            className={`${styles.floatingCard} ${styles.featureCard}`}
             style={{ width: snapshot.bigWidth, height: snapshot.bigSize, transform: OFFSCREEN }}
           >
             <div className={styles.featureArtwork}>

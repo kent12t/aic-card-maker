@@ -446,6 +446,36 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   Each row then fills with independently shuffled batches, with a fresh shuffle
   for every repeated set and on refills. Finish a row's existing set before
   repeating cards; avoid identical neighbors at batch boundaries where possible.
+- Cards float independently over the scrolling, staggered rows. Each occurrence
+  keeps its own random depth (70–155% base size), tilt (±7°), drift amplitude,
+  phase, and 12–18 second period. Gentle horizontal/vertical drift, ±2.5° rocking,
+  and subtle breathing make the cards feel suspended rather than locked to a grid.
+  Larger foreground cards layer above smaller ones with stronger soft violet
+  shadows. The wall scrolls right-to-left at **28px/s**; each card bobs vertically
+  by 6–10% of its base card height with its own phase, inspired by the experimental wall.
+  Depth also controls a **4–40% dark-purple (`#241f61`) tint**,
+  strongest on smaller, more distant cards. Keep the artwork sharp, without blur.
+  Mask the tint to the artwork's alpha
+  so transparent edges remain transparent. Preserve complete artwork without
+  clipping its decorative edges. Automatic highlights are only for new arrivals
+  and the requested personal replay; do not periodically highlight older cards.
+- Use **eight airy lanes**, with the base card height at **76% of lane pitch**.
+  Horizontal slots follow each card's size and rotated bounds, plus its full
+  horizontal drift envelope and **34% of base card height** as breathing room.
+  Nearby cards gently repel using damped springs and size-based inertia, settling
+  around stable scrolling anchors. Reserve the full rocking/breathing/bobbing
+  envelope for separation, then apply independent bobbing after the physics solve
+  so large cards cannot be pinned in place by their neighbors. Simulate only the
+  viewport plus an off-screen buffer. Reduced motion uses a pre-settled layout.
+- Keep complete card artwork inside the wall's top and bottom edges, with at
+  least 12px clearance. Reserve each card's full rotated/scaled/bobbing envelope
+  when positioning its lane anchor and constraining spring displacement, so edge
+  containment does not cancel independent bobbing. Highlighted cards also stay
+  vertically contained throughout entrance, holding, and rejoining.
+- Featured arrivals float more subtly while large and inherit their normal
+  floating motion as they shrink into the wall, avoiding a jump on rejoining.
+  Reduced-motion preferences show a static wall with varied sizes and tilts;
+  disable scrolling, drifting, and animated arrivals, and remove `will-change`.
 - The black header has the AIC and CCD logos at the top left, in their original
   colors, at 64px / 120px wide (48px / 90px on phones). Its centered white title
   is “Celebrating Community Care Day • 1 Nov” in Circular Std Medium (500).
@@ -468,10 +498,9 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   past the right edge and scroll into view. All rows keep moving at their normal
   speed throughout growth, the five-second hold, and rejoining.
 - Highlights keep the same row-based size on phones and desktop. Gaps are inserted
-  at existing brick boundaries without realigning row offsets; alternating rows
-  retain their half-brick stagger after the card rejoins. Off-screen gaps finish
-  their size transition before being retired so fractional widths do not shift
-  a row's alignment.
+  at existing card boundaries without resetting row offsets; on rejoining, the
+  home gap closes to that card's size-aware slot width. Off-screen gaps finish
+  their size transition before being retired so neighbors do not jump.
 - Event mode retains its live new-arrival behavior and ignores the card parameter.
 
 ## 10. Maintaining this guide

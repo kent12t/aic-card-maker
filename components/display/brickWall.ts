@@ -1,5 +1,6 @@
 import type { Id } from "@/convex/_generated/dataModel";
 import { CARD_ASPECT_RATIO } from "@/lib/card-maker/constants";
+import { settleWall, type SpringBody, type WallParticle } from "./wallPhysics";
 
 export type WallCard = { _id: Id<"cards">; _creationTime: number; url: string };
 
@@ -8,21 +9,46 @@ export type WallSnapshot = {
   cellWidth: number;
   bigSize: number;
   bigWidth: number;
-  bricks: { key: string; url: string }[];
+  bricks: { key: string; url: string; depth: number }[];
   features: { key: string; url: string }[];
 };
 
-const ROWS = 10;
+const ROWS = 8;
+// Keep open air between lanes rather than sizing artwork to fill the row pitch.
+const ROW_FILL = 0.76;
 const SPAN_ROWS = 4;
 const BIG_CELLS = 3.4;
-// Gaps are a whole number of bricks wide so rows keep their brick alignment after a gap passes.
+// Feature gaps reserve room across neighboring rows while the normal slots follow card sizes.
 const GAP_CELLS = 5;
-const SPEED_PX_PER_S = 60;
+const SPEED_PX_PER_S = 28;
 const GROW_MS = 900;
 const BIG_MS = 5000;
 const MAX_FRAME_MS = 100;
-// Matches the brick's `p-1` so the shrinking card lands exactly on the brick image.
+// Matches .floatingCard padding so the shrinking card lands exactly on the brick image.
 const BRICK_PADDING = 4;
+const MIN_SCALE = 0.7;
+const SCALE_RANGE = 0.85;
+
+// Each occurrence keeps its own motion, including when a featured card rejoins.
+type FloatMotion = {
+  depth: number;
+  rotation: number;
+  phase: number;
+  period: number;
+  drift: number;
+  body: SpringBody;
+};
+
+function createMotion(): FloatMotion {
+  return {
+    depth: Math.random(),
+    rotation: (Math.random() - 0.5) * 14,
+    phase: Math.random() * Math.PI * 2,
+    period: 12 + Math.random() * 6,
+    drift: 0.06 + Math.random() * 0.04,
+    body: { x: 0, y: 0, vx: 0, vy: 0 },
+  };
+}
 
 // `homeRow` is the row the card shrinks back into; `removed` means a moderator took it down, so it just disappears.
 type Feature = {
@@ -36,8 +62,9 @@ type Feature = {
   removed: boolean;
   centerX: number;
   gaps: number;
+  motion: FloatMotion;
 };
-type Brick = { kind: "brick"; key: string; card: WallCard };
+type Brick = { kind: "brick"; key: string; card: WallCard; motion: FloatMotion };
 type Gap = { kind: "gap"; key: string; feature: Feature; row: number; width: number };
 type Item = Brick | Gap;
 // Each row is a ring of items read from `head`; `offset` is how far the head item has scrolled past the left edge.
@@ -82,16 +109,21 @@ export class BrickWall {
   private cell = 0;
   private keyCounter = 0;
   private replayedCardId: string | undefined;
+  private elapsed = 0;
+  private reducedMotion = false;
+  private needsSettle = true;
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
   /** Advances one frame and returns true when the set of rendered elements changed. */
-  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string): boolean {
+  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string, reducedMotion = false): boolean {
     if (!cards || width <= 0 || height < ROWS) return false;
 
     let changed = false;
+    const motionChanged = reducedMotion !== this.reducedMotion;
+    this.reducedMotion = reducedMotion;
     const resized = width !== this.width || height !== this.height;
-    if (resized || (cards !== this.syncedCards && !this.hasBricks())) {
+    if (resized || motionChanged || (cards !== this.syncedCards && (this.reducedMotion || !this.hasBricks()))) {
       this.build(cards, width, height);
       changed = true;
     } else if (cards !== this.syncedCards) {
@@ -100,7 +132,7 @@ export class BrickWall {
     }
 
     // Replay a published card as a new arrival on this wall only, once per requested ID.
-    if (replayCardId && replayCardId !== this.replayedCardId) {
+    if (!this.reducedMotion && replayCardId && replayCardId !== this.replayedCardId) {
       const card = cards.find((card) => card._id === replayCardId);
       if (card) {
         const feature = this.features.find((feature) => feature.card._id === replayCardId);
@@ -110,8 +142,10 @@ export class BrickWall {
       }
     }
 
-    if (this.animate(Math.min(dtMs, MAX_FRAME_MS))) changed = true;
-    this.place();
+    const step = this.reducedMotion ? 0 : Math.min(Math.max(dtMs, 0), MAX_FRAME_MS);
+    this.elapsed += step / 1000;
+    if (this.animate(step)) changed = true;
+    this.place(step / 1000);
     return changed;
   }
 
@@ -121,7 +155,7 @@ export class BrickWall {
       cellWidth: this.cellWidth,
       bigSize: this.bigSize,
       bigWidth: this.bigWidth,
-      bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (item.kind === "brick" ? [{ key: item.key, url: item.card.url }] : []))),
+      bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (item.kind === "brick" ? [{ key: item.key, url: item.card.url, depth: item.motion.depth }] : []))),
       features: this.features.map((feature) => ({ key: feature.key, url: feature.card.url })),
     };
   }
@@ -144,19 +178,63 @@ export class BrickWall {
 
   // Rings are longer than the screen plus a few gaps, so tail insertions and removals always happen off-screen.
   private get minBricks() {
-    return Math.ceil((this.width + 3 * this.gapWidth) / this.cellWidth) + 2;
+    return Math.ceil((this.width + 3 * this.gapWidth) / (this.cellWidth * MIN_SCALE)) + 2;
   }
 
   private nextKey() {
     return String(this.keyCounter++);
   }
 
-  private brick(card: WallCard): Brick {
-    return { kind: "brick", key: this.nextKey(), card };
+  private brick(card: WallCard, motion = createMotion()): Brick {
+    return { kind: "brick", key: this.nextKey(), card, motion };
+  }
+
+  private get rowPitch() {
+    return this.height / ROWS;
+  }
+
+  private get edgePadding() {
+    return Math.max(12, this.cell * 0.16);
+  }
+
+  private floatingBounds(motion: FloatMotion) {
+    const angle = (Math.abs(motion.rotation) + 2.5) * Math.PI / 180;
+    const scale = MIN_SCALE + motion.depth * SCALE_RANGE + 0.018;
+    const w = (this.cellWidth - BRICK_PADDING * 2) * scale;
+    const h = (this.cell - BRICK_PADDING * 2) * scale;
+    const drift = this.cell * motion.drift;
+    return {
+      halfWidth: (Math.cos(angle) * w + Math.sin(angle) * h) / 2 + drift * 0.7,
+      halfHeight: (Math.sin(angle) * w + Math.cos(angle) * h) / 2 + drift,
+    };
+  }
+
+  private rowCenter(row: number, halfHeight: number) {
+    return Math.max(halfHeight + this.edgePadding,
+      Math.min(this.height - halfHeight - this.edgePadding, (row + 0.5) * this.rowPitch));
+  }
+
+  private floating(motion: FloatMotion) {
+    const phase = this.elapsed * Math.PI * 2 / motion.period + motion.phase;
+    const amplitude = this.reducedMotion ? 0 : this.cell * motion.drift;
+    return {
+      x: Math.sin(phase) * amplitude * 0.7,
+      y: Math.sin(phase) * amplitude,
+      rotation: motion.rotation + (this.reducedMotion ? 0 : Math.sin(phase * 0.67) * 2.5),
+      scale: MIN_SCALE + motion.depth * SCALE_RANGE + (this.reducedMotion ? 0 : Math.sin(phase * 0.59) * 0.018),
+    };
   }
 
   private widthOf(item: Item) {
-    return item.kind === "brick" ? this.cellWidth : item.width;
+    return item.kind === "brick" ? this.brickWidth(item.motion) : item.width;
+  }
+
+  private brickWidth(motion: FloatMotion) {
+    const angle = (Math.abs(motion.rotation) + 2.5) * Math.PI / 180;
+    const scale = MIN_SCALE + motion.depth * SCALE_RANGE + 0.018;
+    return ((this.cellWidth - BRICK_PADDING * 2) * Math.cos(angle)
+      + (this.cell - BRICK_PADDING * 2) * Math.sin(angle)) * scale
+      + this.cell * (0.34 + motion.drift * 1.4);
   }
 
   private hasBricks() {
@@ -166,12 +244,13 @@ export class BrickWall {
   private build(cards: WallCard[], width: number, height: number) {
     this.width = width;
     this.height = height;
-    this.cell = Math.floor(height / ROWS);
+    this.cell = Math.floor(this.rowPitch * ROW_FILL);
     this.syncedCards = cards;
     // Oldest first so newer cards are added at the tail rather than reshuffling the wall.
     this.cards = [...cards].reverse();
     this.known = new Set(cards.map((card) => card._id));
     this.features = [];
+    this.needsSettle = true;
     this.rows = Array.from({ length: ROWS }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cellWidth / 2 : 0 }));
     if (!this.cards.length) return;
 
@@ -201,7 +280,7 @@ export class BrickWall {
     for (const card of this.cards) {
       if (this.known.has(card._id)) continue;
       this.known.add(card._id);
-      this.addFeature(card);
+      if (!this.reducedMotion) this.addFeature(card);
     }
     this.refill();
   }
@@ -269,6 +348,7 @@ export class BrickWall {
       removed: false,
       centerX,
       gaps: 0,
+      motion: createMotion(),
     };
     for (let r = start; r < start + SPAN_ROWS; r++) {
       const row = this.rows[r];
@@ -299,7 +379,7 @@ export class BrickWall {
         if (item.kind !== "gap" || item.feature !== feature) continue;
         // The home gap has shrunk to one brick wide, so swapping in the brick causes no visible jump.
         if (!rejoined && item.row === feature.homeRow) {
-          row.items[i] = this.brick(feature.card);
+          row.items[i] = this.brick(feature.card, feature.motion);
           rejoined = true;
         } else {
           removeAt(row, i);
@@ -308,7 +388,7 @@ export class BrickWall {
     }
     this.features = this.features.filter((f) => f !== feature);
     // If the gaps already scrolled off-screen, the card rejoins as a brick entering from the right.
-    if (!rejoined) insertAt(this.rows[feature.homeRow], Infinity, this.brick(feature.card));
+    if (!rejoined) insertAt(this.rows[feature.homeRow], Infinity, this.brick(feature.card, feature.motion));
   }
 
   private isRejoining(feature: Feature) {
@@ -335,7 +415,7 @@ export class BrickWall {
         if (item.kind !== "gap") continue;
         const eased = easeInOutCubic(item.feature.progress);
         // While rejoining, the home row's gap closes down to one brick-sized slot for the card to land in.
-        const minWidth = this.isRejoining(item.feature) && item.row === item.feature.homeRow ? this.cellWidth : 0;
+        const minWidth = this.isRejoining(item.feature) && item.row === item.feature.homeRow ? this.brickWidth(item.feature.motion) : 0;
         item.width = minWidth + (this.gapWidth - minWidth) * eased;
       }
 
@@ -344,9 +424,7 @@ export class BrickWall {
         const item = row.items[row.head];
         const width = this.widthOf(item);
         if (row.offset < width) break;
-        // A changing gap can already be off-screen, but removing its fractional
-        // brick width would permanently shift this row's stagger. Let it finish
-        // opening or closing before retiring it from the ring.
+        // Let a changing gap finish before retiring it, so its neighbors do not jump.
         if (item.kind === "gap" && item.feature.progress < 1) break;
         row.offset -= width;
         if (item.kind === "gap") {
@@ -365,9 +443,10 @@ export class BrickWall {
     return changed;
   }
 
-  private place() {
+  private place(seconds: number) {
     const bounds = new Map<Feature, { left: number; right: number }>();
     const homeSlots = new Map<Feature, number>();
+    const particles: (WallParticle & { brick: Brick; rotation: number; scale: number; bobX: number; bobY: number })[] = [];
 
     this.rows.forEach((row, r) => {
       let x = -row.offset;
@@ -376,8 +455,31 @@ export class BrickWall {
         const item = row.items[(row.head + i) % n];
         const width = this.widthOf(item);
         if (item.kind === "brick") {
-          const element = this.elements.get(item.key);
-          if (element) element.style.transform = `translate3d(${x}px, ${r * this.cell}px, 0)`;
+          if (x > -this.cellWidth * 3 && x < this.width + this.cellWidth * 3) {
+            const float = this.floating(item.motion);
+            // Reserve the full motion envelope; solve spacing around stable anchors.
+            // Applying bobbing afterward prevents collision forces from cancelling it.
+            const { halfWidth, halfHeight } = this.floatingBounds(item.motion);
+            particles.push({
+              brick: item,
+              body: item.motion.body,
+              anchorX: x + width / 2,
+              anchorY: this.rowCenter(r, halfHeight),
+              halfWidth,
+              halfHeight,
+              minY: halfHeight + this.edgePadding,
+              maxY: this.height - halfHeight - this.edgePadding,
+              mass: 0.6 + float.scale * float.scale,
+              rotation: float.rotation,
+              scale: float.scale,
+              bobX: float.x,
+              bobY: float.y,
+            });
+          } else {
+            const element = this.elements.get(item.key);
+            if (element) element.style.transform = `translate3d(-9999px, 0, 0)`;
+            Object.assign(item.motion.body, { x: 0, y: 0, vx: 0, vy: 0 });
+          }
         } else {
           const bound = bounds.get(item.feature) ?? { left: -Infinity, right: Infinity };
           bound.left = Math.max(bound.left, x);
@@ -389,13 +491,23 @@ export class BrickWall {
       }
     });
 
+    settleWall(particles, this.needsSettle ? 0.8 : seconds, this.cell * 0.06);
+    this.needsSettle = false;
+    for (const p of particles) {
+      const element = this.elements.get(p.brick.key);
+      if (!element) continue;
+      const x = p.anchorX + p.body.x + p.bobX - this.cellWidth / 2;
+      const y = p.anchorY + p.body.y + p.bobY - this.cell / 2;
+      element.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${p.rotation}deg) scale(${p.scale})`;
+    }
+
     for (const feature of this.features) {
       const bound = bounds.get(feature);
       const element = this.elements.get(feature.key);
       if (!bound || !element) continue;
       feature.centerX = (bound.left + bound.right) / 2;
       let x = feature.centerX;
-      let y = (feature.row + SPAN_ROWS / 2) * this.cell;
+      let y = (feature.row + SPAN_ROWS / 2) * this.rowPitch;
       let scale = easeOutBack(feature.progress);
 
       const homeX = homeSlots.get(feature);
@@ -404,10 +516,23 @@ export class BrickWall {
         const eased = easeInOutCubic(feature.progress);
         const brickSize = this.cell - BRICK_PADDING * 2;
         x = homeX + (x - homeX) * eased;
-        y = (feature.homeRow + 0.5) * this.cell + (y - (feature.homeRow + 0.5) * this.cell) * eased;
+        const homeY = this.rowCenter(feature.homeRow, this.floatingBounds(feature.motion).halfHeight);
+        y = homeY + (y - homeY) * eased;
         scale = (brickSize + (this.bigSize - brickSize) * eased) / this.bigSize;
       }
-      element.style.transform = `translate3d(${x - this.bigWidth / 2}px, ${y - this.bigSize / 2}px, 0) scale(${scale})`;
+      const float = this.floating(feature.motion);
+      const presence = easeInOutCubic(feature.progress);
+      const driftWeight = 1 - presence * 0.65;
+      x += (float.x + feature.motion.body.x) * driftWeight;
+      y += (float.y + feature.motion.body.y) * driftWeight;
+      scale *= float.scale + (1 - float.scale) * presence;
+      const rotation = float.rotation * (1 - presence * 0.75);
+      const radians = rotation * Math.PI / 180;
+      const rotatedHeight = Math.abs(Math.sin(radians)) * this.bigWidth + Math.abs(Math.cos(radians)) * this.bigSize;
+      scale = Math.min(scale, (this.height - this.edgePadding * 2) / rotatedHeight);
+      const halfHeight = rotatedHeight * scale / 2;
+      y = Math.max(halfHeight + this.edgePadding, Math.min(this.height - halfHeight - this.edgePadding, y));
+      element.style.transform = `translate3d(${x - this.bigWidth / 2}px, ${y - this.bigSize / 2}px, 0) rotate(${rotation}deg) scale(${scale})`;
     }
   }
 }
