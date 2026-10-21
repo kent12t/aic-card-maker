@@ -5,11 +5,13 @@ import { DragEvent, PointerEvent, Suspense, useEffect, useMemo, useRef, useState
 import { useSearchParams } from "next/navigation";
 import { ActionButtons } from "@/components/card-maker/ActionButtons";
 import { CardCanvas } from "@/components/card-maker/CardCanvas";
-import { DesktopEditorPanel } from "@/components/card-maker/DesktopEditorPanel";
-import { DesktopPalettePanel } from "@/components/card-maker/DesktopPalettePanel";
-import { IntroContent } from "@/components/card-maker/IntroContent";
-import { MobilePalettePanel } from "@/components/card-maker/MobilePalettePanel";
+import { PalettePanel } from "@/components/card-maker/PalettePanel";
+import { EditorInstructions } from "@/components/card-maker/EditorInstructions";
+import { HowItWorks } from "@/components/card-maker/HowItWorks";
+import { SiteHeader } from "@/components/landing/SiteHeader";
 import { StatusNotice } from "@/components/card-maker/StatusNotice";
+import { circular, caslon } from "@/lib/fonts";
+import styles from "./page.module.css";
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
@@ -18,7 +20,6 @@ import {
   messageSources,
   personSources,
   stickerSources,
-  TAB_LABELS,
 } from "@/lib/card-maker/constants";
 import { renderCardImage, submitCardImage, uploadDownloadImage } from "@/lib/card-maker/submit";
 import {
@@ -44,20 +45,18 @@ function CardMaker() {
   const [isExporting, setIsExporting] = useState(false);
   const exportingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<TabKey>("messages");
-  const [selectedFrame, setSelectedFrame] = useState(frameSources[1]);
+  const [selectedFrame, setSelectedFrame] = useState(frameSources[5]);
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
   const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [counter, setCounter] = useState(1);
   const [cardScale, setCardScale] = useState(1);
-  const [mobileTabMenuOpen, setMobileTabMenuOpen] = useState(false);
   const [notice, setNotice] = useState<{ title: string; message: string; linkHref?: string; qrUrl?: string; confirmClear?: boolean; download?: boolean } | null>(null);
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardCaptureRef = useRef<HTMLDivElement | null>(null);
-  const mobileTabMenuRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
   const isSubmittingRef = useRef(false);
   const submissionKeyRef = useRef<string | null>(null);
@@ -93,8 +92,6 @@ function CardMaker() {
     return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
   }, [activeTab]);
 
-  const activeTabLabel = useMemo(() => TAB_LABELS.find((tab) => tab.key === activeTab)?.label ?? "", [activeTab]);
-
   useEffect(() => {
     if (!cardViewportRef.current) return;
 
@@ -102,25 +99,12 @@ function CardMaker() {
     const observer = new ResizeObserver(() => {
       const bounds = element.getBoundingClientRect();
       const ratio = bounds.width / BOARD_WIDTH;
-      setCardScale(Math.min(ratio, 1));
+      setCardScale(ratio);
     });
 
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (!mobileTabMenuOpen) return;
-
-    function handlePointerDown(event: globalThis.PointerEvent) {
-      if (!mobileTabMenuRef.current?.contains(event.target as Node)) {
-        setMobileTabMenuOpen(false);
-      }
-    }
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [mobileTabMenuOpen]);
 
   useEffect(() => {
     function handlePointerMove(event: globalThis.PointerEvent) {
@@ -310,37 +294,6 @@ function CardMaker() {
     }
   }
 
-  async function handleShare() {
-    if (typeof navigator.share !== "function") {
-      setNotice({ title: "Sharing unavailable", message: "Your browser does not support native sharing. Download your card and share it from your photos." });
-      return;
-    }
-    if (!cardCaptureRef.current || exportingRef.current || isSubmittingRef.current) return;
-    exportingRef.current = true;
-    setIsExporting(true);
-    setIsCaptureMode(true);
-    try {
-      await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined)));
-      const dataUrl = await toPng(cardCaptureRef.current, { cacheBust: true, pixelRatio: 2 });
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], "community-care-card.png", { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My thank you card" });
-      } else {
-        const url = await uploadDownloadImage(blob);
-        await navigator.share({ url, title: "My thank you card" });
-      }
-    } catch (error) {
-      if (!(error instanceof Error && error.name === "AbortError")) {
-        setNotice({ title: "Sharing unavailable", message: "Please download your card and share it from your photos, or try sharing again." });
-      }
-    } finally {
-      setIsCaptureMode(false);
-      exportingRef.current = false;
-      setIsExporting(false);
-    }
-  }
-
   function handleRestart() {
     setNotice({
       title: "This will clear your current card.",
@@ -389,21 +342,26 @@ function CardMaker() {
     setSelectedTarget(null);
   }
 
-  function handleSelectMobileTab(tab: TabKey) {
-    setActiveTab(tab);
-    setMobileTabMenuOpen(false);
-  }
-
   return (
-    <main className="overflow-x-hidden px-4 py-4 lg:px-8 lg:py-8">
-      <div className="mx-auto flex w-full max-w-[1595px] flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-        <section className="lg:hidden">
-          <IntroContent titleClassName="font-open-sans text-[22px] font-bold leading-none text-[#ff661e]" textClassName="text-[12px] font-semibold leading-[1.28] text-black" />
+    <div className={`${styles.designer} ${circular.variable} ${caslon.variable}`}>
+      <SiteHeader compact />
+      <main className={styles.editor}>
+        <section className={styles.library} aria-labelledby="design-title">
+          <h1 id="design-title" className={styles.heading}>Design your<br className={styles.headingBreak} /> thank you card</h1>
+          <p className={styles.description}>Select an element to add to your card.</p>
+          <PalettePanel
+            activeTab={activeTab}
+            paletteItems={paletteItems}
+            selectedFrame={selectedFrame}
+            onSelectTab={setActiveTab}
+            onSelectFrame={setSelectedFrame}
+            onAddSticker={(payload) => addSticker(payload, BOARD_WIDTH / 2, BOARD_HEIGHT / 2)}
+            onDragStartItem={handlePaletteDragStart}
+          />
         </section>
 
-        <DesktopEditorPanel />
-
-        <section className="flex w-full flex-col items-center gap-4 lg:w-[443px] lg:gap-6">
+        <section className={styles.workspace} aria-label="Your thank you card">
+          <HowItWorks />
           <CardCanvas
             cardScale={cardScale}
             selectedFrame={selectedFrame}
@@ -418,46 +376,17 @@ function CardMaker() {
             onBeginInteraction={beginInteraction}
             onDeleteSticker={handleDeleteSticker}
           />
-
+          <EditorInstructions />
           <ActionButtons
             isExporting={isExporting}
-            onShare={!eventMode ? () => void handleShare() : undefined}
             isSubmitting={isSubmitting}
             onRestart={handleRestart}
             onSubmit={() => void handleSubmit()}
             onSave={() => void handleSave()}
           />
 
-          <MobilePalettePanel
-            isExporting={isExporting}
-            onShare={!eventMode ? () => void handleShare() : undefined}
-            activeTab={activeTab}
-            activeTabLabel={activeTabLabel}
-            mobileTabMenuOpen={mobileTabMenuOpen}
-            mobileTabMenuRef={mobileTabMenuRef}
-            paletteItems={paletteItems}
-            selectedFrame={selectedFrame}
-            onToggleMenu={() => setMobileTabMenuOpen((open) => !open)}
-            onSelectTab={handleSelectMobileTab}
-            onSelectFrame={setSelectedFrame}
-            onAddSticker={(payload) => addSticker(payload, BOARD_WIDTH / 2, BOARD_HEIGHT / 2)}
-            onDragStartItem={handlePaletteDragStart}
-            isSubmitting={isSubmitting}
-            onRestart={handleRestart}
-            onSubmit={() => void handleSubmit()}
-            onSave={() => void handleSave()}
-          />
         </section>
-
-        <DesktopPalettePanel
-          activeTab={activeTab}
-          paletteItems={paletteItems}
-          selectedFrame={selectedFrame}
-          onSelectTab={setActiveTab}
-          onSelectFrame={setSelectedFrame}
-          onDragStartItem={handlePaletteDragStart}
-        />
-      </div>
+      </main>
 
       <StatusNotice
         open={notice !== null}
@@ -470,6 +399,6 @@ function CardMaker() {
         onClose={() => setNotice(null)}
       />
 
-    </main>
+    </div>
   );
 }

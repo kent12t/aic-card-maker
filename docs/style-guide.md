@@ -10,17 +10,19 @@ buttons that start raised. Use this visual language when updating the designer.
 | File | Responsibility |
 | --- | --- |
 | `app/globals.css` | Global color variables; existing app defaults |
-| `app/page.tsx` | Landing markup, local font loading, links |
+| `app/page.tsx` | Landing markup and links |
+| `lib/fonts.ts` | Shared local Circular and Caslon font loading |
 | `app/page.module.css` | Landing layout, typography, buttons, motion, breakpoints |
 | `components/landing/LandingNav.tsx` | Desktop links and mobile dropdown |
+| `components/landing/SiteHeader.tsx` | Shared logo group and navigation; compact desktop designer variant |
 | `components/landing/CardDeck.tsx` | Animated cards and pause control |
-| `app/design/page.tsx` | Existing card designer, moved from `/` |
+| `app/design/page.tsx` | Responsive card designer and editor interactions |
+| `app/design/page.module.css` | Designer layout, tabs, palette, buttons, instructions, and help modal |
 
-The landing font variables are currently scoped to its root element. The global
-body and existing designer still use Open Sans and older color values. To apply
-the new typography to other routes, load the fonts in a shared layout/module or
-apply the same local-font setup and variable classes to those routes. Merely
-referencing `--font-circular` or `--font-caslon` outside that scope is insufficient.
+Both landing and designer import the local fonts from `lib/fonts.ts` and apply
+their variable classes to the route root. The global body retains Open Sans for
+other existing screens. Merely referencing `--font-circular` or `--font-caslon`
+outside a root with those variable classes is insufficient.
 
 ## 1. Color palette
 
@@ -232,7 +234,90 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Under reduced motion, show a static layered deck, hide the animation control,
   and remove `will-change`.
 
-## 8. Maintaining this guide
+## 8. Card designer (`/design`)
+
+### Surfaces and typography
+
+- The header is white. Below it, the editor surface is **orange `#f99d21` at
+  35% opacity over white**, implemented as a flat translucent gradient over a
+  white background (not opacity on the container or its contents).
+  The route root is a full-viewport-height flex column, with the editor growing
+  to fill all remaining space below the header. Do not calculate its height by
+  subtracting a fixed header height; that leaves a white footer at some sizes.
+- The heading is Circular Std Black in dark orange. Desktop uses two lines,
+  “Design your” / “thank you card”, at `clamp(36px, 3.35vw, 64px)`.
+  At <=1100px the explicit line break is removed; mobile type is
+  `clamp(24px, 7.1vw, 36px)` and wraps naturally on the narrowest screens.
+- Body copy uses Caslon; tab labels and action buttons use Circular Std Black.
+- The shared `SiteHeader` uses the same `LandingNav`, links, and mobile dropdown
+  as the landing page. Its `compact` variant reduces the
+  desktop AIC logo to `clamp(90px, 6vw, 116px)` and CCD logo to
+  `clamp(148px, 9.8vw, 188px)`.
+- On mobile, the designer's compact header uses smaller logos to fit comfortably
+  within its padding: AIC `clamp(44px, 12vw, 56px)`, CCD
+  `clamp(72px, 20vw, 90px)`, with a 12px gap. Header padding is
+  `8px 5% 8px 8%`; the navigation toggle retains its 44px hit area.
+
+### Palette and responsive layout
+
+- Tab order: **Frames → CCP Stickers → Messages → Stickers**. Messages is the
+  initially selected tab; the initial frame is the orange heart (`frame_6.webp`).
+- Tabs sit directly on the orange surface. The active tab has a white fill,
+  rounded top corners, and curved lower joins into the white palette. Labels
+  use purple; a thin separator precedes CCP Stickers when applicable.
+- The first and last active tabs omit their outward-facing lower join. The
+  palette's corresponding top corner becomes square so it meets the active tab
+  flush, without a protruding white shape; inward-facing joins remain curved.
+- Tabs use accessible tab/tabpanel roles, a roving tab stop, and
+  Left/Right/Home/End keyboard selection.
+- Above 1100px, the palette has three columns and vertical scrolling.
+  At <=1100px it has **two rows scrolling horizontally**, with all four tabs
+  visible. On mobile the palette is 158px tall to keep the card nearby.
+- Palette items support click/tap-to-add as well as desktop drag-and-drop;
+  frame items select the background and show an outlined selected state.
+- Palette item gutters are **0 on all screen sizes**; the artwork's built-in
+  transparent safe zones provide the spacing between images.
+- Palette item boxes and their selector borders preserve the artwork ratios:
+  **frames 64:53**, **CCP stickers 4:5**, **messages and stickers 1:1**.
+  Use `object-fit: contain` without scaling or cropping; keep the complete
+  asset visible, including its transparent padding. Desktop rows size naturally
+  to their items. In the horizontal tray, category-specific column widths derive
+  from the 90px row height (70px on mobile) and the item's aspect ratio.
+- Mobile maximizes thumbnail space within the same 158px tray: `1px 2px`
+  internal padding, a 2px white border, zero item gutters, and a thin
+  violet scrollbar. Keep full artwork and its aspect ratio visible as items grow.
+- Scrollbars use violet thumbs and a white-tinted light-violet track, including
+  the document scrollbar on this route. Native overlay scrollbar visibility
+  still follows the browser/OS. Both standard and WebKit styling are supplied.
+- Wide desktop: library on the left, canvas and actions in the middle,
+  instructions on the right. At <=1550px instructions move beneath the canvas;
+  at <=1100px the library stacks above the workspace.
+- The canvas keeps a CSS `64 / 53` aspect ratio independent of JavaScript
+  measurement. A ResizeObserver scales the internal 443px editing coordinate
+  system to fit, including scaling upward on desktop. Exports retain that
+  internal capture surface. The viewport has 9% rounded corners.
+
+### Controls and help
+
+- Three orange, dark-purple outlined action buttons: **Restart**, **Submit**,
+  **Download**. Use `icon_restart.svg`, `icon_send.svg`, and
+  `icon_download.svg` from `public/assets/misc/`.
+- Preserve the landing's raised resting state, lowered mouse hover, flat press,
+  visible keyboard focus, and reduced-motion behavior. Desktop buttons have
+  22px radii and 3px outlines, reducing to 17px on smaller desktops and 8px /
+  1.5px outlines on mobile. Labels have a 14px minimum and can wrap the action
+  row at very narrow widths rather than clipping.
+- Editing instructions are italic Caslon. Their circular dark-purple badges
+  use the same Lucide `RotateCw`, `Maximize2`, and `X` icons as the canvas
+  handles. Canvas handles also use dark-purple circles with white icons.
+- “How it works” sits above the canvas, aligned right. Its pill background is
+  **orange at 53% opacity**; text and the question icon are **`#a37d4f`**, with
+  a white icon interior.
+- The pill opens a native modal dialog with temporary text instructions,
+  pending the user's modal design. It has a labeled close button, outside-click
+  dismissal, native Escape handling, focus containment, and focus restoration.
+
+## 9. Maintaining this guide
 
 Use the existing CSS module and components as the exact implementation reference
 when porting styles. Update this document when approved colors, font roles,

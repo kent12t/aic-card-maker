@@ -6,6 +6,7 @@ import type { DragEvent, PointerEvent, RefObject } from "react";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "@/lib/card-maker/constants";
 import { getHandleStyle } from "@/lib/card-maker/utils";
 import type { InteractionMode, SelectedTarget, StickerItem } from "@/lib/card-maker/types";
+import styles from "@/app/design/page.module.css";
 
 type CardCanvasProps = {
   cardScale: number;
@@ -49,8 +50,7 @@ export function CardCanvas({
   return (
     <div
       ref={cardViewportRef}
-      className="sticky top-0 z-20 w-full max-w-[443px] overflow-hidden bg-white lg:static lg:w-[443px]"
-      style={{ height: BOARD_HEIGHT * cardScale }}
+      className={styles.canvasViewport}
     >
       <div
         style={{
@@ -81,7 +81,7 @@ export function CardCanvas({
                 return (
                   <div
                     key={sticker.id}
-                    className={`absolute ${isSelected ? "outline outline-2 outline-[#6ab5ff]" : ""}`}
+                    className={`absolute ${isSelected ? "outline outline-2 outline-[var(--color-violet)]" : ""}`}
                     style={{
                       left: sticker.x,
                       top: sticker.y,
@@ -94,6 +94,7 @@ export function CardCanvas({
                   >
                     <button
                       type="button"
+                      aria-label="Move sticker"
                       onPointerDown={(event) =>
                         onBeginInteraction(
                           event,
@@ -116,18 +117,20 @@ export function CardCanvas({
                       <>
                         <button
                           type="button"
+                          aria-label="Delete sticker"
                           onPointerDown={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
                             onDeleteSticker(sticker.id);
                           }}
-                          className="absolute -right-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                          className={`absolute -right-3 -top-3 ${styles.stickerHandle}`}
                           style={getHandleStyle(sticker.scale)}
                         >
                           <X size={14} />
                         </button>
                         <button
                           type="button"
+                          aria-label="Rotate sticker"
                           onPointerDown={(event) =>
                             onBeginInteraction(
                               event,
@@ -141,13 +144,14 @@ export function CardCanvas({
                               sticker.rotation,
                             )
                           }
-                          className="absolute -left-3 -top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                          className={`absolute -left-3 -top-3 ${styles.stickerHandle}`}
                           style={getHandleStyle(sticker.scale)}
                         >
                           <RotateCw size={13} />
                         </button>
                         <button
                           type="button"
+                          aria-label="Resize sticker"
                           onPointerDown={(event) =>
                             onBeginInteraction(
                               event,
@@ -161,7 +165,7 @@ export function CardCanvas({
                               sticker.rotation,
                             )
                           }
-                          className="absolute -bottom-3 -right-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#6ab5ff] bg-white"
+                          className={`absolute -bottom-3 -right-3 ${styles.stickerHandle}`}
                           style={getHandleStyle(sticker.scale)}
                         >
                           <Maximize2 size={12} />

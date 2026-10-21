@@ -1,27 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import localFont from "next/font/local";
 import { CardDeck } from "@/components/landing/CardDeck";
-import { LandingNav } from "@/components/landing/LandingNav";
+import { SiteHeader } from "@/components/landing/SiteHeader";
+import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
-
-const circular = localFont({
-  src: [
-    { path: "../public/assets/fonts/CircularStd-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../public/assets/fonts/CircularStd-Black.ttf", weight: "900", style: "normal" },
-  ],
-  variable: "--font-circular",
-  display: "swap",
-});
-
-const caslon = localFont({
-  src: [
-    { path: "../public/assets/fonts/CaslonDoric-RegularNo2.otf", weight: "400", style: "normal" },
-    { path: "../public/assets/fonts/CaslonDoric-RegularNo2Italic.otf", weight: "400", style: "italic" },
-  ],
-  variable: "--font-caslon",
-  display: "swap",
-});
 
 const steps = [
   { label: "Design", icon: "icon_design.svg" },
@@ -39,13 +21,7 @@ export default async function Home({
 
   return (
     <div className={`${styles.landing} ${circular.variable} ${caslon.variable}`}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logos} aria-label="Community Care Day home">
-          <Image className={styles.aicLogo} src="/assets/misc/aic_logo.svg" alt="Agency for Integrated Care" width={249} height={179} priority />
-          <Image className={styles.ccdLogo} src="/assets/misc/ccd-logo.svg" alt="Community Care Day" width={681} height={215} priority />
-        </Link>
-        <LandingNav />
-      </header>
+      <SiteHeader />
 
       <main className={styles.hero}>
         <section className={styles.content} aria-labelledby="landing-title">

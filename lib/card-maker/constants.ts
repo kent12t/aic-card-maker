@@ -8,9 +8,9 @@ export const CARD_EXPORT_HEIGHT = Math.round(CARD_EXPORT_WIDTH / CARD_ASPECT_RAT
 
 export const TAB_LABELS: TabLabel[] = [
   { key: "frames", label: "Frames" },
+  { key: "persons", label: "CCP Stickers" },
   { key: "messages", label: "Messages" },
   { key: "stickers", label: "Stickers" },
-  { key: "persons", label: "CCP Stickers" },
 ];
 
 export const frameSources = Array.from({ length: 6 }, (_, i) => `/assets/frames/frame_${i + 1}.webp`);

@@ -33,6 +33,30 @@
   height: auto;
 }
 
+.compactHeader {
+  flex-shrink: 0;
+  width: 100%;
+  align-items: center;
+  padding: 24px 3.9% 30px 2.5%;
+  background: var(--bg);
+}
+
+.compactHeader .logos {
+  gap: clamp(20px, 1.7vw, 33px);
+}
+
+.compactHeader .aicLogo {
+  width: clamp(90px, 6vw, 116px);
+}
+
+.compactHeader .ccdLogo {
+  width: clamp(148px, 9.8vw, 188px);
+}
+
+.compactHeader .nav {
+  padding-top: 0;
+}
+
 .nav {
   position: relative;
   z-index: 10;
@@ -369,6 +393,22 @@
 }
 
 @media (max-width: 600px) {
+  .header.compactHeader {
+    padding: 8px 5% 8px 8%;
+  }
+
+  .compactHeader .logos {
+    gap: 12px;
+  }
+
+  .compactHeader .aicLogo {
+    width: clamp(44px, 12vw, 56px);
+  }
+
+  .compactHeader .ccdLogo {
+    width: clamp(72px, 20vw, 90px);
+  }
+
   .header {
     gap: 16px;
     padding: 16px 5% 0 8%;
