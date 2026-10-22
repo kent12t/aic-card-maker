@@ -444,7 +444,9 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - **Submission:** “Card submitted!” appears above a preview of the exact image
   blob sent to the API. Decorate its top-left with `stickers/sticker_6.webp` and
   bottom-right with `stickers/sticker_1.webp`, retaining their transparent safe
-  zones. Below it, regular mode says only “Thank you!” with **View the Thank You Wall**
+  zones. The top-left sticker is sized at 48% of its original modal dimensions
+  and the bottom-right at 72%, with corner offsets adjusted proportionally.
+  Below it, regular mode says only “Thank you!” with **View the Thank You Wall**
   (links to `/display?card=<submitted card ID>` for a client-local replay of the
   wall's new-card entrance) and **Close**. Event mode adds “Now look out for it on
   our Thank You Wall.” and has only **Close**. Closing preserves the editor's card.

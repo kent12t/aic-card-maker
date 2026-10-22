@@ -597,15 +597,15 @@
 .previewStickerTop {
   /* The sparkle asset has generous transparent padding; size its full box
      so the visible artwork straddles the card's top-left corner. */
-  top: -24%;
-  left: -31%;
-  width: 65%;
+  top: -11.52%;
+  left: -14.88%;
+  width: 31.2%;
 }
 
 .previewStickerBottom {
-  right: -14%;
+  right: -10.08%;
   bottom: 0;
-  width: 32%;
+  width: 23.04%;
 }
 
 .shareFeedback {
