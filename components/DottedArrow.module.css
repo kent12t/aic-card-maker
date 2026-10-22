@@ -1,0 +1,37 @@
+.arrow {
+  --arrow-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--color-purple);
+}
+
+.shaft {
+  flex: 1;
+  min-width: 0;
+  height: 3px;
+  background: repeating-linear-gradient(to right, currentColor 0 5px, transparent 5px 9px);
+}
+
+.head {
+  flex: none;
+  width: var(--arrow-size);
+  height: calc(var(--arrow-size) * 14 / 12);
+}
+
+.arrow[data-direction="down"] {
+  flex-direction: column;
+  width: var(--arrow-size);
+}
+
+.arrow[data-direction="down"] .shaft {
+  width: 3px;
+  min-height: 0;
+  background: repeating-linear-gradient(to bottom, currentColor 0 5px, transparent 5px 9px);
+}
+
+.arrow[data-direction="down"] .head {
+  width: var(--arrow-size);
+  height: var(--arrow-size);
+  transform: rotate(90deg);
+}

@@ -227,13 +227,16 @@ Assets live in `public/assets/misc/` (URL prefix `/assets/misc/`):
 
 - Logos: `aic_logo.svg`, `ccd-logo.svg`.
 - Steps: `icon_design.svg`, `icon_submit.svg`, `icon_share.svg`.
-- Connecting arrow: `icon_arrow.svg`.
+- Connecting arrows: `components/DottedArrow.tsx` and its CSS module; a flexible
+  dashed shaft and independent SVG triangle support horizontal/right and
+  vertical/down directions. Landing icon/caption groups have equal widths so
+  both connecting arrows have equal lengths.
 - Cards: `card_kv1.webp`, `card_kv2.webp`, `card_kv3.webp`.
 
 Preserve image proportions with `object-fit: contain`. Logos use a responsive
-CSS width and `height: auto`. Arrows use Next.js `Image` with `fill` inside a
-positioned wrapper to avoid width/height modification warnings. Do not re-add
-fixed arrow image dimensions that conflict with its flexible width.
+CSS width and `height: auto`. Arrow shafts shrink to available space while their
+triangle heads retain their proportions. Landing step items use zero-basis flex
+sizing and non-shrinking icon/caption groups to keep the entire row in bounds.
 
 The deck has `aspect-ratio: 1.11`, overlapping full-area cards and a 12-second
 loop, giving each of the three cards a four-second turn at the front. Its easing
@@ -289,7 +292,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 ### Palette and responsive layout
 
-- Tab order: **Frames → Avatars → Messages → Stickers**. Messages is the
+- Tab order: **Frames → Avatars → Messages → Stickers**. Frames is the
   initially selected tab; the initial frame is the orange heart (`frame_6.webp`).
 - Tabs sit directly on the orange surface. The active tab has a white fill,
   rounded top corners, and curved lower joins into the white palette. Labels
@@ -302,7 +305,8 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   Left/Right/Home/End keyboard selection.
 - Above 1100px, the palette has three columns and vertical scrolling.
   At <=1100px it has **two rows scrolling horizontally**, with all four tabs
-  visible. On mobile the palette is 158px tall to keep the card nearby.
+   visible. On mobile the palette is 180px tall; frames and avatars use one
+   horizontally scrolling row, while messages and stickers retain two rows.
 - Palette items support click/tap-to-add as well as desktop drag-and-drop;
   frame items select the background and show an outlined selected state.
 - Palette item gutters are **0 on all screen sizes**; the artwork's built-in
@@ -312,8 +316,10 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   Use `object-fit: contain` without scaling or cropping; keep the complete
   asset visible, including its transparent padding. Desktop rows size naturally
   to their items. In the horizontal tray, category-specific column widths derive
-  from the 90px row height (70px on mobile) and the item's aspect ratio.
-- Mobile maximizes thumbnail space within the same 158px tray: `1px 2px`
+   from the 90px row height and the item's aspect ratio. Mobile rows are 81px
+   for messages/stickers and 162px for frames/avatars.
+- Mobile uses a smaller `clamp(15px, 4vw, 19px)` selection subheading.
+- Mobile maximizes thumbnail space within the 180px tray: `1px 2px`
   internal padding, a 2px white border, zero item gutters, and a thin
   violet scrollbar. Keep full artwork and its aspect ratio visible as items grow.
 - Scrollbars use violet thumbs and a white-tinted light-violet track, including
@@ -363,10 +369,11 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Help steps: **Choose a frame**, **Select Avatars**, **Pick your thank you
   message and stickers**, then **Submit your card to be part of the Thank You Wall**.
 - Use the existing `icon_design.svg`, `icon_avatar.svg`, `icon_message.svg`,
-  and `icon_submit.svg` assets in that order for the four steps. Rotate `icon_arrow.svg` for
-  the vertical dotted connectors. Desktop step rows contain number, icon, and
+  and `icon_submit.svg` assets in that order for the four steps. Use `DottedArrow`
+  in its down direction for vertical dashed connectors. Desktop step rows contain number, icon, and
   label inline. On mobile the icon is above the number/label row; the heading
-  and final step use mobile-specific line breaks.
+  uses a mobile-specific line break. Step labels use balanced text wrapping so
+  long instructions break earlier into more even lines at each viewport width.
 - The panel is at most 1288px wide on desktop, with 52px corners at 1920px.
   Mobile uses `min(420px, 100% - 64px)` width and 24px corners. Limit the modal
   to the viewport height and allow internal scrolling on short screens; use

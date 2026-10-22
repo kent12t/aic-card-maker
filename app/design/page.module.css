@@ -418,6 +418,7 @@
 }
 
 .helpStepLabel {
+  text-wrap: balance;
   font-family: var(--font-circular), sans-serif;
   font-size: clamp(24px, 2.2vw, 42px);
   font-weight: 500;
@@ -436,10 +437,9 @@
   height: 58px;
 }
 
-.helpStepArrow img {
-  width: 70px;
-  height: 9px;
-  transform: rotate(90deg);
+.helpConnector {
+  --arrow-size: 9px;
+  height: 100%;
 }
 
 .startButton {
@@ -636,9 +636,8 @@
     height: 40px;
   }
 
-  .helpStepArrow img {
-    width: 50px;
-    height: 7px;
+  .helpConnector {
+    --arrow-size: 7px;
   }
 }
 
@@ -670,9 +669,8 @@
     height: 32px;
   }
 
-  .helpStepArrow img {
-    width: 40px;
-    height: 6px;
+  .helpConnector {
+    --arrow-size: 6px;
   }
 
   .startButton {
@@ -838,7 +836,7 @@
 
   .description {
     margin-top: 6px;
-    font-size: clamp(17px, 4.85vw, 24px);
+    font-size: clamp(15px, 4vw, 19px);
     letter-spacing: -0.025em;
   }
 
@@ -854,7 +852,7 @@
   }
 
   .paletteScroll {
-    height: 158px;
+    height: 180px;
     padding: 1px 2px;
     border-width: 2px;
     border-radius: 14px;
@@ -862,7 +860,13 @@
   }
 
   .paletteGrid {
-    --palette-row-height: 70px;
+    --palette-row-height: 81px;
+  }
+
+  .paletteGrid[data-category="frames"],
+  .paletteGrid[data-category="persons"] {
+    --palette-row-height: 162px;
+    grid-template-rows: var(--palette-row-height);
   }
 
   .workspace {
@@ -991,9 +995,8 @@
     height: 36px;
   }
 
-  .helpStepArrow img {
-    width: 34px;
-    height: 5px;
+  .helpConnector {
+    --arrow-size: 5px;
   }
 
   .startButton {

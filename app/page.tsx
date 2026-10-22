@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DottedArrow } from "@/components/DottedArrow";
 import { CardDeck } from "@/components/landing/CardDeck";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { PageTransitionReady, TransitionLink } from "@/components/navigation/PageTransition";
@@ -45,9 +46,7 @@ export default async function Home({
                   <span>{step.label}</span>
                 </div>
                 {index < steps.length - 1 && (
-                  <span className={styles.stepArrow} aria-hidden="true">
-                    <Image src="/assets/misc/icon_arrow.svg" alt="" fill sizes="114px" className={styles.stepArrowImage} />
-                  </span>
+                  <DottedArrow className={styles.stepArrow} />
                 )}
               </li>
             ))}

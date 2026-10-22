@@ -45,7 +45,7 @@ function CardMaker() {
   const eventMode = useSearchParams().get("event") === "true";
   const [isExporting, setIsExporting] = useState(false);
   const exportingRef = useRef(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("messages");
+  const [activeTab, setActiveTab] = useState<TabKey>("frames");
   const [selectedFrame, setSelectedFrame] = useState(frameSources[5]);
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>(null);
