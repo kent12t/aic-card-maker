@@ -11,8 +11,8 @@ import styles from "@/app/design/page.module.css";
 const steps = [
   { icon: "icon_design.svg", label: "Choose a frame" },
   { icon: "icon_avatar.svg", label: "Select Avatars" },
-  { icon: "icon_message.svg", label: "Pick your thank you message and stickers" },
-  { icon: "icon_submit.svg", label: "Submit your card to be part of the Thank You Wall" },
+  { icon: "icon_message.svg", label: <>Pick your thank you<br className={styles.mobileHelpBreak} /> message and stickers</> },
+  { icon: "icon_submit.svg", label: <>Submit your card to be<br className={styles.mobileHelpBreak} /> part of the Thank You Wall</> },
 ];
 
 export function HowItWorks() {

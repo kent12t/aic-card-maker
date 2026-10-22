@@ -979,6 +979,9 @@
 
   .helpStepLabel {
     grid-row: 2;
+    width: max-content;
+    max-width: 100%;
+    text-wrap: pretty;
     font-size: clamp(16px, 4.72vw, 22px);
     line-height: 1.04;
   }
@@ -997,6 +1000,9 @@
 
   .helpConnector {
     --arrow-size: 5px;
+    --arrow-thickness: 1.5px;
+    height: calc(100% - 12px);
+    margin-block: 6px;
   }
 
   .startButton {

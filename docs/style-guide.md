@@ -372,8 +372,12 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   and `icon_submit.svg` assets in that order for the four steps. Use `DottedArrow`
   in its down direction for vertical dashed connectors. Desktop step rows contain number, icon, and
   label inline. On mobile the icon is above the number/label row; the heading
-  uses a mobile-specific line break. Step labels use balanced text wrapping so
-  long instructions break earlier into more even lines at each viewport width.
+  and longer instructions use intentional mobile line breaks. Mobile labels
+  shrink to their longest line (with a 100% maximum for narrow screens), so the
+  number and label center together as a group while the label stays left-aligned.
+  Desktop labels use balanced text wrapping.
+- Mobile help connectors have 6px clearance at each end, a 1.5px dashed shaft,
+  and a 5px triangle so they remain light and separated from labels and icons.
 - The panel is at most 1288px wide on desktop, with 52px corners at 1920px.
   Mobile uses `min(420px, 100% - 64px)` width and 24px corners. Limit the modal
   to the viewport height and allow internal scrolling on short screens; use
