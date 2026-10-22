@@ -23,6 +23,11 @@
   flex-shrink: 0;
 }
 
+.logos a {
+  display: flex;
+  align-items: center;
+}
+
 .aicLogo {
   view-transition-name: aic-logo;
   width: clamp(100px, 9.17vw, 176px);
@@ -135,7 +140,10 @@
 }
 
 .steps {
+  --step-icon-size: clamp(56px, 4.38vw, 84px);
+  --step-caption-size: clamp(18px, 1.25vw, 24px);
   display: flex;
+  width: max-content;
   align-items: flex-start;
   max-width: 505px;
   padding: 0;
@@ -146,7 +154,7 @@
 
 .step {
   display: flex;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   align-items: flex-start;
   min-width: 0;
 }
@@ -156,27 +164,54 @@
 }
 
 .stepContent {
-  display: flex;
+  position: relative;
+  display: grid;
   flex-shrink: 0;
-  width: clamp(90px, 6.25vw, 120px);
-  flex-direction: column;
+  width: max-content;
+  padding-top: calc(var(--step-icon-size) + 4px);
+  justify-items: center;
   align-items: center;
   gap: 4px;
-  font-size: clamp(18px, 1.25vw, 24px);
+  font-size: var(--step-caption-size);
+  line-height: 1.2;
   font-style: italic;
 }
 
+.stepContent > span {
+  grid-area: 2 / 1;
+}
+
 .stepIcon {
-  width: clamp(56px, 4.38vw, 84px);
-  height: clamp(56px, 4.38vw, 84px);
+  position: absolute;
+  bottom: calc(100% - var(--step-icon-size));
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--step-icon-size);
+  max-width: none;
+  height: auto;
   object-fit: contain;
 }
 
-.stepArrow {
-  flex: 1 1 0;
+.step:first-child .stepIcon {
+  width: calc(var(--step-icon-size) * 1.125);
+}
+
+.stepArrowSlot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  align-self: flex-end;
+  width: clamp(28px, 3vw, 58px);
   min-width: 0;
   height: 15px;
-  margin: clamp(23px, 1.85vw, 36px) 8px 0;
+  margin: 0 12px calc((var(--step-caption-size) * 1.2 - 15px) / 2);
+}
+
+.stepArrow {
+  --arrow-thickness: 2.4px;
+  --arrow-size: 8.4px;
+  width: 100%;
 }
 
 .actions {
@@ -456,15 +491,20 @@
   .navLinks {
     position: absolute;
     top: 0;
-    right: 0;
+    right: 1vw;
     display: none;
     flex-direction: column;
     align-items: stretch;
-    width: min(270px, 80vw);
+    width: 88vw;
     padding: 8px 16px;
     border-radius: 7px;
     background: #d6d4ee;
     color: var(--color-dark-purple);
+  }
+
+  .compactHeader .navLinks {
+    right: 0;
+    width: 90vw;
   }
 
   .navOpen {
@@ -511,23 +551,25 @@
   }
 
   .steps {
+    --step-icon-size: 48px;
+    --step-caption-size: 15px;
     max-width: 310px;
     margin-top: 30px;
   }
 
   .stepContent {
-    width: 68px;
     gap: 0;
-    font-size: 13px;
+    font-size: var(--step-caption-size);
   }
 
-  .stepIcon {
-    width: 52px;
-    height: 52px;
+  .stepArrowSlot {
+    width: clamp(16px, 5vw, 30px);
+    margin-inline: 10px;
   }
 
   .stepArrow {
-    margin: 20px 5px 0;
+    --arrow-thickness: 1.5px;
+    --arrow-size: 6px;
   }
 
   .actions {

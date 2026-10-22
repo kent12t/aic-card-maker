@@ -344,7 +344,7 @@
   cursor: pointer;
 }
 
-.actionButton img {
+.actionButton svg {
   flex-shrink: 0;
   width: clamp(18px, 3.2cqw, 26px);
   height: 26px;
@@ -378,13 +378,13 @@
 
 .helpContent {
   position: relative;
-  padding: clamp(32px, 3.125vw, 60px) clamp(32px, 5.83vw, 112px) clamp(32px, 3.65vw, 70px);
+  padding: 40px clamp(32px, 5vw, 96px) 44px;
 }
 
 .helpContent h2 {
-  margin: 0 0 30px;
+  margin: 0 0 40px;
   font-family: var(--font-circular), sans-serif;
-  font-size: clamp(32px, 3.125vw, 60px);
+  font-size: clamp(28px, 2.6vw, 50px);
   font-weight: 900;
   line-height: 1.04;
   letter-spacing: -0.025em;
@@ -392,52 +392,74 @@
 }
 
 .helpSteps {
-  width: min(780px, 100%);
+  width: 100%;
   margin: 0 auto;
   padding: 0;
   list-style: none;
 }
 
 .helpStepRow {
+  position: relative;
   display: grid;
-  grid-template-columns: 58px 106px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, max-content) 72px;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
-  min-height: 104px;
+  gap: 16px;
+  min-height: 0;
+  padding-block: 8px;
 }
 
 .helpStepNumber {
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #c9ade8;
   color: var(--color-dark-purple);
   font-family: var(--font-caslon), sans-serif;
-  font-size: 42px;
+  font-size: 26px;
   font-weight: 600;
   font-style: normal;
   line-height: 1;
 }
 
+.helpStepArtwork {
+  position: relative;
+  width: 100%;
+  height: 0;
+  align-self: center;
+}
+
 .helpStepIcon {
-  justify-self: center;
-  width: 106px;
-  height: 104px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 
+.helpStepNumber > span {
+  transform: translateY(-2px);
+}
+
 .helpStepLabel {
-  text-wrap: balance;
+  display: grid;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  text-wrap: wrap;
   font-family: var(--font-circular), sans-serif;
-  font-size: clamp(24px, 2.2vw, 42px);
+  font-size: clamp(22px, 1.8vw, 34px);
   font-weight: 500;
   line-height: 1.02;
   letter-spacing: -0.025em;
 }
 
-.mobileHelpBreak {
+.mobileHelpBreak,
+.mobileHelpLabel {
   display: none;
 }
 
@@ -445,18 +467,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 58px;
+  height: 56px;
 }
 
 .helpConnector {
   --arrow-size: 9px;
-  height: 100%;
+  height: calc(100% - 24px);
 }
 
 .startButton {
   display: block;
   width: 100%;
-  min-height: 80px;
+  min-height: 64px;
   margin-top: 44px;
   padding: 12px;
   border: 3px solid var(--color-dark-purple);
@@ -627,15 +649,15 @@
 
 @media (min-width: 601px) and (max-width: 1100px) {
   .helpStepRow {
-    grid-template-columns: 44px 76px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, max-content) 76px;
     gap: 16px;
-    min-height: 76px;
+    min-height: 0;
   }
 
   .helpStepNumber {
     width: 44px;
     height: 44px;
-    font-size: 32px;
+    font-size: 26px;
   }
 
   .helpStepIcon {
@@ -644,7 +666,7 @@
   }
 
   .helpStepArrow {
-    height: 40px;
+    height: 48px;
   }
 
   .helpConnector {
@@ -654,38 +676,45 @@
 
 @media (min-width: 601px) and (max-height: 850px) {
   .helpContent {
-    padding-block: 32px;
+    padding-block: 24px;
   }
 
   .helpContent h2 {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    font-size: clamp(28px, 2.5vw, 42px);
   }
 
   .helpStepRow {
-    min-height: 72px;
+    grid-template-columns: 36px minmax(0, max-content) 60px;
+    min-height: 0;
   }
 
   .helpStepIcon {
-    width: 72px;
-    height: 72px;
+    width: 60px;
+    height: 60px;
   }
 
   .helpStepNumber {
-    width: 44px;
-    height: 44px;
-    font-size: 32px;
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+  }
+
+  .helpStepLabel {
+    font-size: clamp(20px, 1.65vw, 28px);
   }
 
   .helpStepArrow {
-    height: 32px;
+    height: 40px;
   }
 
   .helpConnector {
     --arrow-size: 6px;
+    height: calc(100% - 16px);
   }
 
   .startButton {
-    min-height: 60px;
+    min-height: 52px;
     margin-top: 28px;
   }
 
@@ -944,7 +973,7 @@
     transform: translate(-2px, -2px);
   }
 
-  .actionButton img {
+  .actionButton svg {
     width: 15px;
     height: 16px;
   }
@@ -967,13 +996,20 @@
 
   .helpStepRow {
     display: grid;
-    grid-template-columns: 22px minmax(0, max-content);
+    grid-template-columns: 26px minmax(0, max-content);
     justify-content: center;
     gap: 6px;
     min-height: 0;
+    padding-block: 0;
+  }
+
+  .helpStepArtwork {
+    display: contents;
   }
 
   .helpStepIcon {
+    position: static;
+    transform: none;
     grid-column: 1 / -1;
     grid-row: 1;
     justify-self: center;
@@ -983,22 +1019,36 @@
 
   .helpStepNumber {
     grid-row: 2;
-    width: 22px;
-    height: 22px;
-    font-size: 18px;
+    width: 26px;
+    height: 26px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .helpStepNumber > span {
+    transform: translateY(-1px);
   }
 
   .helpStepLabel {
     grid-row: 2;
+    min-block-size: 0;
     width: max-content;
     max-width: 100%;
-    text-wrap: pretty;
+    text-wrap: wrap;
     font-size: clamp(16px, 4.72vw, 22px);
     line-height: 1.04;
   }
 
   .mobileHelpBreak {
     display: initial;
+  }
+
+  .mobileHelpLabel {
+    display: inline;
+  }
+
+  .desktopHelpLabel {
+    display: none;
   }
 
   .desktopHelpBreak {

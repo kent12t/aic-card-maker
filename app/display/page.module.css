@@ -124,6 +124,24 @@
 }
 
 @media (max-width: 600px) {
+  .createAction {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: calc(100% - 32px);
+  }
+
+  .createButton,
+  .backButton {
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: 100%;
+    padding-inline: 12px;
+    font-size: 14px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   .logos {
     gap: 12px;
   }

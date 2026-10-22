@@ -2,17 +2,17 @@
 
 import { CircleHelp, X } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { DottedArrow } from "@/components/DottedArrow";
 import { usePageTransition } from "@/components/navigation/PageTransition";
 import styles from "@/app/design/page.module.css";
 
 const steps = [
-  { icon: "icon_design.svg", label: "Choose a frame" },
-  { icon: "icon_avatar.svg", label: "Select Community Care Professional (CCP)" },
-  { icon: "icon_message.svg", label: "Pick an appreciation message and personalise your card with decorative stickers" },
-  { icon: "icon_submit.svg", label: "Submit your card" },
+  { icon: "icon_design.svg", lines: ["Choose a frame"] },
+  { icon: "icon_message.svg", lines: ["Select Community", "Care Professional (CCP)"] },
+  { icon: "icon_sticker.svg", lines: ["Pick an appreciation", "message and personalise", "your card with", "decorative stickers"], desktopLines: ["Pick an appreciation message and", "personalise your card with decorative stickers"] },
+  { icon: "icon_submit.svg", lines: ["Submit your card"] },
 ];
 
 export function HowItWorks() {
@@ -32,9 +32,28 @@ export function HowItWorks() {
             {steps.map((step, index) => (
               <li key={step.icon}>
                 <div className={styles.helpStepRow}>
-                  <span className={styles.helpStepNumber} aria-hidden="true">{index + 1}</span>
-                  <Image src={`/assets/misc/${step.icon}`} alt="" width={106} height={104} className={styles.helpStepIcon} />
-                  <span className={styles.helpStepLabel}>{step.label}</span>
+                  <span className={styles.helpStepNumber} aria-hidden="true"><span>{index + 1}</span></span>
+                  <span className={styles.helpStepLabel}>
+                    <span className={styles.desktopHelpLabel}>
+                      {(step.desktopLines ?? [step.lines.join(" ")]).map((line, lineIndex) => (
+                        <Fragment key={line}>
+                          {lineIndex > 0 && <> <br /></>}
+                          {line}
+                        </Fragment>
+                      ))}
+                    </span>
+                    <span className={styles.mobileHelpLabel}>
+                    {step.lines.map((line, lineIndex) => (
+                      <Fragment key={line}>
+                        {lineIndex > 0 && <> <br className={styles.mobileHelpBreak} /></>}
+                        {line}
+                      </Fragment>
+                    ))}
+                    </span>
+                  </span>
+                  <span className={styles.helpStepArtwork}>
+                    <Image src={`/assets/misc/${step.icon}`} alt="" width={84} height={84} className={styles.helpStepIcon} />
+                  </span>
                 </div>
                 {index < steps.length - 1 && <span className={styles.helpStepArrow}><DottedArrow direction="down" className={styles.helpConnector} /></span>}
               </li>

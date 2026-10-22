@@ -169,6 +169,8 @@ Display the complete image rather than clipping it to another rounded rectangle.
 
 - Header and hero each have a maximum width of `1920px`, centered.
 - Header: logos on the left; navigation on the right.
+- Logo links use flex alignment so SVG image baselines do not add space below
+  the logos; the AIC and CCD artwork remains vertically centered as a pair.
 - Hero: copy on the left, cards on the right; columns `0.88fr 1.12fr`.
 - Base hero gap: `clamp(48px, 6.8vw, 130px)`.
 - Base hero padding: `clamp(48px, 3.2vw, 62px) 5.5% 96px 7.8%`.
@@ -218,7 +220,8 @@ is a compositional reference; retain the subsequent smaller deck and wider copy.
 Desktop links use violet, a thin vertical separator, and underline on hover.
 Tablet headers can wrap navigation onto another row to accommodate the longer labels.
 On mobile use a `44 × 44px` hamburger button hit area and a pale-purple dropdown
-of `min(270px, 80vw)` width, with a horizontal violet divider. The menu opens
+spanning the content width (88vw / 6% side insets on landing; 90vw / 5% side
+insets in the designer), with a horizontal violet divider. The menu opens
 over the card area without shifting page content. Keep `aria-expanded`,
 `aria-controls`, outside-click dismissal, focus-leave dismissal, and Escape
 handling; Escape returns focus to the toggle.
@@ -231,14 +234,15 @@ Assets live in `public/assets/misc/` (URL prefix `/assets/misc/`):
 - Steps: `icon_design.svg`, `icon_submit.svg`, `icon_share.svg`.
 - Connecting arrows: `components/DottedArrow.tsx` and its CSS module; a flexible
   solid shaft and independent SVG triangle support horizontal/right and
-  vertical/down directions. Landing icon/caption groups have equal widths so
-  both connecting arrows have equal lengths.
+  vertical/down directions. Landing icon/caption groups hug each caption, with
+  equal connector widths and gaps. Arrows align with the captions
+  below the icons on desktop and mobile, following the updated reference.
 - Cards: `card_kv1.webp`, `card_kv2.webp`, `card_kv3.webp`.
 
 Preserve image proportions with `object-fit: contain`. Logos use a responsive
 CSS width and `height: auto`. Arrow shafts shrink to available space while their
-triangle heads retain their proportions. Landing step items use zero-basis flex
-sizing and non-shrinking icon/caption groups to keep the entire row in bounds.
+triangle heads retain their proportions. Landing step items use intrinsic-width,
+non-shrinking icon/caption groups and responsive connector widths.
 
 The deck has `aspect-ratio: 1.11`, overlapping full-area cards and a 12-second
 loop, giving each of the three cards a four-second turn at the front. Its easing
@@ -351,8 +355,8 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 ### Controls and help
 
 - Three orange, dark-purple outlined action buttons: **Restart**, **Submit**,
-  **Download**. Use `icon_restart.svg`, `icon_send.svg`, and
-  `icon_download.svg` from `public/assets/misc/`.
+  **Download**. Use Lucide `RotateCcw`, `Send`, and `Download`; the previous
+  standalone SVG assets have been removed.
 - Preserve the landing's raised resting state, lowered mouse hover, flat press,
   visible keyboard focus, and reduced-motion behavior. Desktop buttons have
   22px radii and 3px outlines, reducing to 17px on smaller desktops and 8px /
@@ -375,13 +379,52 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Help steps: **Choose a frame**, **Select Community Care Professional (CCP)**,
   **Pick an appreciation message and personalise your card with decorative stickers**,
   then **Submit your card**.
-- Use the existing `icon_design.svg`, `icon_avatar.svg`, `icon_message.svg`,
-  and `icon_submit.svg` assets in that order for the four steps. Use `DottedArrow`
-   in its down direction for vertical solid connectors. Desktop step rows contain number, icon, and
-  label inline. On mobile the icon is above the number/label row; the heading
+- Use the updated `icon_design.svg`, `icon_message.svg`, `icon_sticker.svg`,
+  and `icon_submit.svg` assets in that order for the four steps. Existing step
+  copy is preserved. Use `DottedArrow` in its down direction for vertical solid
+  connectors. Desktop step rows center each number/label/icon group, with the
+  icon after the label and 44px numbered circles. On mobile the icon is above the number/label row; the heading
   and longer instructions use intentional mobile line breaks. Mobile labels
   shrink to their longest line (with a 100% maximum for narrow screens), so the
   number and label center together as a group while the label stays left-aligned.
+  Mobile numbered circles are 26px with 15px optically centered numerals. Mobile-only
+  line breaks keep label boxes sized to their longest line, centering each
+  number/text group without unused width after wrapping; narrower screens can
+  still wrap naturally. Desktop uses an intentional two-line third label with
+  a longest-line-sized box, so its number, text, and icon center together without
+  excess trailing space. Desktop labels scale from 22–34px, with 26px numerals
+  inside 44px circles, 72px icons, and 32px connectors (28px on tablets).
+  Desktop panels use 40px top / 44px bottom padding and a 64px minimum CTA.
+  At viewport heights <=850px, labels reduce to 20–28px, icons to 60px,
+  connectors to 24px, and numerals to 24px inside 36px circles; padding and
+  CTA spacing also tighten to keep the full modal comfortably within view.
+  Desktop rows follow their actual text height, with 8px clearance at both ends.
+  Stickers are positioned in a reserved grid column without contributing to row
+  height, so arrow clearance follows the text rather than sticker dimensions.
+  Mobile retains natural label heights and in-flow icons above the text.
+  Desktop stickers anchor inside a zero-height wrapper in the grid column
+  immediately after each label, keeping the 16px text-to-artwork gap stable
+  without influencing row height. Heading clearance is 40px and CTA clearance
+  is 44px; connector slots are 56px with 12px clearance at each end. Short
+  desktop viewports use 28px heading/CTA gaps and 40px connector slots with
+  8px clearance at each end.
+  Mobile help circles are now 26px (retaining 15px numerals). All help numerals
+  sit 2px above geometric center on desktop and 1px above on mobile to optically
+  center the font within the circle.
+  Landing step groups hug each caption's intrinsic width. Icons center above
+  captions without widening their boxes. Connectors have equal fixed responsive
+  widths and equal caption-side gaps; arrows center vertically on the captions.
+  Desktop shafts are 2.4px with 8.4px triangle heads; mobile shafts are 1.5px
+  with 6px heads.
+  Landing Design / Submit / Share icon sizes follow a 9:8:8 ratio on desktop
+  and mobile. The larger Design artwork may extend beyond its caption box,
+  without affecting horizontal layout; all icons share the same lower edge.
+  Mobile connector slots have 10px horizontal gutters on each side.
+  Landing icons explicitly use `max-width: none` to escape the global image
+  constraint, plus `height: auto` and SVG-proportional intrinsic dimensions.
+  This preserves the intended widths even when captions are narrower than icons.
+  Mobile landing icons use a 48px base width (54px for Design), with larger
+  15px captions. Caption-centered arrow placement follows this type size.
   Desktop labels use balanced text wrapping.
 - Mobile help connectors have 6px clearance at each end, a 1.5px solid shaft,
   and a 5px triangle so they remain light and separated from labels and icons.
@@ -507,6 +550,9 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   lowered mouse hover, flat press, and reduced-motion transition behavior. A
   width-constrained container supplies its `cqw` sizing; keyboard focus remains
   visibly outlined. Both actions are hidden in event mode.
+- On mobile, wall CTA buttons size to their labels rather than growing to fill
+  the row. Labels use 14px type with 12px horizontal padding; the action row can
+  wrap on narrow screens so neither label overflows and Back remains compact.
 - After its image loads, the requested published card uses the wall's actual
   new-arrival animation: gaps open, the card grows with a light-violet glow
   (`--color-light-violet`, 65% opacity, 60px blur), holds

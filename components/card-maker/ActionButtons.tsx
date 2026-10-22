@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Download, RotateCcw, Send } from "lucide-react";
 import styles from "@/app/design/page.module.css";
 
 type ActionButtonsProps = {
@@ -18,13 +18,13 @@ export function ActionButtons({ isSubmitting = false, isExporting = false, onRes
   return (
     <div className={styles.actions}>
       <button type="button" onClick={onRestart} disabled={busy} className={styles.actionButton}>
-        Restart <Image src="/assets/misc/icon_restart.svg" alt="" width={24} height={26} />
+        Restart <RotateCcw aria-hidden="true" width={24} height={26} />
       </button>
       <button type="button" onClick={onSubmit} disabled={busy} aria-busy={isSubmitting} className={styles.actionButton}>
-        {isSubmitting ? "Submitting…" : "Submit"} <Image src="/assets/misc/icon_send.svg" alt="" width={25} height={25} />
+        {isSubmitting ? "Submitting…" : "Submit"} <Send aria-hidden="true" width={25} height={25} />
       </button>
       <button type="button" onClick={onSave} disabled={busy} aria-busy={isExporting} className={styles.actionButton}>
-        Download <Image src="/assets/misc/icon_download.svg" alt="" width={26} height={26} />
+        Download <Download aria-hidden="true" width={26} height={26} />
       </button>
     </div>
   );

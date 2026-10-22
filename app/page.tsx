@@ -8,9 +8,9 @@ import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
 
 const steps = [
-  { label: "Personalise", icon: "icon_design.svg" },
-  { label: "Submit", icon: "icon_submit.svg" },
-  { label: "Share", icon: "icon_share.svg" },
+  { label: "Personalise", icon: "icon_design.svg", width: 84.72, height: 86.36 },
+  { label: "Submit", icon: "icon_submit.svg", width: 74.55, height: 73.43 },
+  { label: "Share", icon: "icon_share.svg", width: 73.92, height: 66.12 },
 ];
 
 export default async function Home({
@@ -38,11 +38,11 @@ export default async function Home({
             {steps.map((step, index) => (
               <li key={step.label} className={styles.step}>
                 <div className={styles.stepContent}>
-                  <Image src={`/assets/misc/${step.icon}`} alt="" width={84} height={84} className={styles.stepIcon} />
+                  <Image src={`/assets/misc/${step.icon}`} alt="" width={step.width} height={step.height} className={styles.stepIcon} />
                   <span>{step.label}</span>
                 </div>
                 {index < steps.length - 1 && (
-                  <DottedArrow className={styles.stepArrow} />
+                  <span className={styles.stepArrowSlot}><DottedArrow className={styles.stepArrow} /></span>
                 )}
               </li>
             ))}

@@ -93,7 +93,7 @@ export function StatusNotice({ notice, eventMode, onRestart, onNewCard, onClose 
             <button type="button" className={styles.noticeButton} disabled={isSharing} onClick={() => void shareCard()}>{isSharing ? "Sharing…" : "Share with a friend"}</button>
           </> : <>
             {notice?.kind === "eventDownload" && <button type="button" className={styles.noticeButton} onClick={onClose}>Back to my card</button>}
-            {notice?.kind === "submitted" && !eventMode && <Link href={`/display?card=${encodeURIComponent(notice.cardId)}`} className={styles.noticeButton}>View the Thank You Wall</Link>}
+            {notice?.kind === "submitted" && !eventMode && <Link href={`/display?card=${encodeURIComponent(notice.cardId)}`} className={styles.noticeButton}>View the &apos;Thank You&apos; wall</Link>}
             <button type="button" className={styles.noticeButton} onClick={onClose}>Close</button>
           </>}
         </div>
