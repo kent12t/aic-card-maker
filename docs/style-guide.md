@@ -81,7 +81,7 @@ Use the provided font files and explicit weights rather than synthesized bold.
 | Element | Desktop base | Tablet, <=1100px | Mobile, <=600px |
 | --- | --- | --- | --- |
 | H1 size | `clamp(50px, 5.2vw, 100px)` | `clamp(64px, 8.5vw, 88px)` | `clamp(34px, 11.3vw, 64px)` |
-| H1 line height | `0.89` | Inherits base | `0.91` |
+| H1 line height | `0.979` | Inherits base | `1.001` |
 | Body size | `clamp(21px, 1.875vw, 36px)` | `28px` | `clamp(16px, 4.32vw, 21px)` |
 | Body line height | `1.14` | Inherits base | `1.15` |
 | Nav size | `clamp(18px, 1.56vw, 30px)` | Inherits base | `24px` dropdown links |
@@ -91,11 +91,12 @@ Use the provided font files and explicit weights rather than synthesized bold.
 H1 tracking is `-0.035em`. Body tracking is `-0.025em`, changing to
 `-0.015em` on mobile. Buttons have `line-height: 1.15` and no label wrapping.
 
-The hero heading has three explicit lines: “Say thank you” / “to the people” /
-“who care.” The first line is dark orange and the others are orange.
-The description begins “Create a card” and refers to a “Community Care Professional”.
+The hero heading has three explicit lines: “Say Thank You” / “to the people” /
+“who care”, without a full stop. The first line is dark orange and the others are
+orange. There is no hero body copy. Heading leading is 10% above the original.
 Step captions are **Personalise → Submit → Share**; the secondary CTA reads
-**View the Thank You Wall**. Always capitalise **Thank You Wall** in navigation,
+**View the 'Thank You' Wall**; the primary CTA reads **Create 'Thank You' card**.
+Always capitalise **Thank You Wall** in navigation,
 buttons, body copy, popup instructions, and page metadata.
 
 ## 3. Buttons
@@ -203,18 +204,19 @@ is a compositional reference; retain the subsequent smaller deck and wider copy.
 
 ## 6. Navigation
 
-- Logo group links to `/`.
-- “Thank You Wall” links to `/display`.
-- “Community Care Day” links to `https://for.sg/ccd26` in a new tab, with
+- The AIC logo links to `/`; the CCD logo links to `https://www.aic.sg/ccd2026`.
+- “‘Thank You’ Wall” links to `/display`.
+- “Discover Community Care Day” links to `https://www.aic.sg/CCD2026` in a new tab, with
   `rel="noopener noreferrer"`.
 - Main CTA links to `/design`; `/?event=true` carries event mode through to
   `/design?event=true`.
-- The display-wall create CTA also links directly to `/design`.
+- The display wall has a Discover Community Care Day link and a Back link to `/`.
 - Browser-tab titles use **Create a thank you card | Community Care Day** on
   the landing page, **Create your thank you card | Community Care Day** in the
   editor, and **Thank You Wall | Community Care Day** on the wall.
 
 Desktop links use violet, a thin vertical separator, and underline on hover.
+Tablet headers can wrap navigation onto another row to accommodate the longer labels.
 On mobile use a `44 × 44px` hamburger button hit area and a pale-purple dropdown
 of `min(270px, 80vw)` width, with a horizontal violet divider. The menu opens
 over the card area without shifting page content. Keep `aria-expanded`,
@@ -228,7 +230,7 @@ Assets live in `public/assets/misc/` (URL prefix `/assets/misc/`):
 - Logos: `aic_logo.svg`, `ccd-logo.svg`.
 - Steps: `icon_design.svg`, `icon_submit.svg`, `icon_share.svg`.
 - Connecting arrows: `components/DottedArrow.tsx` and its CSS module; a flexible
-  dashed shaft and independent SVG triangle support horizontal/right and
+  solid shaft and independent SVG triangle support horizontal/right and
   vertical/down directions. Landing icon/caption groups have equal widths so
   both connecting arrows have equal lengths.
 - Cards: `card_kv1.webp`, `card_kv2.webp`, `card_kv3.webp`.
@@ -276,10 +278,8 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   The route root is a full-viewport-height flex column, with the editor growing
   to fill all remaining space below the header. Do not calculate its height by
   subtracting a fixed header height; that leaves a white footer at some sizes.
-- The heading is Circular Std Black in dark orange. Desktop uses two lines,
-  “Create your” / “thank you card”, at `clamp(36px, 3.35vw, 64px)`.
-  At <=1100px the explicit line break is removed; mobile type is
-  `clamp(24px, 7.1vw, 36px)` and wraps naturally on the narrowest screens.
+- The designer has no introductory heading or selection body copy; the palette
+  begins directly with its tabs, without a top margin.
 - Body copy uses Caslon; tab labels and action buttons use Circular Std Black.
 - The shared `SiteHeader` uses the same `LandingNav`, links, and mobile dropdown
   as the landing page. Its `compact` variant reduces the
@@ -292,7 +292,7 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 ### Palette and responsive layout
 
-- Tab order: **Frames → Avatars → Messages → Stickers**. Frames is the
+- Tab order: **Frames → CCPs → Messages → Stickers**. Frames is the
   initially selected tab; the initial frame is the orange heart (`frame_6.webp`).
 - Tabs sit directly on the orange surface. The active tab has a white fill,
   rounded top corners, and curved lower joins into the white palette. Labels
@@ -303,23 +303,29 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   flush, without a protruding white shape; inward-facing joins remain curved.
 - Tabs use accessible tab/tabpanel roles, a roving tab stop, and
   Left/Right/Home/End keyboard selection.
-- Above 1100px, the palette has three columns and vertical scrolling.
+- Above 1100px, the palette has two columns for frames and three for other
+  categories, with vertical scrolling. Its height follows the canvas so the
+  palette's bottom edge aligns with the canvas bottom, above the action buttons.
+  The canvas and tab bar are measured with ResizeObserver to preserve alignment
+  as the desktop layout resizes.
   At <=1100px it has **two rows scrolling horizontally**, with all four tabs
-   visible. On mobile the palette is 180px tall; frames and avatars use one
+    visible. On mobile the palette is 240px tall; frames and CCPs use one
    horizontally scrolling row, while messages and stickers retain two rows.
 - Palette items support click/tap-to-add as well as desktop drag-and-drop;
-  frame items select the background and show an outlined selected state.
+  frame items select the background and show an outlined selected state with
+  an 18px corner radius on desktop and mobile.
 - Palette item gutters are **0 on all screen sizes**; the artwork's built-in
   transparent safe zones provide the spacing between images.
 - Palette item boxes and their selector borders preserve the artwork ratios:
-  **frames 64:53**, **avatars 4:5**, **messages and stickers 1:1**.
+   **frames 64:53**, **CCPs, messages, and stickers 1:1**.
+   CCP stickers are added to the canvas at 90×90 editing units, with square
+   selection bounds and proportional resizing.
   Use `object-fit: contain` without scaling or cropping; keep the complete
   asset visible, including its transparent padding. Desktop rows size naturally
   to their items. In the horizontal tray, category-specific column widths derive
-   from the 90px row height and the item's aspect ratio. Mobile rows are 81px
-   for messages/stickers and 162px for frames/avatars.
-- Mobile uses a smaller `clamp(15px, 4vw, 19px)` selection subheading.
-- Mobile maximizes thumbnail space within the 180px tray: `1px 2px`
+   from the 90px row height and the item's aspect ratio. Mobile rows are 111px
+    for messages/stickers and 222px for frames/CCPs.
+- Mobile maximizes thumbnail space within the 240px tray: `1px 2px`
   internal padding, a 2px white border, zero item gutters, and a thin
   violet scrollbar. Keep full artwork and its aspect ratio visible as items grow.
 - Scrollbars use violet thumbs and a white-tinted light-violet track, including
@@ -366,17 +372,18 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   “Let’s start” button. The CTA uses the same **raised resting state**, lowered
   mouse hover, flat pressed state, and reduced-motion behavior as the editor
   action buttons (5px desktop / 3px mobile hard shadow at rest).
-- Help steps: **Choose a frame**, **Select Avatars**, **Pick your thank you
-  message and stickers**, then **Submit your card to be part of the Thank You Wall**.
+- Help steps: **Choose a frame**, **Select Community Care Professional (CCP)**,
+  **Pick an appreciation message and personalise your card with decorative stickers**,
+  then **Submit your card**.
 - Use the existing `icon_design.svg`, `icon_avatar.svg`, `icon_message.svg`,
   and `icon_submit.svg` assets in that order for the four steps. Use `DottedArrow`
-  in its down direction for vertical dashed connectors. Desktop step rows contain number, icon, and
+   in its down direction for vertical solid connectors. Desktop step rows contain number, icon, and
   label inline. On mobile the icon is above the number/label row; the heading
   and longer instructions use intentional mobile line breaks. Mobile labels
   shrink to their longest line (with a 100% maximum for narrow screens), so the
   number and label center together as a group while the label stays left-aligned.
   Desktop labels use balanced text wrapping.
-- Mobile help connectors have 6px clearance at each end, a 1.5px dashed shaft,
+- Mobile help connectors have 6px clearance at each end, a 1.5px solid shaft,
   and a 5px triangle so they remain light and separated from labels and icons.
 - The panel is at most 1288px wide on desktop, with 52px corners at 1920px.
   Mobile uses `min(420px, 100% - 64px)` width and 24px corners. Limit the modal
@@ -491,14 +498,15 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   disable scrolling, drifting, and animated arrivals, and remove `will-change`.
 - The black header has the AIC and CCD logos at the top left, in their original
   colors, at 64px / 120px wide (48px / 90px on phones). Its centered white title
-  is “Celebrating Community Care Day • 1 Nov” in Circular Std Medium (500).
+  is “Celebrating Community Care Day | 1 Nov” in Circular Std Medium (500).
   At <=1000px the title moves to its own centered row beneath the logos.
-- The fixed bottom-center **Create your thank you card** CTA directly reuses
+- The fixed bottom-center **Discover Community Care Day** CTA links to
+  `https://www.aic.sg/CCD2026`, with **Back** to its right linking to `/`. Both reuse
   the landing's primary-button classes: orange fill, dark-purple outline/text
   and hard shadow, Circular Std Black, responsive radii, raised resting state,
   lowered mouse hover, flat press, and reduced-motion transition behavior. A
   width-constrained container supplies its `cqw` sizing; keyboard focus remains
-  visibly outlined. The CTA is hidden in event mode.
+  visibly outlined. Both actions are hidden in event mode.
 - After its image loads, the requested published card uses the wall's actual
   new-arrival animation: gaps open, the card grows with a light-violet glow
   (`--color-light-violet`, 65% opacity, 60px blur), holds

@@ -79,13 +79,24 @@
   bottom: max(24px, env(safe-area-inset-bottom));
   left: 50%;
   z-index: 50;
-  width: min(460px, calc(100% - 48px));
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(620px, calc(100% - 48px));
   container-type: inline-size;
   transform: translateX(-50%);
 }
 
 .createButton {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(14px, 3.6cqw, 24px);
+  white-space: normal;
+  text-align: center;
+}
+
+.backButton {
+  font-size: clamp(14px, 3.6cqw, 24px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,8 +105,9 @@
   }
 }
 
-.logos:focus-visible,
-.createButton:focus-visible {
+.logos a:focus-visible,
+.createButton:focus-visible,
+.backButton:focus-visible {
   outline: 3px solid var(--color-purple);
   outline-offset: 6px;
 }

@@ -9,7 +9,7 @@
   flex: 1;
   min-width: 0;
   height: var(--arrow-thickness, 3px);
-  background: repeating-linear-gradient(to right, currentColor 0 5px, transparent 5px 9px);
+  background: currentColor;
 }
 
 .head {
@@ -26,7 +26,6 @@
 .arrow[data-direction="down"] .shaft {
   width: var(--arrow-thickness, 3px);
   min-height: 0;
-  background: repeating-linear-gradient(to bottom, currentColor 0 5px, transparent 5px 9px);
 }
 
 .arrow[data-direction="down"] .head {

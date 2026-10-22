@@ -70,11 +70,13 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-black py-6">
       <header className={styles.header}>
-        <Link href="/" className={styles.logos} aria-label="Community Care Day home">
+        <div className={styles.logos}>
+          <Link href="/" aria-label="Community Care Day home">
           <Image className={styles.aicLogo} src="/assets/misc/aic_logo.svg" alt="Agency for Integrated Care" width={249} height={179} priority />
-          <Image className={styles.ccdLogo} src="/assets/misc/ccd-logo.svg" alt="Community Care Day" width={681} height={215} priority />
-        </Link>
-        <h1 className={styles.title}>Celebrating Community Care Day • 1 Nov</h1>
+          </Link>
+          <a href="https://www.aic.sg/ccd2026" target="_blank" rel="noopener noreferrer"><Image className={styles.ccdLogo} src="/assets/misc/ccd-logo.svg" alt="Community Care Day" width={681} height={215} priority /></a>
+        </div>
+        <h1 className={styles.title}>Celebrating Community Care Day | 1 Nov</h1>
       </header>
 
       <div ref={wallRef} className="relative isolate min-h-0 flex-1 overflow-hidden">

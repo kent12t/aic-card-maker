@@ -53,9 +53,9 @@ export function LandingNav() {
         {open ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
       </button>
       <div id="landing-navigation" className={`${styles.navLinks} ${open ? styles.navOpen : ""}`}>
-        <Link href="/display" onClick={() => setOpen(false)}>Thank You Wall</Link>
-        <a href="https://for.sg/ccd26" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-          Community Care Day
+        <Link href="/display" onClick={() => setOpen(false)}>‘Thank You’ Wall</Link>
+        <a href="https://www.aic.sg/CCD2026" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+          Discover Community Care Day
         </a>
       </div>
     </nav>

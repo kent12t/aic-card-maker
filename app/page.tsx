@@ -29,14 +29,10 @@ export default async function Home({
       <main className={styles.hero}>
         <section className={styles.content} aria-labelledby="landing-title">
           <h1 id="landing-title" className={styles.heading}>
-            <span>Say thank you</span>
+            <span>Say Thank You</span>
             <span>to the people</span>
-            <span>who care.</span>
+            <span>who care</span>
           </h1>
-          <p className={styles.description}>
-            Create a card in two minutes and send it to a Community Care Professional – a nurse,
-            therapist, befriender or care staff who made a difference.
-          </p>
 
           <ol className={styles.steps} aria-label="Three simple steps">
             {steps.map((step, index) => (
@@ -54,10 +50,10 @@ export default async function Home({
 
           <div className={styles.actions}>
             <TransitionLink href={designHref} className={`${styles.button} ${styles.primaryButton}`}>
-              Create your thank you card
+              Create &apos;Thank You&apos; card
             </TransitionLink>
             <Link href="/display" className={`${styles.button} ${styles.secondaryButton}`}>
-              View the Thank You Wall
+              View the &apos;Thank You&apos; Wall
             </Link>
           </div>
         </section>

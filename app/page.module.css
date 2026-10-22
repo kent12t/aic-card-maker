@@ -114,7 +114,7 @@
   font-size: clamp(50px, 5.2vw, 100px);
   font-weight: 900;
   letter-spacing: -0.035em;
-  line-height: 0.89;
+  line-height: 0.979;
 }
 
 .heading span {
@@ -342,11 +342,13 @@
 @media (max-width: 1100px) {
   .header {
     align-items: center;
+    flex-wrap: wrap;
     padding: 24px 5% 0;
   }
 
   .nav {
     padding-top: 0;
+    margin-left: auto;
   }
 
   .nav a + a {
@@ -476,6 +478,7 @@
 
   .navLinks a {
     padding: 12px;
+    white-space: normal;
   }
 
   .navLinks a:first-child {
@@ -496,7 +499,7 @@
 
   .heading {
     font-size: clamp(34px, 11.3vw, 64px);
-    line-height: 0.91;
+    line-height: 1.001;
   }
 
   .description {

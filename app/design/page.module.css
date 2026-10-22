@@ -47,7 +47,7 @@
 }
 
 .palette {
-  margin-top: clamp(36px, 3.2vw, 62px);
+  margin-top: 0;
 }
 
 .tabs {
@@ -171,7 +171,17 @@
 }
 
 .paletteGrid[data-category="persons"] {
-  --palette-item-ratio: calc(4 / 5);
+  --palette-item-ratio: 1;
+}
+
+@media (min-width: 1101px) {
+  .paletteScroll {
+    height: var(--desktop-palette-height, clamp(330px, 22vw, 422px));
+  }
+
+  .paletteGrid[data-category="frames"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .paletteItem {
@@ -191,6 +201,7 @@
 }
 
 .frameItem[aria-pressed="true"] {
+  border-radius: 18px;
   border-color: var(--color-purple);
   outline: 2px solid #fff;
   outline-offset: -4px;
@@ -796,7 +807,7 @@
   }
 
   .palette {
-    margin-top: 28px;
+    margin-top: 0;
     text-align: left;
   }
 
@@ -841,7 +852,7 @@
   }
 
   .palette {
-    margin: 20px 4px 0;
+    margin: 0 4px;
   }
 
   .tab {
@@ -852,7 +863,7 @@
   }
 
   .paletteScroll {
-    height: 180px;
+    height: 240px;
     padding: 1px 2px;
     border-width: 2px;
     border-radius: 14px;
@@ -860,12 +871,12 @@
   }
 
   .paletteGrid {
-    --palette-row-height: 81px;
+    --palette-row-height: 111px;
   }
 
   .paletteGrid[data-category="frames"],
   .paletteGrid[data-category="persons"] {
-    --palette-row-height: 162px;
+    --palette-row-height: 222px;
     grid-template-rows: var(--palette-row-height);
   }
 

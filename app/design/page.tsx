@@ -66,6 +66,7 @@ function CardMaker() {
   }
 
   const cardViewportRef = useRef<HTMLDivElement | null>(null);
+  const libraryRef = useRef<HTMLElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
   const isSubmittingRef = useRef(false);
@@ -99,22 +100,29 @@ function CardMaker() {
     if (activeTab === "stickers") {
       return stickerSources.map((src) => ({ src, width: 100, height: 100, frame: false }));
     }
-    return personSources.map((src) => ({ src, width: 90, height: 130, frame: false }));
+    return personSources.map((src) => ({ src, width: 90, height: 90, frame: false }));
   }, [activeTab]);
 
   useLayoutEffect(() => {
     if (!cardViewportRef.current) return;
 
     const element = cardViewportRef.current;
+    const library = libraryRef.current;
+    const tabs = library?.querySelector('[role="tablist"]');
     const measure = () => {
       const bounds = element.getBoundingClientRect();
       const ratio = bounds.width / BOARD_WIDTH;
       setCardScale(ratio);
+      if (library && tabs) {
+        const height = bounds.bottom - tabs.getBoundingClientRect().bottom;
+        library.style.setProperty("--desktop-palette-height", `${Math.max(0, height)}px`);
+      }
     };
     measure();
     const observer = new ResizeObserver(measure);
 
     observer.observe(element);
+    if (tabs) observer.observe(tabs);
     return () => observer.disconnect();
   }, []);
 
@@ -362,9 +370,7 @@ function CardMaker() {
       <PageTransitionReady imageSrc={selectedFrame} />
       <SiteHeader compact />
       <main className={styles.editor}>
-        <section className={styles.library} aria-labelledby="design-title">
-          <h1 id="design-title" className={styles.heading}>Create your<br className={styles.headingBreak} /> thank you card</h1>
-          <p className={styles.description}>Select an element to add to your card.</p>
+        <section ref={libraryRef} className={styles.library} aria-label="Card design elements">
           <PalettePanel
             activeTab={activeTab}
             paletteItems={paletteItems}

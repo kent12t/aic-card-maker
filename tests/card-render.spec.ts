@@ -63,6 +63,7 @@ test("all six frames produce visible images, including the PNG encoder fallback"
 
 test("export matches the editor with rotated, resized, overlapping stickers", async ({ page }) => {
   await openEditor(page);
+  await page.getByRole("tab", { name: "Messages", exact: true }).click();
   await page.getByRole("button", { name: "Add message 1", exact: true }).click();
   const rotate = page.getByRole("button", { name: "Rotate sticker", exact: true });
   const handle = (await rotate.boundingBox())!;
@@ -75,7 +76,7 @@ test("export matches the editor with rotated, resized, overlapping stickers", as
   await page.mouse.down();
   await page.mouse.move(resize.x + 35, resize.y + 40);
   await page.mouse.up();
-  await page.getByRole("tab", { name: "Avatars", exact: true }).click();
+  await page.getByRole("tab", { name: "CCPs", exact: true }).click();
   await page.getByRole("button", { name: "Add avatar 1", exact: true }).click();
   const board = page.locator('[style*="background-image:"]');
   await board.click({ position: { x: 20, y: 20 } });
@@ -120,6 +121,7 @@ for (const failure of ["missing frame", "missing sticker", "blank canvas", "soli
     if (failure === "missing frame") {
       await page.route("**/assets/frames/frame_6.webp", (route) => route.abort());
     } else if (failure === "missing sticker") {
+      await page.getByRole("tab", { name: "Messages", exact: true }).click();
       await page.route("**/assets/messages/msg_1.webp", (route) => route.abort());
       await page.getByRole("button", { name: "Add message 1", exact: true }).click();
     } else if (failure === "blank canvas") {
@@ -144,6 +146,7 @@ for (const failure of ["missing frame", "missing sticker", "blank canvas", "soli
 
 test("submission waits for slow artwork to decode", async ({ page }) => {
   await openEditor(page);
+  await page.getByRole("tab", { name: "Messages", exact: true }).click();
   await page.getByRole("button", { name: "Add message 1", exact: true }).click();
   await page.evaluate(() => {
     const decode = HTMLImageElement.prototype.decode;
