@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { PageTransitionProvider } from "@/components/navigation/PageTransition";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
         className={openSans.variable}
       >
         <PageTransitionProvider>{children}</PageTransitionProvider>
+        <Analytics />
       </body>
     </html>
   );
