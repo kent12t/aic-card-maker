@@ -374,6 +374,94 @@
   }
 }
 
+@media (min-width: 1101px) {
+  .landing {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+    overflow-x: clip;
+  }
+
+  .landing .header,
+  .header.compactHeader {
+    flex-shrink: 0;
+    width: 100%;
+    align-items: center;
+    padding-block: clamp(12px, 2dvh, 20px);
+  }
+
+  .landing .logos,
+  .compactHeader .logos {
+    gap: clamp(20px, 1.7vw, 33px);
+  }
+
+  .landing .aicLogo,
+  .compactHeader .aicLogo {
+    width: clamp(76px, min(6vw, 12dvh), 116px);
+  }
+
+  .landing .ccdLogo,
+  .compactHeader .ccdLogo {
+    width: clamp(124px, min(9.8vw, 19.6dvh), 188px);
+  }
+
+  .landing .nav,
+  .compactHeader .nav {
+    padding-top: 0;
+    font-size: clamp(18px, 1.3vw, 25px);
+  }
+
+  .header.compactHeader {
+    padding-block: clamp(8px, 1.2dvh, 12px);
+  }
+
+  .compactHeader .aicLogo {
+    width: clamp(60px, min(4.6vw, 9dvh), 88px);
+  }
+
+  .compactHeader .ccdLogo {
+    width: clamp(98px, min(7.5vw, 14.7dvh), 144px);
+  }
+
+  .compactHeader .nav {
+    font-size: clamp(16px, 1.1vw, 21px);
+  }
+
+  .landing .hero {
+    flex: 1;
+    width: 100%;
+    padding-top: clamp(16px, 3dvh, 36px);
+    padding-bottom: clamp(40px, 6dvh, 64px);
+  }
+
+  .landing .heading {
+    font-size: clamp(40px, min(5.2vw, 10dvh), 100px);
+  }
+
+  .landing .steps {
+    --step-icon-size: clamp(40px, min(4.38vw, 7.5dvh), 84px);
+    margin-top: clamp(16px, 4dvh, 46px);
+  }
+
+  .landing .actions {
+    margin-top: clamp(16px, 3.5dvh, 40px);
+  }
+
+  .landing .button {
+    min-height: clamp(44px, 8dvh, 76px);
+    padding-block: clamp(10px, 1.7dvh, 16px);
+    font-size: clamp(14px, min(4.2cqw, 3dvh), 30px);
+  }
+
+  .landing .deckSection {
+    /* Leave space for the shuffled card's rotation and the pause control. */
+    width: min(100%, calc(100dvh - 200px));
+    margin-inline: auto;
+  }
+}
+
 @media (max-width: 1100px) {
   .header {
     align-items: center;

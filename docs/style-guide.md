@@ -80,13 +80,13 @@ Use the provided font files and explicit weights rather than synthesized bold.
 
 | Element | Desktop base | Tablet, <=1100px | Mobile, <=600px |
 | --- | --- | --- | --- |
-| H1 size | `clamp(50px, 5.2vw, 100px)` | `clamp(64px, 8.5vw, 88px)` | `clamp(34px, 11.3vw, 64px)` |
+| H1 size | `clamp(40px, min(5.2vw, 10dvh), 100px)` | `clamp(64px, 8.5vw, 88px)` | `clamp(34px, 11.3vw, 64px)` |
 | H1 line height | `0.979` | Inherits base | `1.001` |
 | Body size | `clamp(21px, 1.875vw, 36px)` | `28px` | `clamp(16px, 4.32vw, 21px)` |
 | Body line height | `1.14` | Inherits base | `1.15` |
-| Nav size | `clamp(18px, 1.56vw, 30px)` | Inherits base | `24px` dropdown links |
+| Nav size | `clamp(18px, 1.3vw, 25px)` | `clamp(18px, 1.56vw, 30px)` | `24px` dropdown links |
 | Step captions | `clamp(18px, 1.25vw, 24px)` | Inherits base | `13px` |
-| Button labels | `clamp(14px, 4.2cqw, 30px)` | Inherits base | `clamp(14px, 4cqw, 20px)` |
+| Button labels | `clamp(14px, min(4.2cqw, 3dvh), 30px)` | `clamp(14px, 4.2cqw, 30px)` | `clamp(14px, 4cqw, 20px)` |
 
 H1 tracking is `-0.035em`. Body tracking is `-0.025em`, changing to
 `-0.015em` on mobile. Buttons have `line-height: 1.15` and no label wrapping.
@@ -119,6 +119,11 @@ pressing makes it flat. Preserve this direction when reusing the style.
 | Secondary fill | Light yellow | Same | Same |
 
 ### States
+
+On the desktop homepage (>1100px), button height and padding also follow the
+available viewport height: minimum height `clamp(44px, 8dvh, 76px)` and vertical
+padding `clamp(10px, 1.7dvh, 16px)`. These homepage-only overrides preserve the
+shared button styling used by other routes.
 
 | State | Transform | Shadow |
 | --- | --- | --- |
@@ -168,16 +173,32 @@ Display the complete image rather than clipping it to another rounded rectangle.
 ### Desktop (>1100px)
 
 - Header and hero each have a maximum width of `1920px`, centered.
-- Header: logos on the left; navigation on the right.
+- The homepage is a flex column with `min-height: 100vh` and a `100dvh`
+  override; the hero grows into the space below the header. Size the composition
+  against the browser's available content height, including on short laptops.
+  Retain natural vertical overflow for exceptionally short viewports instead of
+  clipping content or hiding the CTAs. Horizontal animation overflow is clipped.
+- Header: logos on the left; navigation on the right, vertically centered.
+  Vertical padding is `clamp(12px, 2dvh, 20px)`. AIC width is
+  `clamp(76px, min(6vw, 12dvh), 116px)`; CCD width is
+  `clamp(124px, min(9.8vw, 19.6dvh), 188px)`, with a
+  `clamp(20px, 1.7vw, 33px)` gap. The designer uses an even smaller desktop
+  header, detailed in section 8.
 - Logo links use flex alignment so SVG image baselines do not add space below
   the logos; the AIC and CCD artwork remains vertically centered as a pair.
 - Hero: copy on the left, cards on the right; columns `0.88fr 1.12fr`.
 - Base hero gap: `clamp(48px, 6.8vw, 130px)`.
-- Base hero padding: `clamp(48px, 3.2vw, 62px) 5.5% 96px 7.8%`.
+- Hero padding: `clamp(16px, 3dvh, 36px) 5.5% clamp(40px, 6dvh, 64px) 7.8%`.
 - At <=1400px: hero gap `54px`, left/right padding `6%` / `5%`.
 - Copy maximum width `650px`; step row maximum width `505px`.
-- Vertical rhythm: heading to copy `32px`; copy to steps `46px`;
-  steps to CTAs `48px` (`34px` at <=1400px).
+- Vertical rhythm: heading to steps `clamp(16px, 4dvh, 46px)`;
+  steps to CTAs `clamp(16px, 3.5dvh, 40px)`.
+- Step icon base width is `clamp(40px, min(4.38vw, 7.5dvh), 84px)`;
+  retain the Design icon's 9:8 size ratio.
+- The centered deck width is `min(100%, calc(100dvh - 200px))`, retaining
+  its aspect ratio and reserving space for card rotation and the pause control.
+- `tests/landing-layout.spec.ts` checks no-scroll layouts from 1101–1920px
+  wide, including 1280×550 and 1366×600, plus animated card containment.
 
 ### Tablet (601–1100px)
 
@@ -286,9 +307,19 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   begins directly with its tabs, without a top margin.
 - Body copy uses Caslon; tab labels and action buttons use Circular Std Black.
 - The shared `SiteHeader` uses the same `LandingNav`, links, and mobile dropdown
-  as the landing page. Its `compact` variant reduces the
-  desktop AIC logo to `clamp(90px, 6vw, 116px)` and CCD logo to
-  `clamp(148px, 9.8vw, 188px)`.
+  as the landing page. Above 1100px, its `compact` variant is smaller than the
+  homepage header: AIC width `clamp(60px, min(4.6vw, 9dvh), 88px)`, CCD width
+  `clamp(98px, min(7.5vw, 14.7dvh), 144px)`, navigation type
+  `clamp(16px, 1.1vw, 21px)`, and vertical padding
+  `clamp(8px, 1.2dvh, 12px)`. The header is about 59px tall at 1366×600 and
+  87px at 1920×1080.
+- Desktop editor top padding is `clamp(12px, 2dvh, 24px)`, replacing the
+  previous 36–44px gap below the header so the palette and workspace move up
+  together. Preserve the library's separate offset aligning it with the canvas.
+- Desktop editor bottom padding is `clamp(16px, 2dvh, 24px)`, replacing the
+  previous 70–90px empty footer space. Do not hide document overflow: when all
+  content and this small bottom clearance fit, the page should naturally have
+  no vertical scrollbar; shorter viewports retain normal document scrolling.
 - On mobile, the designer's compact header uses smaller logos to fit comfortably
   within its padding: AIC `clamp(44px, 12vw, 56px)`, CCD
   `clamp(72px, 20vw, 90px)`, with a 12px gap. Header padding is
