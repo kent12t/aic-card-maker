@@ -193,25 +193,34 @@
 }
 
 .step:first-child .stepIcon {
-  width: calc(var(--step-icon-size) * 1.125);
+  width: calc(var(--step-icon-size) * 215 / 180);
+}
+
+.step:last-child .stepIcon {
+  width: calc(var(--step-icon-size) * 178 / 180);
 }
 
 .stepArrowSlot {
+  --step-arrow-width: clamp(28px, 3vw, 58px);
   display: flex;
   justify-content: center;
   align-items: center;
   flex: 0 0 auto;
   align-self: flex-end;
-  width: clamp(28px, 3vw, 58px);
+  width: var(--step-arrow-width);
   min-width: 0;
   height: 15px;
-  margin: 0 12px calc((var(--step-caption-size) * 1.2 - 15px) / 2);
+  margin: 0 18px calc((var(--step-caption-size) * 1.2 - 15px) / 2);
+}
+
+.step:nth-child(2) .stepArrowSlot {
+  width: calc(var(--step-arrow-width) * 153 / 104);
 }
 
 .stepArrow {
-  --arrow-thickness: 2.4px;
-  --arrow-size: 8.4px;
-  width: 100%;
+  width: 75%;
+  height: auto;
+  object-fit: contain;
 }
 
 .actions {
@@ -651,13 +660,8 @@
   }
 
   .stepArrowSlot {
-    width: clamp(16px, 5vw, 30px);
-    margin-inline: 10px;
-  }
-
-  .stepArrow {
-    --arrow-thickness: 1.5px;
-    --arrow-size: 6px;
+    --step-arrow-width: clamp(16px, 5vw, 30px);
+    margin-inline: 14px;
   }
 
   .actions {

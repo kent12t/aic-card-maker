@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { DottedArrow } from "@/components/DottedArrow";
 import { CardDeck } from "@/components/landing/CardDeck";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { PageTransitionReady, TransitionLink } from "@/components/navigation/PageTransition";
@@ -8,9 +7,9 @@ import { circular, caslon } from "@/lib/fonts";
 import styles from "./page.module.css";
 
 const steps = [
-  { label: "Personalise", icon: "icon_design.svg", width: 84.72, height: 86.36 },
-  { label: "Submit", icon: "icon_submit.svg", width: 74.55, height: 73.43 },
-  { label: "Share", icon: "icon_share.svg", width: 73.92, height: 66.12 },
+  { label: "Personalise", icon: "icon_pencil.webp", width: 215, height: 184 },
+  { label: "Submit", icon: "icon_submit.webp", width: 180, height: 177 },
+  { label: "Share", icon: "icon_share.webp", width: 178, height: 162 },
 ];
 
 export default async function Home({
@@ -42,7 +41,9 @@ export default async function Home({
                   <span>{step.label}</span>
                 </div>
                 {index < steps.length - 1 && (
-                  <span className={styles.stepArrowSlot}><DottedArrow className={styles.stepArrow} /></span>
+                  <span className={styles.stepArrowSlot}>
+                    <Image src={`/assets/misc/${index === 0 ? "arrow_short.webp" : "arrow_long.webp"}`} alt="" width={index === 0 ? 104 : 153} height={35} className={styles.stepArrow} />
+                  </span>
                 )}
               </li>
             ))}

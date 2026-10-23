@@ -347,6 +347,7 @@ function CardMaker() {
         kind: "submitted",
         imageUrl: URL.createObjectURL(image),
         cardId,
+        file: new File([image], `community-care-card.${image.type === "image/png" ? "png" : "webp"}`, { type: image.type }),
       });
     } catch (error) {
       setNotice({

@@ -4,15 +4,14 @@ import { CircleHelp, X } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { DottedArrow } from "@/components/DottedArrow";
 import { usePageTransition } from "@/components/navigation/PageTransition";
 import styles from "@/app/design/page.module.css";
 
 const steps = [
-  { icon: "icon_design.svg", lines: ["Choose a frame"] },
-  { icon: "icon_message.svg", lines: ["Select Community", "Care Professional (CCP)"] },
-  { icon: "icon_sticker.svg", lines: ["Pick an appreciation", "message and personalise", "your card with", "decorative stickers"], desktopLines: ["Pick an appreciation message and", "personalise your card with decorative stickers"] },
-  { icon: "icon_submit.svg", lines: ["Submit your card"] },
+  { icon: "icon_howto_pencil.webp", width: 151, height: 129, lines: ["Choose a frame"] },
+  { icon: "icon_howto_avatar.webp", width: 219, height: 123, lines: ["Select your favourite", "Community Care", "Professional (CCP)"] },
+  { icon: "icon_howto_messages.webp", width: 166, height: 124, lines: ["Pick an appreciation", "message and personalise", "your card with", "decorative stickers"], desktopLines: ["Pick an appreciation message and personalise", "your card with decorative stickers"] },
+  { icon: "icon_howto_submit.webp", width: 140, height: 138, lines: ["Submit your card"] },
 ];
 
 export function HowItWorks() {
@@ -52,10 +51,10 @@ export function HowItWorks() {
                     </span>
                   </span>
                   <span className={styles.helpStepArtwork}>
-                    <Image src={`/assets/misc/${step.icon}`} alt="" width={84} height={84} className={styles.helpStepIcon} />
+                    <Image src={`/assets/misc/${step.icon}`} alt="" width={step.width} height={step.height} className={styles.helpStepIcon} />
                   </span>
                 </div>
-                {index < steps.length - 1 && <span className={styles.helpStepArrow}><DottedArrow direction="down" className={styles.helpConnector} /></span>}
+                {index < steps.length - 1 && <span className={styles.helpStepArrow}><Image src="/assets/misc/arrow_down.webp" alt="" width={30} height={109} className={styles.helpConnector} /></span>}
               </li>
             ))}
           </ol>

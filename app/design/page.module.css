@@ -399,9 +399,10 @@
 }
 
 .helpStepRow {
+  --help-icon-size: 72px;
   position: relative;
   display: grid;
-  grid-template-columns: 44px minmax(0, max-content) 72px;
+  grid-template-columns: 44px minmax(0, max-content) max-content;
   justify-content: center;
   align-items: center;
   gap: 16px;
@@ -424,9 +425,29 @@
   line-height: 1;
 }
 
+.helpSteps > li:nth-child(1) {
+  --help-icon-scale: calc(64 / 68);
+  --help-icon-aspect: calc(151 / 129);
+}
+
+.helpSteps > li:nth-child(2) {
+  --help-icon-scale: calc(61 / 68);
+  --help-icon-aspect: calc(219 / 123);
+}
+
+.helpSteps > li:nth-child(3) {
+  --help-icon-scale: calc(62 / 68);
+  --help-icon-aspect: calc(166 / 124);
+}
+
+.helpSteps > li:nth-child(4) {
+  --help-icon-scale: 1;
+  --help-icon-aspect: calc(140 / 138);
+}
+
 .helpStepArtwork {
   position: relative;
-  width: 100%;
+  width: calc(var(--help-icon-size) * var(--help-icon-scale) * var(--help-icon-aspect));
   height: 0;
   align-self: center;
 }
@@ -436,8 +457,9 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 72px;
-  height: 72px;
+  width: auto;
+  max-width: none;
+  height: calc(var(--help-icon-size) * var(--help-icon-scale));
   object-fit: contain;
 }
 
@@ -471,8 +493,9 @@
 }
 
 .helpConnector {
-  --arrow-size: 9px;
+  width: auto;
   height: calc(100% - 24px);
+  object-fit: contain;
 }
 
 .startButton {
@@ -608,7 +631,7 @@
 
 .submittedPreview {
   position: relative;
-  width: min(100%, max(160px, calc((100dvh - 540px) * 64 / 53)));
+  width: min(75%, max(120px, calc((100dvh - 540px) * 48 / 53)));
   margin: 28px auto 0;
 }
 
@@ -649,7 +672,8 @@
 
 @media (min-width: 601px) and (max-width: 1100px) {
   .helpStepRow {
-    grid-template-columns: 44px minmax(0, max-content) 76px;
+    --help-icon-size: 76px;
+    grid-template-columns: 44px minmax(0, max-content) max-content;
     gap: 16px;
     min-height: 0;
   }
@@ -660,18 +684,10 @@
     font-size: 26px;
   }
 
-  .helpStepIcon {
-    width: 76px;
-    height: 76px;
-  }
-
   .helpStepArrow {
     height: 48px;
   }
 
-  .helpConnector {
-    --arrow-size: 7px;
-  }
 }
 
 @media (min-width: 601px) and (max-height: 850px) {
@@ -685,13 +701,9 @@
   }
 
   .helpStepRow {
-    grid-template-columns: 36px minmax(0, max-content) 60px;
+    --help-icon-size: 60px;
+    grid-template-columns: 36px minmax(0, max-content) max-content;
     min-height: 0;
-  }
-
-  .helpStepIcon {
-    width: 60px;
-    height: 60px;
   }
 
   .helpStepNumber {
@@ -709,7 +721,6 @@
   }
 
   .helpConnector {
-    --arrow-size: 6px;
     height: calc(100% - 16px);
   }
 
@@ -743,13 +754,75 @@
   }
 
   .submittedPreview {
-    width: min(100%, max(160px, calc((100dvh - 460px) * 64 / 53)));
+    width: min(75%, max(120px, calc((100dvh - 460px) * 48 / 53)));
     margin-top: 20px;
   }
 
   .noticeQr {
     width: min(280px, 100%, max(160px, calc(100dvh - 500px)));
     margin-top: 20px;
+  }
+}
+
+@media (min-width: 601px) and (max-height: 950px) {
+  .submittedNotice {
+    padding: 44px 64px 28px;
+  }
+
+  .submittedNotice .noticeTitle {
+    font-size: 32px;
+  }
+
+  .submittedNotice .submittedPreview {
+    width: min(75%, max(110px, calc((100dvh - 540px) * 48 / 53)));
+    margin-top: 20px;
+  }
+
+  .submittedNotice .noticeCopy {
+    margin-top: 16px;
+    font-size: 20px;
+  }
+
+  .submittedNotice .noticeActions {
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .submittedNotice .noticeButton {
+    min-height: 48px;
+    padding-block: 8px;
+    font-size: 22px;
+  }
+}
+
+@media (min-width: 601px) and (max-height: 650px) {
+  .submittedNotice {
+    padding: 24px 48px 20px;
+  }
+
+  .submittedNotice .noticeTitle {
+    font-size: 28px;
+  }
+
+  .submittedNotice .submittedPreview {
+    width: min(60%, max(88px, calc((100dvh - 500px) * 48 / 53)));
+    margin-top: 12px;
+  }
+
+  .submittedNotice .noticeCopy {
+    margin-top: 12px;
+    font-size: 18px;
+  }
+
+  .submittedNotice .noticeActions {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .submittedNotice .noticeButton {
+    min-height: 44px;
+    padding-block: 6px;
+    font-size: 20px;
   }
 }
 
@@ -1002,6 +1075,7 @@
   }
 
   .helpStepRow {
+    --help-icon-size: 46px;
     display: grid;
     grid-template-columns: 26px minmax(0, max-content);
     justify-content: center;
@@ -1020,8 +1094,6 @@
     grid-column: 1 / -1;
     grid-row: 1;
     justify-self: center;
-    width: 46px;
-    height: 46px;
   }
 
   .helpStepNumber {
@@ -1067,8 +1139,6 @@
   }
 
   .helpConnector {
-    --arrow-size: 5px;
-    --arrow-thickness: 1.5px;
     height: calc(100% - 12px);
     margin-block: 6px;
   }

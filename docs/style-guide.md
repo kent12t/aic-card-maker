@@ -194,7 +194,8 @@ Display the complete image rather than clipping it to another rounded rectangle.
 - Vertical rhythm: heading to steps `clamp(16px, 4dvh, 46px)`;
   steps to CTAs `clamp(16px, 3.5dvh, 40px)`.
 - Step icon base width is `clamp(40px, min(4.38vw, 7.5dvh), 84px)`;
-  retain the Design icon's 9:8 size ratio.
+   use the current WebP artwork's intrinsic width ratio of 215:180:178 for
+   Personalise / Submit / Share, with Submit defining the base width.
 - The centered deck width is `min(100%, calc(100dvh - 200px))`, retaining
   its aspect ratio and reserving space for card rotation and the pause control.
 - `tests/landing-layout.spec.ts` checks no-scroll layouts from 1101–1920px
@@ -252,11 +253,12 @@ handling; Escape returns focus to the toggle.
 Assets live in `public/assets/misc/` (URL prefix `/assets/misc/`):
 
 - Logos: `aic_logo.svg`, `ccd-logo.svg`.
-- Steps: `icon_design.svg`, `icon_submit.svg`, `icon_share.svg`.
-- Connecting arrows: `components/DottedArrow.tsx` and its CSS module; a flexible
-  solid shaft and independent SVG triangle support horizontal/right and
-  vertical/down directions. Landing icon/caption groups hug each caption, with
-  equal connector widths and gaps. Arrows align with the captions
+- Landing steps: `icon_pencil.webp`, `icon_submit.webp`, `icon_share.webp`.
+- Connecting arrows: `arrow_short.webp` between Personalise and Submit,
+  `arrow_long.webp` between Submit and Share, and `arrow_down.webp` between
+  how-it-works steps. Preserve their intrinsic proportions; the long landing
+  arrow is 153:104 wider than the short arrow, with matching artwork heights
+  and equal caption-side gaps. Arrows align with the captions
   below the icons on desktop and mobile, following the updated reference.
 - Cards: `card_kv1.webp`, `card_kv2.webp`, `card_kv3.webp`.
 
@@ -407,12 +409,15 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   “Let’s start” button. The CTA uses the same **raised resting state**, lowered
   mouse hover, flat pressed state, and reduced-motion behavior as the editor
   action buttons (5px desktop / 3px mobile hard shadow at rest).
-- Help steps: **Choose a frame**, **Select Community Care Professional (CCP)**,
+- Help steps: **Choose a frame**, **Select your favourite Community Care Professional (CCP)**,
   **Pick an appreciation message and personalise your card with decorative stickers**,
   then **Submit your card**.
-- Use the updated `icon_design.svg`, `icon_message.svg`, `icon_sticker.svg`,
-  and `icon_submit.svg` assets in that order for the four steps. Existing step
-  copy is preserved. Use `DottedArrow` in its down direction for vertical solid
+- Use `icon_howto_pencil.webp`, `icon_howto_avatar.webp`, `icon_howto_messages.webp`,
+  and `icon_howto_submit.webp` assets in that order for the four steps. The
+  icon heights follow a **64:61:62:68** ratio at every breakpoint, with intrinsic
+  image proportions preserved. The last icon uses the breakpoint's base height;
+  desktop artwork columns reserve each icon's proportional width.
+  Existing step copy is preserved. Use `arrow_down.webp` for vertical
   connectors. Desktop step rows center each number/label/icon group, with the
   icon after the label and 44px numbered circles. On mobile the icon is above the number/label row; the heading
   and longer instructions use intentional mobile line breaks. Mobile labels
@@ -423,7 +428,9 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   number/text group without unused width after wrapping; narrower screens can
   still wrap naturally. Desktop uses an intentional two-line third label with
   a longest-line-sized box, so its number, text, and icon center together without
-  excess trailing space. Desktop labels scale from 22–34px, with 26px numerals
+   excess trailing space. The third desktop label's first line ends with
+   “and personalise”; its second line is “your card with decorative stickers”.
+   Desktop labels scale from 22–34px, with 26px numerals
   inside 44px circles, 72px icons, and 32px connectors (28px on tablets).
   Desktop panels use 40px top / 44px bottom padding and a 64px minimum CTA.
   At viewport heights <=850px, labels reduce to 20–28px, icons to 60px,
@@ -443,22 +450,24 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   sit 2px above geometric center on desktop and 1px above on mobile to optically
   center the font within the circle.
   Landing step groups hug each caption's intrinsic width. Icons center above
-  captions without widening their boxes. Connectors have equal fixed responsive
+  captions without widening their boxes. Arrow images have proportional responsive
   widths and equal caption-side gaps; arrows center vertically on the captions.
-  Desktop shafts are 2.4px with 8.4px triangle heads; mobile shafts are 1.5px
-  with 6px heads.
-  Landing Design / Submit / Share icon sizes follow a 9:8:8 ratio on desktop
-  and mobile. The larger Design artwork may extend beyond its caption box,
+  Landing Personalise / Submit / Share icon widths follow the current WebP
+  dimensions' 215:180:178 ratio on desktop and mobile, applying the same scale
+  factor to all three images. The larger pencil artwork may extend beyond its caption box,
   without affecting horizontal layout; all icons share the same lower edge.
-  Mobile connector slots have 10px horizontal gutters on each side.
+  Landing connector slots have 18px horizontal gutters on each side, reducing
+  to 14px on mobile. Arrow artwork fills 75% of its slot width, leaving extra
+  horizontal breathing room while preserving the short-to-long arrow ratio.
   Landing icons explicitly use `max-width: none` to escape the global image
-  constraint, plus `height: auto` and SVG-proportional intrinsic dimensions.
+  constraint, plus `height: auto` and WebP-proportional intrinsic dimensions.
   This preserves the intended widths even when captions are narrower than icons.
-  Mobile landing icons use a 48px base width (54px for Design), with larger
+  Mobile landing icons use a 48px Submit base width (about 57.33px for
+  Personalise and 47.47px for Share), with larger
   15px captions. Caption-centered arrow placement follows this type size.
   Desktop labels use balanced text wrapping.
-- Mobile help connectors have 6px clearance at each end, a 1.5px solid shaft,
-  and a 5px triangle so they remain light and separated from labels and icons.
+- Mobile help arrow images have 6px clearance at each end and retain their
+  intrinsic proportions to stay separated from labels and icons.
 - The panel is at most 1288px wide on desktop, with 52px corners at 1920px.
   Mobile uses `min(420px, 100% - 64px)` width and 24px corners. Limit the modal
   to the viewport height and allow internal scrolling on short screens; use
@@ -527,9 +536,20 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   bottom-right with `stickers/sticker_1.webp`, retaining their transparent safe
   zones. The top-left sticker is sized at 48% of its original modal dimensions
   and the bottom-right at 72%, with corner offsets adjusted proportionally.
-  Below it, regular mode says only “Thank you!” with **View the Thank You Wall**
+  Desktop card previews are 25% smaller than the previous viewport-scaled size;
+  mobile retains its existing sizing. At desktop viewport heights <=950px, the
+  submission modal uses compact padding, 32px headings, 20px copy, and 48px
+  action buttons. At <=650px, padding and gaps tighten further, with 28px
+  headings, 18px copy, 44px buttons, and a smaller height-responsive preview.
+  Keep all actions visible on laptop screens, retaining internal scrolling as
+  a fallback for exceptionally short viewports or enlarged text.
+  Below the preview, the body copy reads
+  “Thank you for letting our Community Care Professionals know that their work
+  is seen and valued.” Regular mode has **View the Thank You Wall**
   (links to `/display?card=<submitted card ID>` for a client-local replay of the
-  wall's new-card entrance) and **Close**. Event mode adds “Now look out for it on
+  wall's new-card entrance), **Share with a friend**, and **Close**. Sharing uses
+  the submitted image file with the same native-share/site-link/clipboard behavior
+  as the regular download modal. Event mode adds “Now look out for it on
   our Thank You Wall.” and has only **Close**. Closing preserves the editor's card.
 
 ## 9. Display-wall personal replay (`/display?card=<ID>`)
