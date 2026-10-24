@@ -8,18 +8,24 @@ is separate from the animation so an image never enters the wall before decoding
 | Connection / viewport | Initial unique cards | Maximum resident cards | Concurrent downloads |
 | --- | ---: | ---: | ---: |
 | Mobile (up to 600 CSS px) | 16 | 32 | 3 |
-| Larger screens | 24 | 48 | 3 |
+| Larger screens | 24 | 100 | 3 |
 | Data Saver or 2G | 8 | 8 | 2 |
 
 The first eight decoded cards start a varied wall while the rest of the initial
-pool finishes. Normal connections add four historical images eight seconds after
-the previous batch settles, stopping at the resident-card budget. Repeated wall
+pool finishes. Mobile connections add four historical images eight seconds after
+the previous batch settles. Desktop adds eight images one second after each batch,
+up to the latest 100 published cards returned by Convex. Both stop at their resident-card budget. Repeated wall
 occurrences share decoded blob URLs; masks do not make separate storage downloads.
 Hidden tabs pause loading and animation. Unmounting cancels outstanding requests
 and revokes blob URLs. Removed cards are filtered immediately; fresh published
 cards and the requested spotlight take priority over background images.
 
-Historical prefetches join off-screen without playing new-submission spotlights.
+Historical prefetches replace overrepresented artwork in the existing viewport,
+then rebalance the off-screen ring, without resetting positions, spring bodies or
+playing new-submission spotlights. This prevents the first eight cards from
+dominating the screen while later downloads sit unseen at the back of the ring.
+When the viewport has enough slots, every decoded card is represented before
+excessive duplication; larger collections rotate through the off-screen ring.
 Only real subscription arrivals and the explicitly requested card are featured.
 
 ## Thumbnails and compatibility

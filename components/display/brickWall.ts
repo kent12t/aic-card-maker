@@ -9,8 +9,8 @@ export type WallSnapshot = {
   cellWidth: number;
   bigSize: number;
   bigWidth: number;
-  bricks: { key: string; url: string; depth: number }[];
-  features: { key: string; url: string }[];
+  bricks: { key: string; cardId: string; url: string; depth: number }[];
+  features: { key: string; cardId: string; url: string }[];
 };
 
 const ROWS = 8;
@@ -113,6 +113,7 @@ export class BrickWall {
   private reducedMotion = false;
   private needsSettle = true;
   private visibleBricks = new Set<string>();
+  private viewportBricks = new Set<string>();
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
@@ -158,10 +159,10 @@ export class BrickWall {
       bigWidth: this.bigWidth,
       bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (
         item.kind === "brick" && this.visibleBricks.has(item.key)
-          ? [{ key: item.key, url: item.card.url, depth: item.motion.depth }]
+          ? [{ key: item.key, cardId: item.card._id, url: item.card.url, depth: item.motion.depth }]
           : []
       ))),
-      features: this.features.map((feature) => ({ key: feature.key, url: feature.card.url })),
+      features: this.features.map((feature) => ({ key: feature.key, cardId: feature.card._id, url: feature.card.url })),
     };
   }
 
@@ -286,13 +287,37 @@ export class BrickWall {
       if (this.known.has(card._id)) continue;
       this.known.add(card._id);
       if (!this.reducedMotion && (!arrivalIds || arrivalIds.has(card._id))) this.addFeature(card);
-      else {
-        // Historical thumbnails join off-screen instead of triggering a flood of arrival spotlights.
-        const row = this.rows[this.known.size % ROWS];
-        insertAt(row, Infinity, this.brick(card));
-      }
     }
     this.refill();
+    this.balanceDecodedCards();
+  }
+
+  private balanceDecodedCards() {
+    const featuring = new Set(this.features.map((feature) => feature.card._id));
+    const pool = this.cards.filter((card) => !featuring.has(card._id));
+    if (!pool.length) return;
+    const bricks = this.rows.flatMap((row) => row.items.filter((item): item is Brick => item.kind === "brick"));
+    const viewport = bricks.filter((brick) => this.viewportBricks.has(brick.key));
+    const offscreen = bricks.filter((brick) => !this.viewportBricks.has(brick.key));
+
+    const balance = (counted: Brick[], donors: Brick[]) => {
+      const counts = new Map<string, number>(pool.map((card) => [card._id, 0]));
+      for (const brick of counted) counts.set(brick.card._id, (counts.get(brick.card._id) ?? 0) + 1);
+      for (;;) {
+        const least = pool.reduce((a, b) => counts.get(a._id)! <= counts.get(b._id)! ? a : b);
+        const donor = donors.reduce<Brick | undefined>((a, b) => !a || counts.get(b.card._id)! > counts.get(a.card._id)! ? b : a, undefined);
+        if (!donor || counts.get(donor.card._id)! <= counts.get(least._id)! + 1) break;
+        counts.set(donor.card._id, counts.get(donor.card._id)! - 1);
+        donor.card = least;
+        counts.set(least._id, counts.get(least._id)! + 1);
+      }
+    };
+
+    // Replace redundant artwork in place: retain keys, positions and spring bodies.
+    // Downloaded cards must not wait behind a long ring of copies of the first eight.
+    balance(viewport, shuffle([...viewport]));
+    // Include the whole decoded pool in the ring, even when it cannot all fit on-screen.
+    balance(bricks, shuffle(offscreen));
   }
 
   private refill() {
@@ -505,6 +530,10 @@ export class BrickWall {
     const visibilityChanged = visibleBricks.size !== this.visibleBricks.size
       || [...visibleBricks].some((key) => !this.visibleBricks.has(key));
     this.visibleBricks = visibleBricks;
+    this.viewportBricks = new Set(particles.filter((p) => {
+      const center = p.anchorX + p.body.x + p.bobX;
+      return center + p.halfWidth > 0 && center - p.halfWidth < this.width;
+    }).map(({ brick }) => brick.key));
 
     settleWall(particles, this.needsSettle ? 0.8 : seconds, this.cell * 0.06);
     this.needsSettle = false;

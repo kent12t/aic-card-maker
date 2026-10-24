@@ -6,7 +6,8 @@ export type ImagePoolSnapshot = { cards: WallCard[]; failed: boolean; loading: b
 
 export function imagePolicy(mobile: boolean, constrained: boolean): ImagePolicy {
   if (constrained) return { initial: 8, maximum: 8, concurrency: 2, batch: 0, interval: 8000 };
-  return { initial: mobile ? 16 : 24, maximum: mobile ? 32 : 48, concurrency: 3, batch: 4, interval: 8000 };
+  if (mobile) return { initial: 16, maximum: 32, concurrency: 3, batch: 4, interval: 8000 };
+  return { initial: 24, maximum: 100, concurrency: 3, batch: 8, interval: 1000 };
 }
 
 export function thumbnailPath(source: string): string {
@@ -94,7 +95,7 @@ export class WallImagePool {
     const failed = selected.some((card) => !this.loaded.has(card._id) && !this.active.has(card._id) && (this.attempts.get(card._id) ?? 0) >= 2);
     // Start with a varied deck, not hundreds of copies of the first image to finish.
     const stillPending = selected.some((card) => !this.loaded.has(card._id) && (this.active.has(card._id) || (this.attempts.get(card._id) ?? 0) < 2));
-    if (cards.length >= Math.min(8, selected.length) || (cards.length > 0 && !stillPending)) this.started = true;
+    if (cards.length > 0 && (cards.length >= Math.min(8, selected.length) || !stillPending)) this.started = true;
     const visibleCards = this.started ? cards : [];
     this.publish({ cards: visibleCards, failed, loading: visibleCards.length === 0 && selected.length > 0 && (!failed || stillPending) });
   }
