@@ -20,12 +20,15 @@ Hidden tabs pause loading and animation. Unmounting cancels outstanding requests
 and revokes blob URLs. Removed cards are filtered immediately; fresh published
 cards and the requested spotlight take priority over background images.
 
-Historical prefetches replace overrepresented artwork in the existing viewport,
-then rebalance the off-screen ring, without resetting positions, spring bodies or
-playing new-submission spotlights. This prevents the first eight cards from
-dominating the screen while later downloads sit unseen at the back of the ring.
-When the viewport has enough slots, every decoded card is represented before
-excessive duplication; larger collections rotate through the off-screen ring.
+Historical prefetches enter a FIFO stream queue. On-screen cards never change
+their artwork as more thumbnails finish loading. Each lane prepares only its next
+fully off-screen right-hand slot, with rotation/drift/shadow clearance, preserving
+that slot's geometry and spring motion. Queued downloads take priority over
+duplicate filler, rather than waiting at the back of the long row ring. Once the
+new-image queue drains, shuffled cycles give the full decoded pool regular turns.
+All cards enter naturally from the right at the existing 28px/s scrolling speed;
+loading all thumbnails does not mean every card becomes visible immediately.
+Reduced-motion users retain the static wall instead of animated streaming.
 Only real subscription arrivals and the explicitly requested card are featured.
 
 ## Thumbnails and compatibility

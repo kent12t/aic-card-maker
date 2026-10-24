@@ -135,7 +135,7 @@ test("background thumbnail batches do not animate as new submissions", () => {
   expect(wall.snapshot().features).toHaveLength(1);
 });
 
-test("all 34 decoded cards replace first-batch duplicates without resetting wall positions", () => {
+test("later downloads keep existing artwork and positions unchanged, then enter from the right", () => {
   const elements = new Map<string, HTMLElement>();
   const wall = new BrickWall(elements);
   const cards = Array.from({ length: 34 }, (_, i): WallCard => ({
@@ -148,21 +148,62 @@ test("all 34 decoded cards replace first-batch duplicates without resetting wall
   wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
   reconcile();
   wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
-  const before = new Map([...elements].map(([key, element]) => [key, element.style.transform]));
-  for (let count = 9; count <= cards.length; count++) {
-    decoded = cards.slice(0, count);
-    wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
-    reconcile();
+  const before = wall.snapshot();
+  const transforms = new Map([...elements].map(([key, element]) => [key, element.style.transform]));
+  decoded = cards;
+  wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
+  const after = new Map(wall.snapshot().bricks.map((brick) => [brick.key, brick]));
+  for (const brick of before.bricks) {
+    if (!after.has(brick.key)) continue;
+    expect(after.get(brick.key)?.cardId).toBe(brick.cardId);
+    expect(elements.get(brick.key)?.style.transform).toBe(transforms.get(brick.key));
   }
-  const snapshot = wall.snapshot();
-  const viewport = snapshot.bricks.filter((brick) => {
-    const transform = elements.get(brick.key)?.style.transform;
-    const match = transform?.match(/translate3d\(([-.\d]+)px/);
-    return match && Number(match[1]) > 0 && Number(match[1]) < 1920 - snapshot.cellWidth;
-  });
-  expect(new Set(viewport.map((brick) => brick.cardId)).size).toBe(34);
-  expect(snapshot.features).toHaveLength(0);
-  for (const [key, transform] of before) expect(elements.get(key)?.style.transform).toBe(transform);
+
+  const identities = new Map<string, string>();
+  const seen = new Set(cards.slice(0, 8).map((card) => String(card._id)));
+  for (let frame = 0; frame < 700; frame++) {
+    reconcile();
+    wall.tick(100, decoded, 1920, 1000, undefined, false, new Set());
+    const snapshot = wall.snapshot();
+    expect(snapshot.features).toHaveLength(0);
+    for (const brick of snapshot.bricks) {
+      if (identities.has(brick.key)) expect(brick.cardId).toBe(identities.get(brick.key));
+      identities.set(brick.key, brick.cardId);
+      const transform = elements.get(brick.key)?.style.transform;
+      const match = transform?.match(/translate3d\(([-.\d]+)px, [-.\d]+px, 0\) rotate\(([-.\d]+)deg\) scale\(([-.\d]+)\)/);
+      if (!match) continue;
+      const angle = Number(match[2]) * Math.PI / 180;
+      const half = (Math.abs(Math.cos(angle)) * snapshot.cellWidth + Math.abs(Math.sin(angle)) * snapshot.cell) * Number(match[3]) / 2;
+      const center = Number(match[1]) + snapshot.cellWidth / 2;
+      const left = center - half;
+      if (left >= 1920 || center + half <= 0 || seen.has(brick.cardId)) continue;
+      expect(left, "a newly decoded card must first appear at the right edge").toBeGreaterThan(1900);
+      seen.add(brick.cardId);
+    }
+  }
+  expect(seen.size).toBe(34);
+  expect(identities.size).toBeLessThan(800);
+});
+
+test("the latest 100 decoded cards all get a turn in the right-edge stream", () => {
+  const elements = new Map<string, HTMLElement>();
+  const wall = new BrickWall(elements);
+  const cards = Array.from({ length: 100 }, (_, i): WallCard => ({
+    _id: `card-${i}` as WallCard["_id"], _creationTime: i, url: `/card-${i}.webp`,
+  }));
+  const initial = cards.slice(0, 8);
+  wall.tick(0, initial, 1920, 1000, undefined, false, new Set());
+  const seen = new Set<string>();
+  for (let frame = 0; frame < 1400; frame++) {
+    for (const brick of wall.snapshot().bricks) if (!elements.has(brick.key)) elements.set(brick.key, { style: {} } as HTMLElement);
+    wall.tick(100, cards, 1920, 1000, undefined, false, new Set());
+    for (const brick of wall.snapshot().bricks) {
+      const match = elements.get(brick.key)?.style.transform?.match(/translate3d\(([-.\d]+)px/);
+      if (match && Number(match[1]) > 0 && Number(match[1]) < 1920 - wall.snapshot().cellWidth) seen.add(brick.cardId);
+    }
+    if (seen.size === 100) break;
+  }
+  expect(seen.size).toBe(100);
 });
 
 test("large cards keep bobbing after the spacing physics settles", () => {

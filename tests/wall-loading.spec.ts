@@ -92,16 +92,45 @@ test("moderation removes decoded cards and live arrivals use the same bounded qu
   expect(wall.requests.at(-1)).toContain("000000000040");
 });
 
-test("desktop shows all 34 decoded cards, not just duplicates of the first eight", async ({ page }) => {
+test("desktop streams later cards from the right without changing existing on-screen artwork", async ({ page }) => {
+  test.setTimeout(70_000);
   await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => {
+    const audit = { swaps: 0, seen: [] as string[], badEntries: [] as { id: string; left: number }[], initial: [] as string[] };
+    (window as Window & { wallStreamAudit?: typeof audit }).wallStreamAudit = audit;
+    new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type !== "attributes" || record.attributeName !== "data-card-id") continue;
+        const element = record.target as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        if (record.oldValue && record.oldValue !== element.dataset.cardId && rect.right > 0 && rect.left < innerWidth) audit.swaps++;
+      }
+    }).observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["data-card-id"] });
+    requestAnimationFrame(function sample() {
+      const visible = [...document.querySelectorAll<HTMLElement>("[data-card-id]")].filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const image = element.querySelector("img");
+        return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight && image?.complete && image.naturalWidth;
+      });
+      if (!audit.initial.length && visible.length) audit.initial = [...new Set(visible.map((element) => element.dataset.cardId!))];
+      for (const element of visible) {
+        const id = element.dataset.cardId!;
+        if (audit.seen.includes(id)) continue;
+        const left = element.getBoundingClientRect().left;
+        if (!audit.initial.includes(id) && left < innerWidth - 20) audit.badEntries.push({ id, left });
+        audit.seen.push(id);
+      }
+      requestAnimationFrame(sample);
+    });
+  });
   const wall = await mockWall(page, false, 34);
   await page.goto("/display");
   await expect.poll(() => wall.requests.length, { timeout: 12_000 }).toBe(34);
-  await expect.poll(() => page.locator("[data-card-id]").evaluateAll((elements) => new Set(elements.filter((element) => {
-    const rect = element.getBoundingClientRect();
-    const image = element.querySelector("img");
-    return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight && image?.complete && image.naturalWidth;
-  }).map((element) => element.getAttribute("data-card-id"))).size)).toBe(34);
+  const audit = () => page.evaluate(() => (window as Window & { wallStreamAudit?: { swaps: number; seen: string[]; badEntries: unknown[] } }).wallStreamAudit!);
+  await expect.poll(async () => (await audit()).seen.length, { timeout: 55_000 }).toBe(34);
+  expect((await audit()).swaps).toBe(0);
+  expect((await audit()).badEntries).toEqual([]);
   expect(wall.peak()).toBeLessThanOrEqual(3);
   expect(wall.originals()).toBe(0);
 });
