@@ -5,6 +5,8 @@ export const BOARD_WIDTH = 443;
 export const BOARD_HEIGHT = BOARD_WIDTH / CARD_ASPECT_RATIO;
 export const CARD_EXPORT_WIDTH = 800;
 export const CARD_EXPORT_HEIGHT = Math.round(CARD_EXPORT_WIDTH / CARD_ASPECT_RATIO);
+export const WALL_CARD_WIDTH = 400;
+export const WALL_CARD_HEIGHT = Math.round(WALL_CARD_WIDTH / CARD_ASPECT_RATIO);
 
 export const TAB_LABELS: TabLabel[] = [
   { key: "frames", label: "Frames" },

@@ -1,7 +1,12 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, query } from "./_generated/server";
 
-const WALL_LIMIT = 200;
+const WALL_LIMIT = 80;
+const wallCard = v.object({
+  _id: v.id("cards"),
+  _creationTime: v.number(),
+  url: v.string(),
+});
 
 /** Runs before the image is stored so retries never touch storage. */
 export const findByIdempotencyKey = internalQuery({
@@ -39,7 +44,7 @@ export const createCard = internalMutation({
 
 export const listPublished = query({
   args: {},
-  returns: v.array(v.object({ _id: v.id("cards"), _creationTime: v.number(), url: v.string() })),
+  returns: v.array(wallCard),
   handler: async (ctx) => {
     const cards = await ctx.db
       .query("cards")
@@ -55,5 +60,20 @@ export const listPublished = query({
       })),
     );
     return withUrls.filter((card): card is typeof card & { url: string } => card.url !== null);
+  },
+});
+
+export const getPublishedById = query({
+  args: { cardId: v.string() },
+  returns: v.union(wallCard, v.null()),
+  handler: async (ctx, args) => {
+    const cardId = ctx.db.normalizeId("cards", args.cardId);
+    if (cardId === null) return null;
+
+    const card = await ctx.db.get("cards", cardId);
+    if (card?.status !== "published") return null;
+
+    const url = await ctx.storage.getUrl(card.storageId);
+    return url === null ? null : { _id: card._id, _creationTime: card._creationTime, url };
   },
 });

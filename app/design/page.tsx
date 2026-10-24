@@ -15,6 +15,8 @@ import styles from "./page.module.css";
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
+  WALL_CARD_HEIGHT,
+  WALL_CARD_WIDTH,
   CARD_ASPECT_RATIO,
   frameSources,
   messageSources,
@@ -341,7 +343,11 @@ function CardMaker() {
     submissionKeyRef.current ??= crypto.randomUUID();
     try {
       const image = await renderCardImage({ frame: selectedFrame, stickers });
-      const { cardId } = await submitCardImage(image, submissionKeyRef.current);
+      const wallImage = await renderCardImage(
+        { frame: selectedFrame, stickers },
+        { width: WALL_CARD_WIDTH, height: WALL_CARD_HEIGHT },
+      );
+      const { cardId } = await submitCardImage(wallImage, submissionKeyRef.current);
       submissionKeyRef.current = null;
       setNotice({
         kind: "submitted",

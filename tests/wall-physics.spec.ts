@@ -108,6 +108,20 @@ test("size-aware wall remains finite through arrivals, rejoining, wrapping and r
   expect([...elements.values()].map((element) => element.style.transform)).toEqual(staticTransforms);
 });
 
+test("wall snapshot mounts only cards near the viewport", () => {
+  const wall = new BrickWall(new Map());
+  const cards = Array.from({ length: 80 }, (_, index): WallCard => ({
+    _id: `card-${index}` as WallCard["_id"],
+    _creationTime: index,
+    url: `/card-${index}.webp`,
+  }));
+
+  wall.tick(16, cards, 390, 720);
+
+  expect(wall.snapshot().bricks.length).toBeLessThan(cards.length);
+  expect(wall.snapshot().bricks.length).toBeGreaterThan(0);
+});
+
 test("large cards keep bobbing after the spacing physics settles", () => {
   const random = Math.random;
   let seed = 108;

@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
 import styles from "@/app/display/page.module.css";
@@ -14,7 +14,17 @@ const OFFSCREEN = "translate3d(-9999px, 0, 0)";
 export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   // Convex keeps this subscription live: inserts and moderator removals re-run the query and push new results.
   const cards = useQuery(api.cards.listPublished);
-  const spotlightCard = cards?.find((card) => card._id === spotlightCardId);
+  const recentSpotlightCard = cards?.find((card) => card._id === spotlightCardId);
+  const needsSpotlightLookup = Boolean(spotlightCardId && cards !== undefined && !recentSpotlightCard);
+  const spotlightLookup = useQuery(
+    api.cards.getPublishedById,
+    needsSpotlightLookup ? { cardId: spotlightCardId! } : "skip",
+  );
+  const spotlightCard = recentSpotlightCard ?? spotlightLookup ?? undefined;
+  const wallCards = useMemo(
+    () => cards && spotlightLookup ? [spotlightLookup, ...cards] : cards,
+    [cards, spotlightLookup],
+  );
 
   const [snapshot, setSnapshot] = useState<WallSnapshot | null>(null);
   const wallRef = useRef<HTMLDivElement>(null);
@@ -35,8 +45,8 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
   }, [spotlightCard]);
 
   useEffect(() => {
-    cardsRef.current = cards;
-  }, [cards]);
+    cardsRef.current = wallCards;
+  }, [wallCards]);
 
   useEffect(() => {
     const wall = wallRef.current;
@@ -80,7 +90,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
       </header>
 
       <div ref={wallRef} className="relative isolate min-h-0 flex-1 overflow-hidden">
-        {spotlightCardId && cards !== undefined && !spotlightCard && (
+        {needsSpotlightLookup && spotlightLookup === null && (
           <p role="status" className="absolute inset-x-0 top-0 z-20 rounded-lg bg-black/80 p-3 text-center text-sm text-white">
             This card is no longer available on the wall. Enjoy the latest thank you cards below.
           </p>

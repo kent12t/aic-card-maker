@@ -112,6 +112,7 @@ export class BrickWall {
   private elapsed = 0;
   private reducedMotion = false;
   private needsSettle = true;
+  private visibleBricks = new Set<string>();
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
@@ -145,7 +146,7 @@ export class BrickWall {
     const step = this.reducedMotion ? 0 : Math.min(Math.max(dtMs, 0), MAX_FRAME_MS);
     this.elapsed += step / 1000;
     if (this.animate(step)) changed = true;
-    this.place(step / 1000);
+    if (this.place(step / 1000)) changed = true;
     return changed;
   }
 
@@ -155,7 +156,11 @@ export class BrickWall {
       cellWidth: this.cellWidth,
       bigSize: this.bigSize,
       bigWidth: this.bigWidth,
-      bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (item.kind === "brick" ? [{ key: item.key, url: item.card.url, depth: item.motion.depth }] : []))),
+      bricks: this.rows.flatMap((row) => row.items.flatMap((item) => (
+        item.kind === "brick" && this.visibleBricks.has(item.key)
+          ? [{ key: item.key, url: item.card.url, depth: item.motion.depth }]
+          : []
+      ))),
       features: this.features.map((feature) => ({ key: feature.key, url: feature.card.url })),
     };
   }
@@ -491,6 +496,11 @@ export class BrickWall {
       }
     });
 
+    const visibleBricks = new Set(particles.map(({ brick }) => brick.key));
+    const visibilityChanged = visibleBricks.size !== this.visibleBricks.size
+      || [...visibleBricks].some((key) => !this.visibleBricks.has(key));
+    this.visibleBricks = visibleBricks;
+
     settleWall(particles, this.needsSettle ? 0.8 : seconds, this.cell * 0.06);
     this.needsSettle = false;
     for (const p of particles) {
@@ -534,5 +544,6 @@ export class BrickWall {
       y = Math.max(halfHeight + this.edgePadding, Math.min(this.height - halfHeight - this.edgePadding, y));
       element.style.transform = `translate3d(${x - this.bigWidth / 2}px, ${y - this.bigSize / 2}px, 0) rotate(${rotation}deg) scale(${scale})`;
     }
+    return visibilityChanged;
   }
 }
