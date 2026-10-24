@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, query } from "./_generated/server";
 
-const WALL_LIMIT = 80;
+const WALL_LIMIT = 100;
 const wallCard = v.object({
   _id: v.id("cards"),
   _creationTime: v.number(),

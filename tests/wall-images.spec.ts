@@ -20,6 +20,8 @@ test("initial downloads are bounded, decoded before publication, then loaded in 
       pending.push({ resolve: (image) => { active--; resolve(image); }, signal });
     }), (next) => { snapshot = next; });
   try {
+    // The hook first receives undefined query results, before the subscription responds.
+    pool.update([]);
     pool.update(cards(80));
     expect(pending).toHaveLength(3);
     expect(snapshot.cards).toHaveLength(0);
@@ -46,6 +48,24 @@ test("constrained connections do not fetch the rest of the subscription", async 
     await expect.poll(() => requests).toBe(8);
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(requests).toBe(8);
+  } finally { pool.dispose(); }
+});
+
+test("desktop expands to the latest 100 cards without increasing download concurrency", async () => {
+  const policy = imagePolicy(false, false);
+  expect(policy).toMatchObject({ initial: 24, maximum: 100, concurrency: 3, batch: 8, interval: 1000 });
+  let requests = 0;
+  let snapshot: ImagePoolSnapshot = { cards: [], failed: false, loading: true };
+  const pool = new WallImagePool({ ...policy, interval: 2 }, async () => {
+    requests++;
+    return { url: "blob:test", dispose: () => {} };
+  }, (next) => { snapshot = next; });
+  try {
+    pool.update(cards(150));
+    expect(requests).toBe(3);
+    await expect.poll(() => snapshot.cards.length).toBe(100);
+    expect(requests).toBe(100);
+    expect(snapshot.cards.map((card) => card._id)).toEqual(cards(100).map((card) => card._id));
   } finally { pool.dispose(); }
 });
 

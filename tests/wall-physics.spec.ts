@@ -135,6 +135,36 @@ test("background thumbnail batches do not animate as new submissions", () => {
   expect(wall.snapshot().features).toHaveLength(1);
 });
 
+test("all 34 decoded cards replace first-batch duplicates without resetting wall positions", () => {
+  const elements = new Map<string, HTMLElement>();
+  const wall = new BrickWall(elements);
+  const cards = Array.from({ length: 34 }, (_, i): WallCard => ({
+    _id: `card-${i}` as WallCard["_id"], _creationTime: i, url: `/card-${i}.webp`,
+  }));
+  const reconcile = () => {
+    for (const brick of wall.snapshot().bricks) if (!elements.has(brick.key)) elements.set(brick.key, { style: {} } as HTMLElement);
+  };
+  let decoded = cards.slice(0, 8);
+  wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
+  reconcile();
+  wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
+  const before = new Map([...elements].map(([key, element]) => [key, element.style.transform]));
+  for (let count = 9; count <= cards.length; count++) {
+    decoded = cards.slice(0, count);
+    wall.tick(0, decoded, 1920, 1000, undefined, false, new Set());
+    reconcile();
+  }
+  const snapshot = wall.snapshot();
+  const viewport = snapshot.bricks.filter((brick) => {
+    const transform = elements.get(brick.key)?.style.transform;
+    const match = transform?.match(/translate3d\(([-.\d]+)px/);
+    return match && Number(match[1]) > 0 && Number(match[1]) < 1920 - snapshot.cellWidth;
+  });
+  expect(new Set(viewport.map((brick) => brick.cardId)).size).toBe(34);
+  expect(snapshot.features).toHaveLength(0);
+  for (const [key, transform] of before) expect(elements.get(key)?.style.transform).toBe(transform);
+});
+
 test("large cards keep bobbing after the spacing physics settles", () => {
   const random = Math.random;
   let seed = 108;

@@ -1,13 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import sharp from "sharp";
 import type { WallCard } from "../components/display/brickWall";
 
-async function mockWall(page: Page, constrained = false) {
+async function mockWall(page: Page, constrained = false, count = 80) {
   if (constrained) await page.addInitScript(() => {
     Object.defineProperty(navigator, "connection", { value: { saveData: true, effectiveType: "2g" }, configurable: true });
   });
-  const cards: WallCard[] = Array.from({ length: 80 }, (_, index) => ({
-    _id: `card-${index}` as WallCard["_id"], _creationTime: 80 - index,
+  const cards: WallCard[] = Array.from({ length: count }, (_, index) => ({
+    _id: `card-${index}` as WallCard["_id"], _creationTime: count - index,
     url: `https://wall-test.convex.cloud/api/storage/00000000-0000-0000-0000-${String(index).padStart(12, "0")}`,
   }));
   const requests: string[] = [];
@@ -16,7 +17,7 @@ async function mockWall(page: Page, constrained = false) {
   let originalRequests = 0;
   let update = (_cards: WallCard[]) => {};
   await page.route("**/api/storage/**", (route) => { originalRequests++; return route.abort(); });
-  const artwork = await readFile("public/assets/frames/frame_1.webp");
+  const artwork = await sharp(await readFile("public/assets/frames/frame_1.webp")).resize(384).webp({ quality: 65 }).toBuffer();
   await page.route("**/api/wall-thumbnail/**", async (route) => {
     requests.push(route.request().url());
     active++;
@@ -89,4 +90,18 @@ test("moderation removes decoded cards and live arrivals use the same bounded qu
   wall.update([wall.cards[40]]);
   await expect(images.first()).toBeVisible();
   expect(wall.requests.at(-1)).toContain("000000000040");
+});
+
+test("desktop shows all 34 decoded cards, not just duplicates of the first eight", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const wall = await mockWall(page, false, 34);
+  await page.goto("/display");
+  await expect.poll(() => wall.requests.length, { timeout: 12_000 }).toBe(34);
+  await expect.poll(() => page.locator("[data-card-id]").evaluateAll((elements) => new Set(elements.filter((element) => {
+    const rect = element.getBoundingClientRect();
+    const image = element.querySelector("img");
+    return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight && image?.complete && image.naturalWidth;
+  }).map((element) => element.getAttribute("data-card-id"))).size)).toBe(34);
+  expect(wall.peak()).toBeLessThanOrEqual(3);
+  expect(wall.originals()).toBe(0);
 });

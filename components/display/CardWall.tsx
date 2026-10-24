@@ -120,6 +120,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
         {snapshot?.bricks.map((brick) => (
           <div
             key={brick.key}
+            data-card-id={brick.cardId}
             ref={register(brick.key)}
             className={styles.floatingCard}
             style={{ width: snapshot.cellWidth, height: snapshot.cell, transform: OFFSCREEN, zIndex: Math.round(brick.depth * 4) }}
@@ -138,6 +139,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
         {snapshot?.features.map((feature) => (
           <div
             key={feature.key}
+            data-card-id={feature.cardId}
             ref={register(feature.key)}
             className={`${styles.floatingCard} ${styles.featureCard}`}
             style={{ width: snapshot.bigWidth, height: snapshot.bigSize, transform: OFFSCREEN }}
