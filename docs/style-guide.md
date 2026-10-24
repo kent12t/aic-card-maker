@@ -556,10 +556,15 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 
 - The scrolling card area spans the full viewport width, without horizontal
   page padding. The header and loading/empty copy retain their 24px side inset.
-- Initial layout randomly distributes every published card at least once.
+- Initial layout randomly distributes every initially decoded card at least once.
   Each row then fills with independently shuffled batches, with a fresh shuffle
   for every repeated set and on refills. Finish a row's existing set before
   repeating cards; avoid identical neighbors at batch boundaries where possible.
+- As additional thumbnails decode, queue them to stream in from the right ahead
+  of duplicate filler. Never replace the artwork of an existing on-screen card or
+  reshuffle the current display to expose later downloads. Prepare only fully
+  off-screen incoming slots, retaining their geometry and motion. Once queued
+  images have entered, use shuffled cycles over the whole loaded pool.
 - Cards float independently over the scrolling, staggered rows. Each occurrence
   keeps its own random depth (70–155% base size), tilt (±7°), drift amplitude,
   phase, and 12–18 second period. Gentle horizontal/vertical drift, ±2.5° rocking,

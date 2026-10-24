@@ -113,7 +113,10 @@ export class BrickWall {
   private reducedMotion = false;
   private needsSettle = true;
   private visibleBricks = new Set<string>();
-  private viewportBricks = new Set<string>();
+  private pendingCards: WallCard[] = [];
+  private rotationCards: WallCard[] = [];
+  private preparedBricks = new Set<string>();
+  private lastStreamedId: string | undefined;
 
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
@@ -255,6 +258,10 @@ export class BrickWall {
     // Oldest first so newer cards are added at the tail rather than reshuffling the wall.
     this.cards = [...cards].reverse();
     this.known = new Set(cards.map((card) => card._id));
+    this.pendingCards = [];
+    this.rotationCards = shuffle([...this.cards]);
+    this.preparedBricks.clear();
+    this.lastStreamedId = undefined;
     this.features = [];
     this.needsSettle = true;
     this.rows = Array.from({ length: ROWS }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cellWidth / 2 : 0 }));
@@ -287,37 +294,37 @@ export class BrickWall {
       if (this.known.has(card._id)) continue;
       this.known.add(card._id);
       if (!this.reducedMotion && (!arrivalIds || arrivalIds.has(card._id))) this.addFeature(card);
+      else this.pendingCards.push(card);
     }
+    this.pendingCards = this.pendingCards.filter((card) => ids.has(card._id));
+    this.rotationCards = this.rotationCards.filter((card) => ids.has(card._id));
+    this.known = new Set([...this.known].filter((id) => ids.has(id)));
+    const keys = new Set(this.rows.flatMap((row) => row.items.map((item) => item.key)));
+    this.preparedBricks = new Set([...this.preparedBricks].filter((key) => keys.has(key)));
     this.refill();
-    this.balanceDecodedCards();
   }
 
-  private balanceDecodedCards() {
+  private nextStreamCard(): WallCard | undefined {
     const featuring = new Set(this.features.map((feature) => feature.card._id));
     const pool = this.cards.filter((card) => !featuring.has(card._id));
-    if (!pool.length) return;
-    const bricks = this.rows.flatMap((row) => row.items.filter((item): item is Brick => item.kind === "brick"));
-    const viewport = bricks.filter((brick) => this.viewportBricks.has(brick.key));
-    const offscreen = bricks.filter((brick) => !this.viewportBricks.has(brick.key));
-
-    const balance = (counted: Brick[], donors: Brick[]) => {
-      const counts = new Map<string, number>(pool.map((card) => [card._id, 0]));
-      for (const brick of counted) counts.set(brick.card._id, (counts.get(brick.card._id) ?? 0) + 1);
-      for (;;) {
-        const least = pool.reduce((a, b) => counts.get(a._id)! <= counts.get(b._id)! ? a : b);
-        const donor = donors.reduce<Brick | undefined>((a, b) => !a || counts.get(b.card._id)! > counts.get(a.card._id)! ? b : a, undefined);
-        if (!donor || counts.get(donor.card._id)! <= counts.get(least._id)! + 1) break;
-        counts.set(donor.card._id, counts.get(donor.card._id)! - 1);
-        donor.card = least;
-        counts.set(least._id, counts.get(least._id)! + 1);
+    if (!pool.length) return undefined;
+    while (this.pendingCards.length) {
+      const queued = this.pendingCards.shift()!;
+      const current = pool.find((card) => card._id === queued._id);
+      if (current) {
+        this.lastStreamedId = current._id;
+        return current;
       }
-    };
-
-    // Replace redundant artwork in place: retain keys, positions and spring bodies.
-    // Downloaded cards must not wait behind a long ring of copies of the first eight.
-    balance(viewport, shuffle([...viewport]));
-    // Include the whole decoded pool in the ring, even when it cannot all fit on-screen.
-    balance(bricks, shuffle(offscreen));
+    }
+    this.rotationCards = this.rotationCards.filter((queued) => pool.some((card) => card._id === queued._id));
+    if (!this.rotationCards.length) this.rotationCards = shuffle([...pool]);
+    if (this.rotationCards.length > 1 && this.rotationCards[0]._id === this.lastStreamedId) {
+      [this.rotationCards[0], this.rotationCards[1]] = [this.rotationCards[1], this.rotationCards[0]];
+    }
+    const queued = this.rotationCards.shift()!;
+    const current = pool.find((card) => card._id === queued._id)!;
+    this.lastStreamedId = current._id;
+    return current;
   }
 
   private refill() {
@@ -471,6 +478,7 @@ export class BrickWall {
             changed = true;
           }
         } else {
+          this.preparedBricks.delete(item.key);
           row.head = (row.head + 1) % row.items.length;
         }
       }
@@ -481,7 +489,7 @@ export class BrickWall {
   private place(seconds: number) {
     const bounds = new Map<Feature, { left: number; right: number }>();
     const homeSlots = new Map<Feature, number>();
-    const particles: (WallParticle & { brick: Brick; rotation: number; scale: number; bobX: number; bobY: number })[] = [];
+    const particles: (WallParticle & { brick: Brick; row: Row; index: number; rotation: number; scale: number; bobX: number; bobY: number })[] = [];
 
     this.rows.forEach((row, r) => {
       let x = -row.offset;
@@ -497,6 +505,8 @@ export class BrickWall {
             const { halfWidth, halfHeight } = this.floatingBounds(item.motion);
             particles.push({
               brick: item,
+              row,
+              index: (row.head + i) % n,
               body: item.motion.body,
               anchorX: x + width / 2,
               anchorY: this.rowCenter(r, halfHeight),
@@ -526,17 +536,38 @@ export class BrickWall {
       }
     });
 
+    settleWall(particles, this.needsSettle ? 0.8 : seconds, this.cell * 0.06);
+    this.needsSettle = false;
+
+    if (!this.reducedMotion) {
+      const entryPadding = Math.max(24, this.cell * 0.2);
+      const nextByRow = new Map<Row, typeof particles[number]>();
+      // Choose the closest fully off-screen slot in each row AFTER solving physics.
+      // The full rotation/drift envelope plus shadow clearance must remain to the right.
+      for (const p of particles) {
+        const left = p.anchorX + p.body.x - p.halfWidth;
+        if (left <= this.width + entryPadding) continue;
+        const previous = nextByRow.get(p.row);
+        if (!previous || left < previous.anchorX + previous.body.x - previous.halfWidth) nextByRow.set(p.row, p);
+      }
+      for (const p of nextByRow.values()) {
+        if (this.preparedBricks.has(p.brick.key)) continue;
+        const card = this.nextStreamCard();
+        if (!card) continue;
+        if (card._id !== p.brick.card._id || card.url !== p.brick.card.url) {
+          // Keep slot geometry and motion, but give the incoming image its own identity.
+          // No existing on-screen card ever changes its artwork.
+          p.brick = this.brick(card, p.brick.motion);
+          p.row.items[p.index] = p.brick;
+        }
+        this.preparedBricks.add(p.brick.key);
+      }
+    }
+
     const visibleBricks = new Set(particles.map(({ brick }) => brick.key));
     const visibilityChanged = visibleBricks.size !== this.visibleBricks.size
       || [...visibleBricks].some((key) => !this.visibleBricks.has(key));
     this.visibleBricks = visibleBricks;
-    this.viewportBricks = new Set(particles.filter((p) => {
-      const center = p.anchorX + p.body.x + p.bobX;
-      return center + p.halfWidth > 0 && center - p.halfWidth < this.width;
-    }).map(({ brick }) => brick.key));
-
-    settleWall(particles, this.needsSettle ? 0.8 : seconds, this.cell * 0.06);
-    this.needsSettle = false;
     for (const p of particles) {
       const element = this.elements.get(p.brick.key);
       if (!element) continue;
