@@ -16,7 +16,10 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    env: { NEXT_PUBLIC_CONVEX_SITE_URL: "http://localhost:3000" },
+    env: {
+      NEXT_PUBLIC_CONVEX_SITE_URL: "http://localhost:3000",
+      NEXT_PUBLIC_CONVEX_URL: "https://wall-test.convex.cloud",
+    },
     timeout: 120_000,
   },
 });

@@ -117,7 +117,7 @@ export class BrickWall {
   constructor(private readonly elements: Map<string, HTMLElement>) {}
 
   /** Advances one frame and returns true when the set of rendered elements changed. */
-  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string, reducedMotion = false): boolean {
+  tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string, reducedMotion = false, arrivalIds?: ReadonlySet<string>): boolean {
     if (!cards || width <= 0 || height < ROWS) return false;
 
     let changed = false;
@@ -128,7 +128,7 @@ export class BrickWall {
       this.build(cards, width, height);
       changed = true;
     } else if (cards !== this.syncedCards) {
-      this.sync(cards);
+      this.sync(cards, arrivalIds);
       changed = true;
     }
 
@@ -265,7 +265,7 @@ export class BrickWall {
     this.fillRows(this.cards, perRow);
   }
 
-  private sync(cards: WallCard[]) {
+  private sync(cards: WallCard[], arrivalIds?: ReadonlySet<string>) {
     this.syncedCards = cards;
     this.cards = [...cards].reverse();
     const ids = new Set<string>(cards.map((card) => card._id));
@@ -285,7 +285,12 @@ export class BrickWall {
     for (const card of this.cards) {
       if (this.known.has(card._id)) continue;
       this.known.add(card._id);
-      if (!this.reducedMotion) this.addFeature(card);
+      if (!this.reducedMotion && (!arrivalIds || arrivalIds.has(card._id))) this.addFeature(card);
+      else {
+        // Historical thumbnails join off-screen instead of triggering a flood of arrival spotlights.
+        const row = this.rows[this.known.size % ROWS];
+        insertAt(row, Infinity, this.brick(card));
+      }
     }
     this.refill();
   }
