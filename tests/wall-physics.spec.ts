@@ -108,6 +108,33 @@ test("size-aware wall remains finite through arrivals, rejoining, wrapping and r
   expect([...elements.values()].map((element) => element.style.transform)).toEqual(staticTransforms);
 });
 
+test("wall snapshot mounts only cards near the viewport", () => {
+  const wall = new BrickWall(new Map());
+  const cards = Array.from({ length: 80 }, (_, index): WallCard => ({
+    _id: `card-${index}` as WallCard["_id"],
+    _creationTime: index,
+    url: `/card-${index}.webp`,
+  }));
+
+  wall.tick(16, cards, 390, 720);
+
+  expect(wall.snapshot().bricks.length).toBeLessThan(cards.length);
+  expect(wall.snapshot().bricks.length).toBeGreaterThan(0);
+});
+
+test("background thumbnail batches do not animate as new submissions", () => {
+  const wall = new BrickWall(new Map());
+  const card = (id: string): WallCard => ({ _id: id as WallCard["_id"], _creationTime: 1, url: `/test-${id}.webp` });
+  const first = card("first");
+  const historical = card("historical");
+  const arrival = card("arrival");
+  wall.tick(16, [first], 390, 720, undefined, false, new Set());
+  wall.tick(16, [historical, first], 390, 720, undefined, false, new Set());
+  expect(wall.snapshot().features).toHaveLength(0);
+  wall.tick(16, [arrival, historical, first], 390, 720, undefined, false, new Set([arrival._id]));
+  expect(wall.snapshot().features).toHaveLength(1);
+});
+
 test("large cards keep bobbing after the spacing physics settles", () => {
   const random = Math.random;
   let seed = 108;

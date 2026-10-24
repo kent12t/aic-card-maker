@@ -38,6 +38,13 @@ async function openEditor(page: Page, eventMode = false) {
 }
 
 test("all six frames produce visible images, including the PNG encoder fallback", async ({ page }) => {
+  await page.addInitScript(() => {
+    const encode = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function (callback, type, quality) {
+      document.documentElement.dataset.encodedSize = `${this.width}x${this.height}`;
+      encode.call(this, callback, type, quality);
+    };
+  });
   await openEditor(page);
   // Simulate Safari versions which don't encode WebP, as in the reported PNG.
   await page.evaluate(() => {
@@ -55,6 +62,7 @@ test("all six frames produce visible images, including the PNG encoder fallback"
     const stats = await imageStats(page, (await preview.getAttribute("src"))!);
     expect(stats.width).toBe(800);
     expect(stats.height).toBe(663);
+    await expect(page.locator("html")).toHaveAttribute("data-encoded-size", "400x331");
     expect(stats.visible).toBeGreaterThan(0.9);
     expect(stats.colored).toBeGreaterThan(1000);
     await page.getByRole("button", { name: "Close", exact: true }).click();
