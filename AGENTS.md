@@ -1,3 +1,12 @@
+## Cloud Agent
+
+The dev backend is an anonymous local Convex process. Do not run `npx convex login` or `npx convex deploy`.
+
+- Open the app at `http://localhost:3000`. Next.js dev blocks `127.0.0.1`, so that host stays on the server-rendered shell and `/display` never leaves "Loading cards…".
+- On boot, Convex and `npm run dev` are already running. Convex serves queries at `http://127.0.0.1:3210` and card uploads (`POST /cards`) at `http://127.0.0.1:3211`.
+- If they are down, from `/workspace` run `CONVEX_AGENT_MODE=anonymous npx convex dev --typecheck disable --tail-logs disable --start "npm run dev -- --hostname 0.0.0.0 --port 3000"`.
+- `.env.local` and `.convex/` are local state. Leave them untracked.
+
 ## Frontend design
 
 Before changing UI styling, read [`docs/style-guide.md`](docs/style-guide.md).
