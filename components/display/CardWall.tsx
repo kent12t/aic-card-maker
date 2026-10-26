@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
 import { useWallImages } from "./useWallImages";
+import { HighlightImage } from "./HighlightImage";
 import styles from "@/app/display/page.module.css";
 
 // Elements mount off-screen; the animation loop moves them into place on the next frame.
@@ -51,7 +52,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
 
   useEffect(() => {
     replayCardIdRef.current = undefined;
-    // The pool has already decoded this image; no full-size spotlight download is needed.
+    // Start with the decoded thumbnail; the highlight upgrades to the original when ready.
     if (decodedSpotlight) replayCardIdRef.current = decodedSpotlight._id;
   }, [decodedSpotlight]);
 
@@ -145,7 +146,11 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
             style={{ width: snapshot.bigWidth, height: snapshot.bigSize, transform: OFFSCREEN }}
           >
             <div className={styles.featureArtwork}>
-              <Image src={feature.url} alt="New Community Care Day card" fill sizes={`${Math.ceil(snapshot.bigWidth)}px`} className="object-contain" unoptimized loading="eager" />
+              <HighlightImage
+                thumbnail={feature.url}
+                original={spotlightCard?._id === feature.cardId ? spotlightCard.url : cards?.find((card) => card._id === feature.cardId)?.url}
+                width={snapshot.bigWidth}
+              />
             </div>
           </div>
         ))}

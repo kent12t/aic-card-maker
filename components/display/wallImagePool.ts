@@ -1,4 +1,5 @@
 import type { WallCard } from "./brickWall";
+export { thumbnailPath } from "@/lib/wall-image-url";
 
 export type ImagePolicy = { initial: number; maximum: number; concurrency: number; batch: number; interval: number };
 export type LoadedImage = { url: string; dispose: () => void };
@@ -8,14 +9,6 @@ export function imagePolicy(mobile: boolean, constrained: boolean): ImagePolicy 
   if (constrained) return { initial: 8, maximum: 8, concurrency: 2, batch: 0, interval: 8000 };
   if (mobile) return { initial: 30, maximum: 60, concurrency: 3, batch: 10, interval: 2000 };
   return { initial: 50, maximum: 200, concurrency: 3, batch: 10, interval: 500 };
-}
-
-export function thumbnailPath(source: string): string {
-  const url = new URL(source);
-  if (url.origin !== new URL(process.env.NEXT_PUBLIC_CONVEX_URL!).origin) throw new Error("Unexpected image origin");
-  const id = url.pathname.match(/^\/api\/storage\/([a-f0-9-]{36})$/i)?.[1];
-  if (!id) throw new Error("Unexpected image path");
-  return `/api/wall-thumbnail/${id}`;
 }
 
 /** A bounded, cancellable pool. Only decoded images are ever exposed to the animation. */

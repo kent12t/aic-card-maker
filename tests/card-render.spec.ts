@@ -62,7 +62,7 @@ test("all six frames produce visible images, including the PNG encoder fallback"
     const stats = await imageStats(page, (await preview.getAttribute("src"))!);
     expect(stats.width).toBe(800);
     expect(stats.height).toBe(663);
-    await expect(page.locator("html")).toHaveAttribute("data-encoded-size", "400x331");
+    await expect(page.locator("html")).toHaveAttribute("data-encoded-size", "800x663");
     expect(stats.visible).toBeGreaterThan(0.9);
     expect(stats.colored).toBeGreaterThan(1000);
     await page.getByRole("button", { name: "Close", exact: true }).click();

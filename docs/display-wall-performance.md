@@ -30,6 +30,10 @@ All cards enter naturally from the right at the existing 28px/s scrolling speed;
 loading all thumbnails does not mean every card becomes visible immediately.
 Reduced-motion users retain the static wall instead of animated streaming.
 Only real subscription arrivals and the explicitly requested card are featured.
+These enlarged highlights fetch the original stored image via the same-origin
+`/api/wall-original/[storageId]` CDN endpoint and switch from the
+decoded thumbnail only once the original has decoded. If the original fails,
+the thumbnail stays visible. Normal scrolling cards continue using thumbnails.
 
 ## Thumbnails and compatibility
 
@@ -39,8 +43,21 @@ cache lasts seven days, with a one-day browser cache. It only reads public stora
 on the configured Convex deployment, validates UUIDs, limits input to 2 MiB / two
 million pixels, and has an upstream timeout. It cannot proxy arbitrary URLs.
 
+`GET /api/wall-original/[storageId]` returns the original PNG/WebP bytes without
+resizing or recompression. It uses the same limits and caches successful responses
+for seven days at the CDN and one day in the browser. Highlights never request
+Convex storage URLs directly. Both routes share a seven-day Next.js Data Cache
+entry for each upstream storage URL, so a thumbnail and an original can reuse
+the same Convex download across requests and server instances on supported hosting.
+Cold cache misses and revalidation still incur Convex egress; CDN hits shift
+image delivery to the hosting provider's bandwidth allowance. Local dev tests
+verify headers, cache configuration, and routing; hosted CDN hits must be checked
+after deployment (for example, `x-vercel-cache: HIT`).
+
 No database or storage migration is required. Originals are unchanged. New wall
-submissions use 400×331 images; previews and event QR downloads remain full-size.
+submissions use 800×663 images so enlarged highlights retain detail; previews and
+event QR downloads remain full-size. Older 400×331 submissions use their existing
+originals and cannot recover detail that was not stored.
 The shared backend validator accepts both 400×331 and 800×663, including tabs
 opened before rollout. Do not remove the larger size while these clients exist.
 

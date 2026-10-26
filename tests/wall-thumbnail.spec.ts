@@ -10,8 +10,10 @@ test("thumbnail endpoint resizes legacy images, preserves alpha, and supplies ca
   const originalUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   const source = await sharp({ create: { width: 800, height: 663, channels: 4, background: "#ffca2280" } }).png().toBuffer();
   let requested = "";
-  globalThis.fetch = async (url) => {
+  let options: RequestInit = {};
+  globalThis.fetch = async (url, init) => {
     requested = String(url);
+    options = init ?? {};
     return new Response(new Uint8Array(source), { headers: { "content-type": "image/png" } });
   };
   process.env.NEXT_PUBLIC_CONVEX_URL = "https://wall-test.convex.cloud";
@@ -19,6 +21,7 @@ test("thumbnail endpoint resizes legacy images, preserves alpha, and supplies ca
     const response = await GET(request, { params: Promise.resolve({ storageId }) });
     expect(response.status).toBe(200);
     expect(requested).toBe(`https://wall-test.convex.cloud/api/storage/${storageId}`);
+    expect(options).toMatchObject({ cache: "force-cache", next: { revalidate: 604800 } });
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(response.headers.get("cache-control")).toContain("s-maxage=604800");
     const metadata = await sharp(Buffer.from(await response.arrayBuffer())).metadata();

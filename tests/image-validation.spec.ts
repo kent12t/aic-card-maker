@@ -3,7 +3,7 @@ import { validateCardImage } from "../convex/lib/image";
 
 for (const mimeType of ["image/png", "image/webp"] as const) {
   for (const [width, height, accepted] of [
-    [400, 331, true], // New wall thumbnails.
+    [400, 331, true], // Older smaller wall submissions.
     [800, 663, true], // Event QR downloads and clients opened before deployment.
     [400, 663, false],
     [800, 331, false],

@@ -593,6 +593,11 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   vertically contained throughout entrance, holding, and rejoining.
 - Featured arrivals float more subtly while large and inherit their normal
   floating motion as they shrink into the wall, avoiding a jump on rejoining.
+  Both live arrivals and personal replays load the original stored image through
+  the cacheable `/api/wall-original/[storageId]` endpoint for the
+  enlarged artwork, keeping the thumbnail visible until the original decodes
+  (or as fallback if it fails). Normal wall tiles use thumbnails. New submissions
+  retain 800×663 originals for sharp highlights; older originals are unchanged.
   Reduced-motion preferences show a static wall with varied sizes and tilts;
   disable scrolling, drifting, and animated arrivals, and remove `will-change`.
 - The black header has the AIC and CCD logos at the top left, in their original

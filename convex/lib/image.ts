@@ -1,4 +1,4 @@
-import { CARD_EXPORT_HEIGHT, CARD_EXPORT_WIDTH, WALL_CARD_HEIGHT, WALL_CARD_WIDTH } from "../../lib/card-maker/constants";
+import { CARD_EXPORT_HEIGHT, CARD_EXPORT_WIDTH } from "../../lib/card-maker/constants";
 
 export const MAX_CARD_BYTES = 2 * 1024 * 1024;
 
@@ -49,11 +49,11 @@ export function validateCardImage(bytes: Uint8Array): ImageInfo | string {
   if (bytes.length === 0 || bytes.length > MAX_CARD_BYTES) return "Image must be between 1 byte and 2 MB";
   const info = readPng(bytes) ?? readWebp(bytes);
   if (!info) return "Only PNG or WebP images are allowed";
-  // Downloads remain full-size, and already-open clients may still submit full-size wall cards.
-  const isWallCard = info.width === WALL_CARD_WIDTH && info.height === WALL_CARD_HEIGHT;
+  // Keep accepting smaller submissions from tabs opened before full-size highlights returned.
+  const isLegacyWallCard = info.width === 400 && info.height === 331;
   const isFullSizeCard = info.width === CARD_EXPORT_WIDTH && info.height === CARD_EXPORT_HEIGHT;
-  if (!isWallCard && !isFullSizeCard) {
-    return `Image must be ${WALL_CARD_WIDTH}x${WALL_CARD_HEIGHT} or ${CARD_EXPORT_WIDTH}x${CARD_EXPORT_HEIGHT}`;
+  if (!isLegacyWallCard && !isFullSizeCard) {
+    return `Image must be 400x331 or ${CARD_EXPORT_WIDTH}x${CARD_EXPORT_HEIGHT}`;
   }
   return info;
 }

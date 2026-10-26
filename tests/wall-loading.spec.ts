@@ -15,8 +15,14 @@ async function mockWall(page: Page, constrained = false, count = 80) {
   let active = 0;
   let peak = 0;
   let originalRequests = 0;
+  let cachedOriginalRequests = 0;
   let update = (_cards: WallCard[]) => {};
+  const original = await sharp(await readFile("public/assets/frames/frame_1.webp")).resize(800).webp().toBuffer();
   await page.route("**/api/storage/**", (route) => { originalRequests++; return route.abort(); });
+  await page.route("**/api/wall-original/**", (route) => {
+    cachedOriginalRequests++;
+    return route.fulfill({ contentType: "image/webp", body: original });
+  });
   const artwork = await sharp(await readFile("public/assets/frames/frame_1.webp")).resize(384).webp({ quality: 65 }).toBuffer();
   await page.route("**/api/wall-thumbnail/**", async (route) => {
     requests.push(route.request().url());
@@ -49,7 +55,7 @@ async function mockWall(page: Page, constrained = false, count = 80) {
       send(message.newVersion, modifications);
     });
   });
-  return { cards, requests, update: (next: WallCard[]) => update(next), peak: () => peak, originals: () => originalRequests };
+  return { cards, requests, update: (next: WallCard[]) => update(next), peak: () => peak, originals: () => originalRequests, cachedOriginals: () => cachedOriginalRequests };
 }
 
 test("mobile wall decodes a small initial pool with at most three downloads, then batches", async ({ page }) => {
@@ -60,15 +66,15 @@ test("mobile wall decodes a small initial pool with at most three downloads, the
   await page.goto("/display");
   const images = page.getByAltText("Community Care Day card", { exact: true });
   await expect(images.first()).toBeVisible();
-  await expect.poll(() => wall.requests.length).toBe(16);
+  await expect.poll(() => wall.requests.length).toBe(30);
   expect(wall.peak()).toBeLessThanOrEqual(3);
   expect(wall.originals()).toBe(0);
   await expect.poll(() => images.evaluateAll((images) => images.every((image) => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
-  await expect.poll(() => wall.requests.length, { timeout: 12_000 }).toBe(20);
+  await expect.poll(() => wall.requests.length, { timeout: 12_000 }).toBe(40);
   expect(errors).toEqual([]);
 });
 
-test("Data Saver caps downloads and spotlight is prioritized without a full-size fetch", async ({ page }) => {
+test("Data Saver caps downloads and static spotlight is prioritized without a full-size fetch", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const wall = await mockWall(page, true);
   await page.goto("/display?card=card-79");
@@ -78,6 +84,28 @@ test("Data Saver caps downloads and spotlight is prioritized without a full-size
   expect(wall.peak()).toBeLessThanOrEqual(2);
   expect(wall.originals()).toBe(0);
 });
+
+for (const mode of ["replay", "arrival", "failed original"] as const) {
+  test(`${mode} highlight uses the original image with a decoded-thumbnail fallback`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    const wall = await mockWall(page, true);
+    if (mode === "failed original") await page.route("**/api/wall-original/**", (route) => route.abort());
+    await page.goto(mode === "arrival" ? "/display" : "/display?card=card-79");
+    await expect(page.getByAltText("Community Care Day card", { exact: true }).first()).toBeVisible();
+    if (mode === "arrival") {
+      wall.update([{ ...wall.cards[0], _id: "new-card" as WallCard["_id"] }, ...wall.cards]);
+    }
+    const highlight = page.getByAltText("New Community Care Day card", { exact: true });
+    await expect(highlight).toBeVisible();
+    const expectedWidth = mode === "failed original" ? 384 : 800;
+    await expect.poll(() => highlight.evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(expectedWidth);
+    await expect(highlight).toHaveAttribute("src", mode === "failed original" ? /^blob:/ : /\/api\/wall-original\//);
+    if (mode !== "failed original") expect(wall.cachedOriginals()).toBe(1);
+    expect(wall.originals()).toBe(0);
+    await expect(page.getByAltText("Community Care Day card", { exact: true }).first()).toHaveAttribute("src", /^blob:/);
+  });
+}
 
 test("moderation removes decoded cards and live arrivals use the same bounded queue", async ({ page }) => {
   const wall = await mockWall(page, true);
