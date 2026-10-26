@@ -12,7 +12,7 @@ test("thumbnail endpoint resizes legacy images, preserves alpha, and supplies ca
   let requested = "";
   globalThis.fetch = async (url) => {
     requested = String(url);
-    return new Response(source, { headers: { "content-type": "image/png" } });
+    return new Response(new Uint8Array(source), { headers: { "content-type": "image/png" } });
   };
   process.env.NEXT_PUBLIC_CONVEX_URL = "https://wall-test.convex.cloud";
   try {

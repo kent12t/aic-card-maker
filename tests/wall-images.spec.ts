@@ -51,23 +51,28 @@ test("constrained connections do not fetch the rest of the subscription", async 
   } finally { pool.dispose(); }
 });
 
-test("desktop expands to the latest 100 cards without increasing download concurrency", async () => {
-  const policy = imagePolicy(false, false);
-  expect(policy).toMatchObject({ initial: 24, maximum: 100, concurrency: 3, batch: 8, interval: 1000 });
-  let requests = 0;
-  let snapshot: ImagePoolSnapshot = { cards: [], failed: false, loading: true };
-  const pool = new WallImagePool({ ...policy, interval: 2 }, async () => {
-    requests++;
-    return { url: "blob:test", dispose: () => {} };
-  }, (next) => { snapshot = next; });
-  try {
-    pool.update(cards(150));
-    expect(requests).toBe(3);
-    await expect.poll(() => snapshot.cards.length).toBe(100);
-    expect(requests).toBe(100);
-    expect(snapshot.cards.map((card) => card._id)).toEqual(cards(100).map((card) => card._id));
-  } finally { pool.dispose(); }
-});
+for (const { name, mobile, initial, maximum, interval } of [
+  { name: "desktop", mobile: false, initial: 50, maximum: 200, interval: 500 },
+  { name: "mobile", mobile: true, initial: 30, maximum: 60, interval: 2000 },
+]) {
+  test(`${name} expands to the latest ${maximum} cards without increasing download concurrency`, async () => {
+    const policy = imagePolicy(mobile, false);
+    expect(policy).toMatchObject({ initial, maximum, concurrency: 3, batch: 10, interval });
+    let requests = 0;
+    let snapshot: ImagePoolSnapshot = { cards: [], failed: false, loading: true };
+    const pool = new WallImagePool({ ...policy, interval: 2 }, async () => {
+      requests++;
+      return { url: "blob:test", dispose: () => {} };
+    }, (next) => { snapshot = next; });
+    try {
+      pool.update(cards(250));
+      expect(requests).toBe(3);
+      await expect.poll(() => snapshot.cards.length).toBe(maximum);
+      expect(requests).toBe(maximum);
+      expect(snapshot.cards.map((card) => card._id)).toEqual(cards(maximum).map((card) => card._id));
+    } finally { pool.dispose(); }
+  });
+}
 
 test("background batches respect the lifetime budget and pause while hidden", async () => {
   let requests = 0;

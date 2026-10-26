@@ -7,14 +7,14 @@ is separate from the animation so an image never enters the wall before decoding
 
 | Connection / viewport | Initial unique cards | Maximum resident cards | Concurrent downloads |
 | --- | ---: | ---: | ---: |
-| Mobile (up to 600 CSS px) | 16 | 32 | 3 |
-| Larger screens | 24 | 100 | 3 |
+| Mobile (up to 600 CSS px) | 30 | 60 | 3 |
+| Larger screens | 50 | 200 | 3 |
 | Data Saver or 2G | 8 | 8 | 2 |
 
 The first eight decoded cards start a varied wall while the rest of the initial
-pool finishes. Mobile connections add four historical images eight seconds after
-the previous batch settles. Desktop adds eight images one second after each batch,
-up to the latest 100 published cards returned by Convex. Both stop at their resident-card budget. Repeated wall
+pool finishes. Mobile connections add ten historical images two seconds after
+the previous batch settles. Desktop adds ten images half a second after each batch,
+up to the latest 200 published cards returned by Convex. Both stop at their resident-card budget. Repeated wall
 occurrences share decoded blob URLs; masks do not make separate storage downloads.
 Hidden tabs pause loading and animation. Unmounting cancels outstanding requests
 and revokes blob URLs. Removed cards are filtered immediately; fresh published

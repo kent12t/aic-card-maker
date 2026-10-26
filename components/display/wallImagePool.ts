@@ -6,8 +6,8 @@ export type ImagePoolSnapshot = { cards: WallCard[]; failed: boolean; loading: b
 
 export function imagePolicy(mobile: boolean, constrained: boolean): ImagePolicy {
   if (constrained) return { initial: 8, maximum: 8, concurrency: 2, batch: 0, interval: 8000 };
-  if (mobile) return { initial: 16, maximum: 32, concurrency: 3, batch: 4, interval: 8000 };
-  return { initial: 24, maximum: 100, concurrency: 3, batch: 8, interval: 1000 };
+  if (mobile) return { initial: 30, maximum: 60, concurrency: 3, batch: 10, interval: 2000 };
+  return { initial: 50, maximum: 200, concurrency: 3, batch: 10, interval: 500 };
 }
 
 export function thumbnailPath(source: string): string {
