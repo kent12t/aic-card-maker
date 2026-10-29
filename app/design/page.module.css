@@ -943,6 +943,68 @@
 
 }
 
+/* Landscape tablets need the palette beside the card, not above it. */
+@media (min-width: 901px) and (max-width: 1400px) and (orientation: landscape) {
+  .editor {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 24px;
+    padding: 16px 5% 20px;
+  }
+
+  .library {
+    padding-top: 48px;
+  }
+
+  .workspace {
+    width: min(100%, max(360px, calc((100dvh - 350px) * 64 / 53)));
+    justify-self: center;
+    gap: 10px;
+  }
+
+  .tab {
+    min-height: 44px;
+    font-size: clamp(14px, 1.5vw, 20px);
+  }
+
+  .paletteScroll {
+    height: var(--desktop-palette-height, 300px);
+    padding: 12px;
+    overflow: hidden auto;
+    scrollbar-gutter: stable;
+  }
+
+  .paletteGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-columns: auto;
+    grid-auto-flow: row;
+    width: auto;
+  }
+
+  .paletteGrid[data-category="frames"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actionButton {
+    min-height: 48px;
+    gap: 6px;
+    padding: 8px;
+    font-size: clamp(14px, 3.8cqw, 22px);
+  }
+
+  .instructions {
+    font-size: 14px;
+  }
+
+  .instructions p {
+    margin-bottom: 8px;
+  }
+
+  .instructions ul {
+    gap: 8px;
+  }
+}
+
 @media (max-width: 600px) {
   .editor {
     gap: 18px;

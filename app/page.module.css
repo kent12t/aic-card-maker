@@ -526,6 +526,24 @@
 
 }
 
+@media (min-width: 901px) and (max-width: 1100px) and (orientation: landscape) {
+  .header.compactHeader {
+    padding-block: 8px;
+  }
+
+  .compactHeader .aicLogo {
+    width: 60px;
+  }
+
+  .compactHeader .ccdLogo {
+    width: 98px;
+  }
+
+  .compactHeader .nav {
+    font-size: 16px;
+  }
+}
+
 @media (max-width: 600px) {
   .header.compactHeader {
     padding: 8px 5% 8px 8%;

@@ -376,6 +376,14 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
 - Wide desktop: library on the left, canvas and actions in the middle,
   instructions on the right. At <=1550px instructions move beneath the canvas;
   at <=1100px the library stacks above the workspace.
+  Exception: landscape tablets at 901–1400px keep the library beside the
+  workspace, with a vertically scrolling palette (two frame columns, three
+  columns for other categories). The canvas width responds to viewport height,
+  with compact instructions, 48px action buttons, and tighter spacing so all
+  actions remain visible without scrolling. At 901–1100px the landscape header
+  also uses compact 60px / 98px logos and 16px navigation. Portrait and mobile
+  layouts remain unchanged. `tests/design-layout.spec.ts` checks seven landscape
+  sizes from 960×600 to 1366×1024 in Chromium and WebKit.
 - The canvas keeps a CSS `64 / 53` aspect ratio independent of JavaScript
   measurement. A ResizeObserver scales the internal 443px editing coordinate
   system to fit, including scaling upward on desktop. Exports draw the frame and
