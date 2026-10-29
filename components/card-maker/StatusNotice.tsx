@@ -3,7 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import { X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { EventLink as Link } from "@/components/navigation/EventLink";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import styles from "@/app/design/page.module.css";

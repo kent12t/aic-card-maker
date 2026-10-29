@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import { EventLink as Link } from "@/components/navigation/EventLink";
 import { CardDeck } from "@/components/landing/CardDeck";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { PageTransitionReady, TransitionLink } from "@/components/navigation/PageTransition";

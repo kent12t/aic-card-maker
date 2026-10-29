@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { EventLink, withEventMode } from "./EventLink";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 
@@ -26,6 +27,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
   const onReady = useCallback(() => readyRef.current?.(), []);
 
   function navigate(href: string) {
+    href = withEventMode(href, new URLSearchParams(window.location.search).get("event") === "true");
     const destination = new URL(href, window.location.href);
     const isPagePair = (pathname === "/" && destination.pathname === "/design")
       || (pathname === "/design" && destination.pathname === "/");
@@ -71,7 +73,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
 
 export function TransitionLink({ href, onNavigate, ...props }: Omit<ComponentProps<typeof Link>, "href"> & { href: string }) {
   const { navigate } = useContext(TransitionContext);
-  return <Link {...props} href={href} onNavigate={(event) => {
+  return <EventLink {...props} href={href} onNavigate={(event) => {
     let prevented = false;
     onNavigate?.({ preventDefault: () => { prevented = true; event.preventDefault(); } });
     if (prevented) return;

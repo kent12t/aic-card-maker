@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { EventLink as Link } from "@/components/navigation/EventLink";
 import { Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import styles from "@/app/page.module.css";

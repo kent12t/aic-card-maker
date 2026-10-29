@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import Image from "next/image";
-import Link from "next/link";
+import { EventLink as Link } from "@/components/navigation/EventLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { BrickWall, type WallCard, type WallSnapshot } from "./brickWall";
