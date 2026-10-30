@@ -7,7 +7,7 @@ export default async function DisplayPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const eventMode = params.event === "true";
   return <>
-    <CardWall spotlightCardId={eventMode ? undefined : params.card} />
+    <CardWall eventMode={eventMode} spotlightCardId={eventMode ? undefined : params.card} />
     {!eventMode && (
       <div className={styles.createAction}>
         <a href="https://www.aic.sg/CCD2026" target="_blank" rel="noopener noreferrer" className={`${landingStyles.button} ${landingStyles.primaryButton} ${styles.createButton}`}>Discover Community Care Day</a>

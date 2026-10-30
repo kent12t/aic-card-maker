@@ -13,7 +13,7 @@ import styles from "@/app/display/page.module.css";
 // Elements mount off-screen; the animation loop moves them into place on the next frame.
 const OFFSCREEN = "translate3d(-9999px, 0, 0)";
 
-export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
+export function CardWall({ eventMode = false, spotlightCardId }: { eventMode?: boolean; spotlightCardId?: string }) {
   // Convex keeps this subscription live: inserts and moderator removals re-run the query and push new results.
   const cards = useQuery(api.cards.listPublished);
   const recentSpotlightCard = cards?.find((card) => card._id === spotlightCardId);
@@ -72,7 +72,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
 
   useEffect(() => {
     // Positions are written straight to the DOM every frame; React only re-renders when cards enter or leave.
-    const wall = new BrickWall(elementsRef.current);
+    const wall = new BrickWall(elementsRef.current, eventMode ? 4 : 8);
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let last = performance.now();
     let frame = requestAnimationFrame(function tick(now) {
@@ -82,7 +82,7 @@ export function CardWall({ spotlightCardId }: { spotlightCardId?: string }) {
       frame = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [eventMode]);
 
   const register = (key: string) => (element: HTMLDivElement | null) => {
     if (element) elementsRef.current.set(key, element);

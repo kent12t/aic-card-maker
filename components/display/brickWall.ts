@@ -13,7 +13,6 @@ export type WallSnapshot = {
   features: { key: string; cardId: string; url: string }[];
 };
 
-const ROWS = 8;
 // Keep open air between lanes rather than sizing artwork to fill the row pitch.
 const ROW_FILL = 0.76;
 const SPAN_ROWS = 4;
@@ -118,11 +117,11 @@ export class BrickWall {
   private preparedBricks = new Set<string>();
   private lastStreamedId: string | undefined;
 
-  constructor(private readonly elements: Map<string, HTMLElement>) {}
+  constructor(private readonly elements: Map<string, HTMLElement>, private readonly rowCount: 4 | 8 = 8) {}
 
   /** Advances one frame and returns true when the set of rendered elements changed. */
   tick(dtMs: number, cards: WallCard[] | undefined, width: number, height: number, replayCardId?: string, reducedMotion = false, arrivalIds?: ReadonlySet<string>): boolean {
-    if (!cards || width <= 0 || height < ROWS) return false;
+    if (!cards || width <= 0 || height < this.rowCount) return false;
 
     let changed = false;
     const motionChanged = reducedMotion !== this.reducedMotion;
@@ -199,7 +198,7 @@ export class BrickWall {
   }
 
   private get rowPitch() {
-    return this.height / ROWS;
+    return this.height / this.rowCount;
   }
 
   private get edgePadding() {
@@ -264,12 +263,12 @@ export class BrickWall {
     this.lastStreamedId = undefined;
     this.features = [];
     this.needsSettle = true;
-    this.rows = Array.from({ length: ROWS }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cellWidth / 2 : 0 }));
+    this.rows = Array.from({ length: this.rowCount }, (_, r) => ({ items: [], head: 0, offset: r % 2 ? this.cellWidth / 2 : 0 }));
     if (!this.cards.length) return;
 
-    const perRow = Math.max(this.minBricks, Math.ceil(this.cards.length / ROWS));
+    const perRow = Math.max(this.minBricks, Math.ceil(this.cards.length / this.rowCount));
     // Include every published card once before adding independently shuffled copies.
-    shuffle([...this.cards]).forEach((card, i) => this.rows[i % ROWS].items.push(this.brick(card)));
+    shuffle([...this.cards]).forEach((card, i) => this.rows[i % this.rowCount].items.push(this.brick(card)));
     this.fillRows(this.cards, perRow);
   }
 
@@ -360,7 +359,7 @@ export class BrickWall {
 
   private addFeature(card: WallCard, personal = false) {
     const gap = this.gapWidth;
-    const starts = shuffle(Array.from({ length: ROWS - SPAN_ROWS + 1 }, (_, i) => i));
+    const starts = shuffle(Array.from({ length: this.rowCount - SPAN_ROWS + 1 }, (_, i) => i));
     let start = starts[0];
     // Leave room for the full gap to open to the right, including beyond a phone's edge.
     const preferredX = personal ? Math.max(this.width * 0.85, gap / 2 + this.cellWidth) : this.width * 0.7;

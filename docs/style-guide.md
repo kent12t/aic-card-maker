@@ -7,6 +7,9 @@ buttons that start raised. Use this visual language when updating the designer.
 
 ## Source of truth
 
+The Thank You Wall uses 4 rows in event mode (`/display?event=true`) for
+larger cards, and retains 8 rows on the regular display.
+
 | File | Responsibility |
 | --- | --- |
 | `app/globals.css` | Global color variables; existing app defaults |
