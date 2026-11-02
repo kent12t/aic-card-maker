@@ -642,6 +642,20 @@ the other two; use the existing `shuffle` keyframes as the motion reference.
   their size transition before being retired so neighbors do not jump.
 - Event mode retains its live new-arrival behavior and ignores the card parameter.
 
+## Standalone analytics (`/analytics`)
+
+- Independent read-only reporting route; no changes to game navigation or flows.
+- Uses local Circular headings and Caslon body text, cream surfaces, white panels,
+  dark-purple text, orange daily bars, and violet published-status bars.
+- Filters and charts use Singapore calendar days (UTC+8); timestamps explicitly
+  format with `Asia/Singapore`, independent of the device timezone.
+- Summary cards collapse from four to two columns; charts stack on mobile.
+  Tables scroll within their panel. Reset uses a raised orange button and all
+  controls retain visible keyboard focus and 44px minimum touch targets.
+- Reports metadata for up to the latest 5,000 records, with a visible truncation
+  notice. No upload keys or removed artwork are exposed. The route is public,
+  not an authenticated admin interface.
+
 ## 10. Maintaining this guide
 
 Use the existing CSS module and components as the exact implementation reference

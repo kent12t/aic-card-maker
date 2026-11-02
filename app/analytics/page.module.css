@@ -1,0 +1,45 @@
+.page { min-height: 100vh; padding: 40px max(20px, calc((100vw - 1440px) / 2)); background: #fff9ed; color: var(--color-dark-purple); font-family: var(--font-caslon), sans-serif; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 24px; }
+.page h1, .page h2, .metric strong, .button { font-family: var(--font-circular), sans-serif; }
+.page h1 { font-size: clamp(32px, 4vw, 52px); font-weight: 900; margin: 8px 0; }
+.page h2 { font-size: 23px; font-weight: 900; margin: 0 0 10px; }
+.page p { line-height: 1.5; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; font-weight: 600; }
+.timezone { background: #ffe299; border-radius: 30px; padding: 12px 18px; white-space: nowrap; }
+.scope { margin: 16px 0; }
+.panel { background: white; border: 1px solid #d6d4ee; border-radius: 22px; padding: 24px; margin-bottom: 24px; min-width: 0; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.page label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.filters label { flex: 1 1 155px; }
+.page input, .page select { width: 100%; min-width: 0; background: white; border: 1px solid #8f8fc6; border-radius: 8px; min-height: 44px; padding: 10px; color: var(--color-dark-purple); font: inherit; }
+.page button { min-height: 44px; padding: 10px 16px; border: 2px solid var(--color-dark-purple); border-radius: 8px; color: var(--color-dark-purple); cursor: pointer; background: var(--color-light-yellow); }
+.page .button { background: var(--color-orange); box-shadow: 3px 3px 0 var(--color-dark-purple); transform: translate(-2px, -2px); transition: transform 180ms, box-shadow 180ms; font-weight: 900; }
+@media (hover: hover) and (pointer: fine) { .page .button:hover { transform: translate(-1px, -1px); box-shadow: 2px 2px 0 var(--color-dark-purple); } }
+.page .button:active { transform: none; box-shadow: none; }
+.page :is(input, select, button):focus-visible { outline: 3px solid var(--color-purple); outline-offset: 4px; }
+.page button:disabled { opacity: .4; cursor: not-allowed; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
+.metric { padding: 24px; border: 1px solid #d6d4ee; border-radius: 22px; background: #fff; display: flex; flex-direction: column; gap: 12px; }
+.metric:first-child { background: var(--color-light-yellow); }
+.metric strong { font-size: clamp(24px, 3vw, 38px); font-weight: 900; }
+.charts { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; }
+.daily { max-height: 300px; overflow: auto; margin-top: 20px; }
+.barRow { display: grid; grid-template-columns: 95px 1fr 48px; align-items: center; gap: 12px; margin: 12px 0; font-size: 14px; }
+.track { height: 22px; background: #f4f3fa; border-radius: 4px; overflow: hidden; }
+.bar { height: 100%; min-width: 3px; background: var(--color-orange); border-radius: 4px; }
+.statusBar { margin: 28px 0 16px; background: var(--color-orange); height: 32px; border-radius: 8px; overflow: hidden; }
+.statusBar > div { height: 100%; background: var(--color-violet); }
+.note { font-size: 14px; margin-top: 24px; }
+.tableHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.tableScroll { overflow-x: auto; }
+.page table { border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; white-space: nowrap; }
+.page th, .page td { padding: 16px 12px; border-bottom: 1px solid #e7e5f2; }
+.page th { background: #f4f3fa; }
+.id { font-family: monospace; }
+.published, .removed { border-radius: 20px; padding: 5px 10px; }
+.published { background: #e9e7f7; }
+.removed { background: #fff0d4; }
+.pagination { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 20px; font-size: 14px; }
+@media (max-width: 800px) { .header { align-items: flex-start; flex-direction: column; } .charts { grid-template-columns: 1fr; gap: 0; } .metrics { grid-template-columns: repeat(2, 1fr); } .panel { padding: 18px; } .page { padding-top: 24px; } }
+@media (max-width: 420px) { .metric { padding: 16px; } .tableHeading { align-items: flex-start; flex-direction: column; } .barRow { grid-template-columns: 85px 1fr 30px; gap: 8px; } }
+@media (prefers-reduced-motion: reduce) { .page .button { transition: none; } }

@@ -1,5 +1,31 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, query } from "./_generated/server";
+import { cardStatus } from "./schema";
+
+/** Read-only reporting metadata. Never expose upload keys or removed artwork. */
+export const analytics = query({
+  args: {},
+  returns: v.object({
+    truncated: v.boolean(),
+    cards: v.array(v.object({
+      _id: v.id("cards"),
+      _creationTime: v.number(),
+      status: cardStatus,
+      mimeType: v.string(),
+      byteSize: v.number(),
+    })),
+  }),
+  handler: async (ctx) => {
+    // Bound reporting reads; the UI explicitly identifies this reporting window.
+    const rows = await ctx.db.query("cards").withIndex("by_creation_time").order("desc").take(5001);
+    return {
+      truncated: rows.length > 5000,
+      cards: rows.slice(0, 5000).map(({ _id, _creationTime, status, mimeType, byteSize }) => ({
+        _id, _creationTime, status, mimeType, byteSize,
+      })),
+    };
+  },
+});
 
 const WALL_LIMIT = 200;
 const wallCard = v.object({
