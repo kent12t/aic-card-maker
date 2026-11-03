@@ -337,6 +337,15 @@ function CardMaker() {
 
   async function handleSubmit() {
     if (isSubmittingRef.current || exportingRef.current) return;
+    // A frame alone is not a personalised card, even if it was changed.
+    if (stickers.length === 0) {
+      setNotice({
+        kind: "error",
+        title: "Your card is still blank",
+        message: "Please add a message, sticker, or CCP before submitting your card.",
+      });
+      return;
+    }
     isSubmittingRef.current = true;
     setIsSubmitting(true);
     // Reused across retries of the same submission so the server stores one card.
