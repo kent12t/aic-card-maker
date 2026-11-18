@@ -25,9 +25,9 @@ try {
   const cdp = await context.newCDPSession(page);
   await cdp.send("Network.enable");
   await cdp.send("Network.emulateNetworkConditions", {
-    offline: false, latency: 150, downloadThroughput: 1_600_000 / 8, uploadThroughput: 750_000 / 8,
+    offline: false, latency: Number(process.env.LAT ?? 150), downloadThroughput: Number(process.env.DOWN_MBPS ?? 1.6) * 1_000_000 / 8, uploadThroughput: 750_000 / 8,
   });
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(process.env.CPU ?? 4) });
   const imageRequests = new Set();
   const receivedBytes = new Map();
   const activeThumbnails = new Set();
@@ -98,8 +98,8 @@ try {
     .map((frame) => frame.duration).sort((a, b) => a - b);
   const percentile = (p) => frames[Math.floor((frames.length - 1) * p)] ?? null;
   const results = {
-    url, status: response.status(), conditions: { viewport: "390x844 @2x", network: "1.6Mbps / 150ms RTT", cpuSlowdown: 4, saveData: args["save-data"] === "true" },
-    firstCardsMs: raw.firstCardsMs, imageBytes, imageTransferMiB: imageBytes / 1048576, finishedImages,
+    url, status: response.status(), conditions: { viewport: "390x844 @2x", network: `${process.env.DOWN_MBPS ?? 1.6}Mbps / ${process.env.LAT ?? 150}ms RTT`, cpuSlowdown: Number(process.env.CPU ?? 4), saveData: args["save-data"] === "true" },
+    firstCardsMs: raw.firstCardsMs, imageBytes, imageTransferMB: imageBytes / 1_000_000, finishedImages,
     peakThumbnailRequests, fullSizeImageRequests, thumbnailErrors, frameSamples: frames.length, medianFrameMs: percentile(0.5), p95FrameMs: percentile(0.95),
     framesOver50Ms: frames.filter((duration) => duration > 50).length, longTasks: raw.longTasks, errors, checkpoints,
     caveat: "Desktop Chromium emulation, not a physical-phone measurement. Screenshot capture can itself disturb frame timing.",
