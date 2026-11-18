@@ -86,9 +86,29 @@ It saves checkpoints at 1, 3, 8, 15, and 30 seconds. Compare the same public car
 dataset, and run before/after serially to avoid competing for CPU. Frame statistics
 exclude the first second of wall startup and screenshot capture windows.
 
-An initial 2026-10-24 run against the current public dataset transferred 4.54 MiB
-of images on production versus 0.43 MiB on the updated local build in 30 seconds
-(about 91% less). The updated wall started around 5.4 seconds, had no full-size
-browser requests, and sampled median/p95 frame intervals around 16.7 ms, with no
-steady-state samples over 50 ms. These are desktop Chromium emulation results,
-not physical-phone or hosted-CDN performance guarantees.
+An initial 2026-10-24 run against the current public dataset transferred 4.76 MB
+of images on production versus 0.45 MB on the updated local build in 30 seconds
+(about 91% less; originally recorded as 4.54 and 0.43 MiB). The updated wall started
+around 5.4 seconds, had no full-size browser requests, and sampled median/p95 frame
+intervals around 16.7 ms, with no steady-state samples over 50 ms. These are desktop
+Chromium emulation results, not physical-phone or hosted-CDN performance guarantees.
+
+Sizes are decimal megabytes (1 MB = 1,000,000 bytes). The script reads
+`DOWN_MBPS`, `LAT` and `CPU` to change the emulated connection and CPU; the defaults
+above are unchanged.
+
+### Regular 4G rerun (2026-11-18)
+
+Old code was a local production build of `36ad198` (the parent of the 24 October
+optimization) reading the live card data; new code was production at
+`https://www.ccdthankyou.com/display`. Conditions: 390×844 phone viewport, 9 Mbps
+down, 170 ms latency, no CPU slowdown, 30 seconds, three runs each, read-only.
+
+| | Old code, median (range) | Production, median (range) |
+| --- | --- | --- |
+| First cards visible | 12.1 s (12.1 to 13.4) | 2.8 s (2.7 to 4.9) |
+| Image transfer in 30 s | 20.4 MB (19.9 to 20.8) | 0.83 MB (0.83 in every run) |
+| Full-size image requests | about 308 | 0 |
+
+That is about 96% less image transfer. Desktop Chromium emulation from a cloud
+sandbox, not a physical-device measurement.
