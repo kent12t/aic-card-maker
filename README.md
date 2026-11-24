@@ -49,4 +49,4 @@ Environment variables: `NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_SITE_URL
 
 Original concept by others. Final UI design by Ting Hui, and stickers by Nadiah and Megan. Client servicing and event by Raja and Tammy.
 
-I (Kent, [@kent12t](https://github.com/kent12t)) was the system and UX architect: wireframes, architecture and security diagrams, user journeys, event mode, and the implementation. Much of the code was written with AI assistance, directed and reviewed by me.
+I (Kent, [@kent12t](https://github.com/kent12t)) was the system and UX architect: wireframes, architecture and security diagrams, user journeys, event mode, and the implementation. Much of the code was written with AI assistance, directed and refined by me.
