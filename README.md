@@ -1,60 +1,54 @@
-# AIC Card Maker
+# CCD Thank You
 
-A Next.js card customizer for Community Care Day. Users can pick a frame, arrange preset messages, stickers, and avatars, and export the result as a PNG.
+The card maker and live Thank You Wall for **Community Care Day**. Visitors pick a frame, a community care professional, a message, and stickers, then submit the card and watch it join a wall of thank-you cards. It ran at the Community Care Day campaign site and as a booth at the National Celebration of Seniors 2026, where 347 cards were submitted.
+
+Live: [ccdthankyou.com](https://ccdthankyou.com/) · Case study: [kentlimanza.co/work/ccd-thank-you](https://kentlimanza.co/work/ccd-thank-you)
+
+## What it does
+
+- **Card maker** (`/design`): a drag-and-drop editor with matching desktop and mobile layouts. It exports an 800 × 663 WebP image (PNG where WebP encoding isn't supported).
+- **Live wall** (`/display`): published cards stream in through a Convex reactive query. The wall loads small thumbnails first, limits concurrent downloads, reuses decoded images, and respects reduced-motion settings. Enlarged cards load the original. See [docs/display-wall-performance.md](docs/display-wall-performance.md).
+- **Event mode** (`?event=true`): one codebase serves both the booth tablet and visitors at home. Event mode adds a QR download in place of Share, reloads the shared tablet after 60 seconds idle, hides buttons on the LED wall, and stays on through internal links.
+- **Analytics** (`/analytics`): a read-only dashboard of card counts by Singapore-time date, built from card metadata only.
+- **Safeguards**: submissions are rate limited, validated on the server from the file's bytes, and de-duplicated with an idempotency key. The editor blocks cards with only a frame on them.
+- **Moderation**: set a card's `status` to `removed` in the Convex dashboard (Data, then `cards`) and every connected wall drops it.
 
 ## Stack
 
-- Next.js 14 (App Router)
-- React 18 + TypeScript
-- Tailwind CSS
-- `html-to-image` for PNG export
-- `lucide-react` icons
-- Convex for card submissions, image storage, the realtime display wall, and dashboard moderation
+Next.js (App Router), React, TypeScript, Tailwind CSS, Convex (submissions, image storage, realtime queries), `sharp` for wall thumbnails, `html-to-image`/Canvas for export, Vercel Analytics, Playwright.
 
-## Getting started
-
-1. Install dependencies:
+## Running it locally
 
 ```bash
 npm install
+npx convex dev   # first run logs in and writes .env.local; keep it running
+npm run dev      # in a second terminal
 ```
 
-2. Start Convex (first run logs in and writes `.env.local`), and keep it running:
+Open `http://localhost:3000` for the landing page, `/design` for the card maker, and `/display` for the wall.
 
-```bash
-npx convex dev
-```
+Environment variables: `NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_SITE_URL` (written by `npx convex dev`), and `CLIENT_ORIGIN` on the Convex deployment, a comma-separated list of origins allowed to submit cards.
 
-3. In another terminal, run the local dev server:
-
-```bash
-npm run dev
-```
-
-4. Open `http://localhost:3000` (card maker) and `http://localhost:3000/display` (display wall).
-
-## Available scripts
-
-- `npm run dev` - start development server
-- `npm run build` - create production build
-- `npm run start` - run production server
-- `npm run lint` - run ESLint
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` / `npm run start` | Production build and server |
+| `npm run lint` | ESLint |
+| `npm run test:render` | Playwright checks (Chromium and WebKit): card rendering, blank-card prevention, event navigation, layouts, analytics, and wall loading |
 
 ## Project structure
 
-- `app/page.tsx` - main stateful card-maker page that composes all UI components
-- `app/display/` + `components/display/` - live display wall
-- `convex/` - schema, `/cards` submission HTTP action, and the published-cards query
-- `app/layout.tsx` - global layout, fonts, and metadata (includes favicon config)
-- `components/card-maker/` - page UI components (canvas, editor panels, notices, buttons)
-- `lib/card-maker/` - shared domain types, constants, and utility functions
-- `public/assets/` - frame, sticker, message, and avatar image assets
-- `public/logo.svg` - SVG logo
-- `public/favicon.svg` - SVG favicon used in `<head>`
+- `app/` routes: landing, `design/`, `display/`, `analytics/`, and `api/` for wall thumbnails and originals
+- `components/` UI for the card maker, the wall, and the landing page
+- `lib/card-maker/` card types, constants, rendering, and submission
+- `convex/` schema, the `/cards` HTTP action, image validation, and the published-cards query
+- `public/assets/` frames, stickers, messages, and avatars
+- `docs/` [Convex plan](docs/CONVEX_PLAN.md), [wall performance](docs/display-wall-performance.md), and [style guide](docs/style-guide.md)
 
-## Notes
+## Credits
 
-- Submit renders an 800 × 800 WebP and uploads it to Convex; it appears on `/display` immediately.
-- To moderate, set a card's `status` to `removed` in the Convex dashboard (Data → `cards`).
-- The page keeps desktop and mobile editor layouts with matching functionality.
-- Campaign implementation is outlined in `docs/CONVEX_PLAN.md`.
+Original concept by others. Final UI design by Ting Hui, and stickers by Nadiah and Megan. Client servicing and event by Raja and Tammy.
+
+I (Kent, [@kent12t](https://github.com/kent12t)) was the system and UX architect: wireframes, architecture and security diagrams, user journeys, event mode, and the implementation. Much of the code was written with AI assistance, directed and reviewed by me.
+
+Frames, characters, messages, and stickers in `public/assets/` are artwork made for Community Care Day, shown here for reference.

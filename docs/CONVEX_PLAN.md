@@ -9,12 +9,12 @@
 
 ## Submission flow
 
-1. The browser renders the card at 800 × 800 as WebP (the canvas falls back to PNG where WebP encoding is unsupported).
+1. The browser renders the card at 800 × 663 as WebP (the canvas falls back to PNG where WebP encoding is unsupported).
 2. The browser `POST`s only the image bytes to the Convex HTTP action `/cards`, plus a random `Idempotency-Key` header. No form fields (name, location, etc.) are collected.
 3. The HTTP action:
    - rejects bad keys and oversize bodies;
    - returns the existing card if the key was already used (retries create one card);
-   - validates size (≤ 2 MB), file signature (PNG/WebP), and dimensions (800 × 800) from the bytes, never trusting `Content-Type`;
+   - validates size (≤ 2 MB), file signature (PNG/WebP), and dimensions (800 × 663) from the bytes, never trusting `Content-Type`;
    - stores the file and inserts a `published` card in one mutation, deleting its own file if a concurrent retry won.
 4. Display walls update through a reactive query.
 
