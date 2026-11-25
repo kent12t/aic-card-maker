@@ -30,12 +30,18 @@ const csp = [
 const securityHeaders = [
   { key: CSP_HEADER, value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
+  // frame-ancestors in the report-only CSP isn't enforced, so set the legacy header too.
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-site" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   images: {
     unoptimized: true,
   },
